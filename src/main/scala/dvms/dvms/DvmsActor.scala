@@ -1,4 +1,4 @@
-package dvms
+package dvms.dvms
 
 import akka.actor.{ActorLogging, Actor}
 import akka.pattern.ask
@@ -6,9 +6,10 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 import concurrent.{Await, ExecutionContext}
 import java.util.concurrent.Executors
-import org.bbk.AkkaArc.util.{NodeRef}
-import org.bbk.AkkaArc.PeerActor
+import org.bbk.AkkaArc.util.NodeRef
 import org.bbk.AkkaArc.notification.{WantsToRegister, ToNotificationActor}
+import dvms.entropy.EntropyComputeReconfigurePlan
+import dvms.monitor.CpuViolation
 
 /**
  * Created with IntelliJ IDEA.
@@ -18,6 +19,8 @@ import org.bbk.AkkaArc.notification.{WantsToRegister, ToNotificationActor}
  * To change this template use File | Settings | File Templates.
  */
 
+
+// Routing messages
 case class ToMonitorActor(msg:Any)
 case class ToDvmsActor(msg:Any)
 case class ToEntropyActor(msg:Any)
@@ -55,12 +58,12 @@ class DvmsPartititionState(val name:String) {
    }
 }
 
-case class Created extends DvmsPartititionState("Created")
-case class Blocked extends DvmsPartititionState("Blocked")
-case class Growing extends DvmsPartititionState("Growing")
-case class Destroyed extends DvmsPartititionState("Destroyed")
+case class Created() extends DvmsPartititionState("Created")
+case class Blocked() extends DvmsPartititionState("Blocked")
+case class Growing() extends DvmsPartititionState("Growing")
+case class Destroyed() extends DvmsPartititionState("Destroyed")
 
-class FakeDvmsActor(applicationRef:NodeRef) extends Actor with ActorLogging {
+class DvmsActor(applicationRef:NodeRef) extends Actor with ActorLogging {
 
    implicit val timeout = Timeout(2 seconds)
    implicit val ec = ExecutionContext.fromExecutorService(Executors.newCachedThreadPool())
@@ -98,10 +101,6 @@ class FakeDvmsActor(applicationRef:NodeRef) extends Actor with ActorLogging {
          }
       }
 
-//      case WhoMerge(other:NodeRef) => {
-//         sender ! (other.location isInferiorThan applicationRef.location)
-//      }
-
       case MergeOurPartitions(partition) => {
 
          log.info(s"merging $partition with ${currentPartition.get}")
@@ -122,7 +121,8 @@ class FakeDvmsActor(applicationRef:NodeRef) extends Actor with ActorLogging {
                node.ref ! ToDvmsActor(DissolvePartition())
             })
          } else {
-            log.info(s"the partition $currentPartition is not enough to reconfigure, I try to find another node for the partition")
+
+            log.info(s"the partition $currentPartition is not enough to reconfigure, I try to find another node for the partition, deadlock? ${partition.nodes.contains(firstOut)}")
 
             firstOut.get.ref ! ToDvmsActor(TransmissionOfAnISP(currentPartition.get))
          }

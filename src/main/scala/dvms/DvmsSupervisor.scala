@@ -1,10 +1,13 @@
 package dvms
 
+import dvms._
+import dvms.ThisIsYourNeighbor
+import dvms.ToDvmsActor
+import dvms.ToMonitorActor
+import factory.{DvmsAbstractFactory, DvmsFactory}
 import org.bbk.AkkaArc.util.{NodeRef, INetworkLocation}
 import org.bbk.AkkaArc.PeerActor
 import akka.actor.Props
-import akka.util.Timeout
-import scala.concurrent.duration._
 
 /**
  * Created with IntelliJ IDEA.
@@ -14,11 +17,15 @@ import scala.concurrent.duration._
  * To change this template use File | Settings | File Templates.
  */
 
-class DvmsSupervisor(location:INetworkLocation) extends PeerActor(location) {
+class DvmsSupervisor(location:INetworkLocation, factory:DvmsAbstractFactory) extends PeerActor(location) {
 
-    val monitorActor = context.actorOf(Props(new FakeMonitorActor(NodeRef(location, self))), s"Monitor@${location.getId}")
-    val dvmsActor = context.actorOf(Props(new FakeDvmsActor(NodeRef(location, self))), s"DVMS@${location.getId}")
-    val entropyActor = context.actorOf(Props(new FakeEntropyActor(NodeRef(location, self))), s"Entropy@${location.getId}")
+    def this(location:INetworkLocation)= this(location, DvmsFactory)
+
+    val nodeRef:NodeRef = NodeRef(location, self)
+
+    val monitorActor = context.actorOf(Props(factory.createMonitorActor(nodeRef).get), s"Monitor@${location.getId}")
+    val dvmsActor = context.actorOf(Props(new DvmsActor(NodeRef(location, self))), s"DVMS@${location.getId}")
+    val entropyActor = context.actorOf(Props(factory.createEntropyActor(nodeRef).get), s"Entropy@${location.getId}")
 
     override def receive = {
       case ToMonitorActor(msg) => monitorActor.forward(msg)

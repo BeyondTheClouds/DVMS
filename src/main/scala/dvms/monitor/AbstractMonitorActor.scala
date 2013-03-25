@@ -1,4 +1,4 @@
-package dvms
+package dvms.monitor
 
 import org.bbk.AkkaArc.util.NodeRef
 import akka.actor.{ActorLogging, Actor}
@@ -21,7 +21,7 @@ class CpuViolation() extends SimpleEvent("cpuViolation")
 case class UpdateConfiguration(newLoad:Double)
 case class GetCpuLoad()
 
-class FakeMonitorActor(applicationRef:NodeRef) extends Actor with ActorLogging {
+abstract class AbstractMonitorActor(applicationRef:NodeRef) extends Actor with ActorLogging {
 
   implicit val timeout = Timeout(2 seconds)
   implicit val ec = ExecutionContext.fromExecutorService(Executors.newCachedThreadPool())
@@ -33,16 +33,12 @@ class FakeMonitorActor(applicationRef:NodeRef) extends Actor with ActorLogging {
   val seed:Long = applicationRef.location.getId
   val random:Random = new Random(seed)
 
+  def uploadCpuLoad():Double
+
   override def receive = {
     case Tick() => {
 
-      // cpuLoadChange is contained in [-delta, delta]
-      val cpuLoadChange = random.nextDouble()*2*delta - delta
-
-      cpuLoad = (cpuLoad+cpuLoadChange) match {
-        case n:Double if (n<0) => 0
-        case n:Double => n
-      }
+      uploadCpuLoad()
 
       log.info(s"the new load is : $cpuLoad")
 

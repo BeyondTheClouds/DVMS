@@ -16,7 +16,7 @@ object Main extends App {
       implicit val ec = ExecutionContext.fromExecutorService(Executors.newCachedThreadPool())
 
 
-         try {
+      try {
 
 
          val system = ActorSystem("DvmsSystem")

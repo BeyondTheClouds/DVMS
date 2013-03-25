@@ -3,20 +3,105 @@ package org.bbk.AkkaArc
 import akka.actor._
 import akka.testkit.TestKit
 import akka.testkit.ImplicitSender
+import model.chord.GetRingSize
+import model.ToModelActor
 import org.scalatest.WordSpec
 import org.scalatest.matchers.MustMatchers
 import org.scalatest.BeforeAndAfterAll
-import util.{Configuration, INetworkLocation, FakeNetworkLocation}
+import util.{NodeRef, Configuration, INetworkLocation, FakeNetworkLocation}
 import akka.util.Timeout
 import scala.concurrent.duration._
-import concurrent.{ExecutionContext}
+import concurrent.{Await, ExecutionContext}
 import java.util.concurrent.Executors
 import dvms.DvmsSupervisor
-
+import akka.pattern.ask
+import dvms.factory.DvmsAbstractFactory
+import dvms.factory.DvmsFactory
+import dvms.monitor.{UpdateConfiguration, GetCpuLoad, FakeMonitorActor, AbstractMonitorActor}
+import dvms.entropy.{FakeEntropyActor, AbstractEntropyActor}
+import collection.immutable.HashMap
+import dvms.dvms.{ToEntropyActor, ToDvmsActor, ToMonitorActor}
 
 object DvmsSupervisorTest {
 
 }
+
+
+
+object TestData {
+
+  implicit def intToLocation(i: Long): INetworkLocation = new FakeNetworkLocation(i)
+
+  val hashLoad:HashMap[INetworkLocation, List[Double]] = HashMap(
+    (intToLocation(1) -> List(50.0, 50.0, 110.0, -1, -1, -1, -1)),
+    (intToLocation(2) -> List(50.0, 50.0, 80.0,  -1, -1, -1, -1)),
+    (intToLocation(3) -> List(50.0, 50.0, 70.0,  -1, -1, -1, -1)),
+    (intToLocation(4) -> List(50.0, 50.0, 150.0, -1, -1, 50, -1))
+  )
+}
+
+
+class TestMonitorActor(nodeRef:NodeRef) extends FakeMonitorActor(nodeRef) {
+
+  var count:Int = -1
+
+  override def uploadCpuLoad():Double = {
+
+    count = count + 1
+
+    if(TestData.hashLoad(nodeRef.location).size > count) {
+
+      TestData.hashLoad(nodeRef.location)(count) match {
+        case -1 =>
+        case n:Double => {
+          cpuLoad = n
+        }
+      }
+    }
+
+    cpuLoad
+  }
+}
+
+case class ReportIn()
+
+class TestEntropyActor(nodeRef:NodeRef) extends FakeEntropyActor(nodeRef) {
+
+
+  var failureCount:Int = 0
+  var successCount:Int = 0
+
+  override def computeAndApplyReconfigurationPlan(nodes:List[NodeRef]):Boolean = {
+
+    super.computeAndApplyReconfigurationPlan(nodes) match {
+      case true => {
+        successCount += 1
+        true
+      }
+      case false => {
+        failureCount += 1
+        false
+      }
+    }
+  }
+
+  override def receive = {
+    case ReportIn() => sender ! (failureCount, successCount)
+    case msg => {
+      super.receive(msg)
+    }
+  }
+}
+
+object TestDvmsFactory extends DvmsAbstractFactory {
+  def createMonitorActor(nodeRef:NodeRef):Option[AbstractMonitorActor] = {
+    Some(new TestMonitorActor(nodeRef))
+  }
+  def createEntropyActor(nodeRef:NodeRef):Option[AbstractEntropyActor] = {
+    Some(new TestEntropyActor(nodeRef))
+  }
+}
+
 
 class DvmsSupervisorTest(_system: ActorSystem) extends TestKit(_system) with ImplicitSender
 with WordSpec with MustMatchers with BeforeAndAfterAll {
@@ -35,8 +120,8 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
     system.shutdown()
   }
 
-  "ExampleApplication" must {
-    "must execute correctly" in {
+  "DvmsSupervisor" must {
+    "join other nodes correctly" in {
       val exampleApplication1 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(1))))
 
 
@@ -45,9 +130,30 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
         exampleApplicationI ! InitCommunicationWithHim(exampleApplication1)
       }
 
-      Thread.sleep(22000)
+      Thread.sleep(2000)
+
+      val size:Int = Await.result(exampleApplication1 ? ToModelActor(GetRingSize()), 1 second).asInstanceOf[Int]
+
+      size must be (5)
+    }
+
+    "compute a reconfiguration plan" in {
 
 
+      val exampleApplication1 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(1), TestDvmsFactory)))
+
+
+      for(i <- 2 to 4) {
+        val exampleApplicationI = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(i), TestDvmsFactory)))
+        exampleApplicationI ! InitCommunicationWithHim(exampleApplication1)
+      }
+
+      Thread.sleep(10000)
+
+      val (failureCount, successCount) = Await.result(exampleApplication1 ? ToEntropyActor(ReportIn()), 1 second).asInstanceOf[(Int, Int)]
+
+//      failureCount must be(0)
+//      successCount must be(1)
     }
   }
 }
