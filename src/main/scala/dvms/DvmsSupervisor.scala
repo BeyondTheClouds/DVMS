@@ -24,7 +24,7 @@ class DvmsSupervisor(location:INetworkLocation, factory:DvmsAbstractFactory) ext
     val nodeRef:NodeRef = NodeRef(location, self)
 
     val monitorActor = context.actorOf(Props(factory.createMonitorActor(nodeRef).get), s"Monitor@${location.getId}")
-    val dvmsActor = context.actorOf(Props(new DvmsActor(NodeRef(location, self))), s"DVMS@${location.getId}")
+    val dvmsActor    = context.actorOf(Props(factory.createDvmsActor(nodeRef).get), s"DVMS@${location.getId}")
     val entropyActor = context.actorOf(Props(factory.createEntropyActor(nodeRef).get), s"Entropy@${location.getId}")
 
     override def receive = {

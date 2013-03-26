@@ -40,8 +40,8 @@ case class DvmsPartition(leader:NodeRef, initiator:NodeRef, nodes:List[NodeRef],
 case class TransmissionOfAnISP(currentPartition:DvmsPartition)
 case class IAmTheNewLeader(partition:DvmsPartition, firstOut:NodeRef)
 
-case class YouIfFirstOutOrYourFirstOut()
-case class MergeOurPartitions(parition:DvmsPartition)
+//case class YouIfFirstOutOrYourFirstOut()
+case class MergeOurPartitions(partition:DvmsPartition)
 
 case class WhoMerge(otherNode:NodeRef)
 
@@ -73,9 +73,7 @@ class DvmsActor(applicationRef:NodeRef) extends Actor with ActorLogging {
 
    // Variables that are specific to a node member of a partition
    var firstOut:Option[NodeRef] = None
-
    var currentPartition:Option[DvmsPartition] = None
-   var merging:Boolean = false
 
    override def receive = {
 
@@ -92,14 +90,14 @@ class DvmsActor(applicationRef:NodeRef) extends Actor with ActorLogging {
          }
       }
 
-      case YouIfFirstOutOrYourFirstOut() => {
-         currentPartition match {
-            case None => sender ! applicationRef
-            case _ => {
-               sender ! firstOut
-            }
-         }
-      }
+//      case YouIfFirstOutOrYourFirstOut() => {
+//         currentPartition match {
+//            case None => sender ! applicationRef
+//            case _ => {
+//               sender ! firstOut
+//            }
+//         }
+//      }
 
       case MergeOurPartitions(partition) => {
 
@@ -152,7 +150,7 @@ class DvmsActor(applicationRef:NodeRef) extends Actor with ActorLogging {
 
                   } else {
 
-                     log.info(s"i'm not in a Blocked state, but I belong to a partition, so I forward $currentPartition")
+                     log.info(s"I'm not in a Blocked state, but I belong to a partition, so I forward $currentPartition")
                      firstOut.get.ref.forward(ToDvmsActor(msg))
                   }
 

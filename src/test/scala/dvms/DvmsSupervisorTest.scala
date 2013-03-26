@@ -19,7 +19,7 @@ import dvms.factory.DvmsAbstractFactory
 import dvms.monitor.{FakeMonitorActor, AbstractMonitorActor}
 import dvms.entropy.{FakeEntropyActor, AbstractEntropyActor}
 import collection.immutable.HashMap
-import dvms.dvms.{ToEntropyActor}
+import dvms.dvms.{DvmsActor, ToEntropyActor}
 
 object DvmsSupervisorTest {
 
@@ -100,6 +100,11 @@ object TestDvmsFactory extends DvmsAbstractFactory {
   def createMonitorActor(nodeRef:NodeRef):Option[AbstractMonitorActor] = {
     Some(new TestMonitorActor(nodeRef))
   }
+
+  def createDvmsActor(nodeRef:NodeRef):Option[DvmsActor] = {
+    Some(new DvmsActor(nodeRef))
+  }
+
   def createEntropyActor(nodeRef:NodeRef):Option[AbstractEntropyActor] = {
     Some(new TestEntropyActor(nodeRef))
   }
@@ -157,6 +162,15 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
 
       failureCount must be(10)
       successCount must be(2)
+    }
+
+
+    "handle deadlock efficiently" in {
+
+
+
+
+      true must be(true)
     }
   }
 }

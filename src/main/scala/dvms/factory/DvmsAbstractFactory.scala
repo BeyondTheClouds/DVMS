@@ -3,6 +3,7 @@ package dvms.factory
 import dvms.monitor.{AbstractMonitorActor}
 import org.bbk.AkkaArc.util.NodeRef
 import dvms.entropy.{AbstractEntropyActor}
+import dvms.dvms.DvmsActor
 
 /**
  * Created with IntelliJ IDEA.
@@ -16,6 +17,6 @@ import dvms.entropy.{AbstractEntropyActor}
 trait DvmsAbstractFactory {
 
   def createMonitorActor(nodeRef:NodeRef):Option[AbstractMonitorActor]
-
+  def createDvmsActor(nodeRef:NodeRef):Option[DvmsActor]
   def createEntropyActor(nodeRef:NodeRef):Option[AbstractEntropyActor]
 }

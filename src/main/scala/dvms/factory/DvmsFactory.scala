@@ -3,6 +3,7 @@ package dvms.factory
 import dvms.monitor.{FakeMonitorActor, AbstractMonitorActor}
 import dvms.entropy.{FakeEntropyActor, AbstractEntropyActor}
 import org.bbk.AkkaArc.util.NodeRef
+import dvms.dvms.DvmsActor
 
 
 /**
@@ -18,6 +19,11 @@ object DvmsFactory extends DvmsAbstractFactory {
   def createMonitorActor(nodeRef:NodeRef):Option[AbstractMonitorActor] = {
     Some(new FakeMonitorActor(nodeRef))
   }
+
+  def createDvmsActor(nodeRef:NodeRef):Option[DvmsActor] = {
+    Some(new DvmsActor(nodeRef))
+  }
+
 
   def createEntropyActor(nodeRef:NodeRef):Option[AbstractEntropyActor] = {
     Some(new FakeEntropyActor(nodeRef))
