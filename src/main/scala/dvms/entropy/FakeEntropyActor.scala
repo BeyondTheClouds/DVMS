@@ -32,6 +32,8 @@ class FakeEntropyActor(applicationRef:NodeRef) extends AbstractEntropyActor(appl
       //            }
     })
 
+    log.info(s"computed load: ${nodeLoad/nodes.size}")
+
     if (nodeLoad/nodes.size <= 100) {
 
       nodes.foreach(n => {

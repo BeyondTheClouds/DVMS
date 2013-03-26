@@ -16,11 +16,10 @@ import java.util.concurrent.Executors
 import dvms.DvmsSupervisor
 import akka.pattern.ask
 import dvms.factory.DvmsAbstractFactory
-import dvms.factory.DvmsFactory
-import dvms.monitor.{UpdateConfiguration, GetCpuLoad, FakeMonitorActor, AbstractMonitorActor}
+import dvms.monitor.{FakeMonitorActor, AbstractMonitorActor}
 import dvms.entropy.{FakeEntropyActor, AbstractEntropyActor}
 import collection.immutable.HashMap
-import dvms.dvms.{ToEntropyActor, ToDvmsActor, ToMonitorActor}
+import dvms.dvms.{ToEntropyActor}
 
 object DvmsSupervisorTest {
 
@@ -33,7 +32,7 @@ object TestData {
   implicit def intToLocation(i: Long): INetworkLocation = new FakeNetworkLocation(i)
 
   val hashLoad:HashMap[INetworkLocation, List[Double]] = HashMap(
-    (intToLocation(1) -> List(50.0, 50.0, 110.0, -1, -1, -1, -1)),
+    (intToLocation(1) -> List(50.0, 50.0, 110.0, -1, -1, 110, -1)),
     (intToLocation(2) -> List(50.0, 50.0, 80.0,  -1, -1, -1, -1)),
     (intToLocation(3) -> List(50.0, 50.0, 70.0,  -1, -1, -1, -1)),
     (intToLocation(4) -> List(50.0, 50.0, 150.0, -1, -1, 50, -1))
@@ -65,28 +64,32 @@ class TestMonitorActor(nodeRef:NodeRef) extends FakeMonitorActor(nodeRef) {
 
 case class ReportIn()
 
-class TestEntropyActor(nodeRef:NodeRef) extends FakeEntropyActor(nodeRef) {
 
-
+object TestEntropyActor {
   var failureCount:Int = 0
   var successCount:Int = 0
+}
+
+class TestEntropyActor(nodeRef:NodeRef) extends FakeEntropyActor(nodeRef) {
 
   override def computeAndApplyReconfigurationPlan(nodes:List[NodeRef]):Boolean = {
 
-    super.computeAndApplyReconfigurationPlan(nodes) match {
+    val result = super.computeAndApplyReconfigurationPlan(nodes)
+
+    result match {
       case true => {
-        successCount += 1
-        true
+        TestEntropyActor.successCount += 1
       }
       case false => {
-        failureCount += 1
-        false
+        TestEntropyActor.failureCount += 1
       }
     }
+
+    result
   }
 
   override def receive = {
-    case ReportIn() => sender ! (failureCount, successCount)
+    case ReportIn() => sender ! (TestEntropyActor.failureCount, TestEntropyActor.successCount)
     case msg => {
       super.receive(msg)
     }
@@ -137,7 +140,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
       size must be (5)
     }
 
-    "compute a reconfiguration plan" in {
+    "compute a reconfiguration plan with success" in {
 
 
       val exampleApplication1 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(1), TestDvmsFactory)))
@@ -148,12 +151,12 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
         exampleApplicationI ! InitCommunicationWithHim(exampleApplication1)
       }
 
-      Thread.sleep(10000)
+      Thread.sleep(8000)
 
       val (failureCount, successCount) = Await.result(exampleApplication1 ? ToEntropyActor(ReportIn()), 1 second).asInstanceOf[(Int, Int)]
 
-//      failureCount must be(0)
-//      successCount must be(1)
+      failureCount must be(10)
+      successCount must be(2)
     }
   }
 }

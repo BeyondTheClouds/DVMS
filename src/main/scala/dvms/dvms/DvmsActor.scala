@@ -141,7 +141,13 @@ class DvmsActor(applicationRef:NodeRef) extends Actor with ActorLogging {
                      log.info(s"we can merge $currentPartition and $partition")
 
                      if(currentPartition.get.initiator.location isInferiorThan partition.initiator.location) {
+
                         sender ! MergeOurPartitions(currentPartition.get)
+                     } else if(currentPartition.get.initiator.location isEqualTo partition.initiator.location) {
+
+                       currentPartition.get.nodes.foreach( node => {
+                         node.ref ! ToDvmsActor(DissolvePartition())
+                       })
                      }
 
                   } else {
@@ -151,29 +157,36 @@ class DvmsActor(applicationRef:NodeRef) extends Actor with ActorLogging {
                   }
 
                } else {
-                  log.info(s"the partition $partition got back to it's initiator")
+                  log.info(s"the partition $partition got back to it's initiator, firstout:${firstOut}")
 
-                  partition.state match {
-                     case Blocked() => {
+                  if (!(firstOut.get.location isEqualTo applicationRef.location)) {
+                    partition.state match {
+                      case Blocked() => {
                         context.system.scheduler.scheduleOnce(
-                           1 second,
-                           self,
-                           msg)
-                     }
-                     case _ => {
+                          1 second,
+                          self,
+                          msg)
+                      }
+                      case _ => {
                         currentPartition = Some(DvmsPartition(
-                           currentPartition.get.leader,
-                           currentPartition.get.initiator,
-                           currentPartition.get.nodes,
-                           Blocked()))
+                          currentPartition.get.leader,
+                          currentPartition.get.initiator,
+                          currentPartition.get.nodes,
+                          Blocked()))
 
                         partition.nodes.foreach(n => {
-                           n.ref ! ToDvmsActor(IAmTheNewLeader(currentPartition.get, firstOut.get))
+                          n.ref ! ToDvmsActor(IAmTheNewLeader(currentPartition.get, firstOut.get))
                         })
 
                         firstOut.get.ref ! ToDvmsActor(TransmissionOfAnISP(currentPartition.get))
-                     }
+                      }
+                    }
+                  } else {
+                    currentPartition.get.nodes.foreach( node => {
+                      node.ref ! ToDvmsActor(DissolvePartition())
+                    })
                   }
+
                }
             }
 
