@@ -161,8 +161,8 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
     system.shutdown()
   }
 
-  "Deadlock" must {
-    "be resolved" in {
+  "Deadlock resolver" must {
+    "resolve a linear deadlock" in {
 
       def quickNodeRef(l:Int, ref:ActorRef):NodeRef = NodeRef(FakeNetworkLocation(l), ref)
 
@@ -184,6 +184,10 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
       node6 ! InitCommunicationWithHim(node1)
       node7 ! InitCommunicationWithHim(node1)
       node8 ! InitCommunicationWithHim(node1)
+
+
+      Thread.sleep(500)
+
 
       val node1Ref = quickNodeRef(1 ,node1)
       val node2Ref = quickNodeRef(2 ,node2)
@@ -230,28 +234,28 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
       node6 ! ToDvmsActor(BeginTransmission())
       node8 ! ToDvmsActor(BeginTransmission())
 
-      Thread.sleep(8000)
+      Thread.sleep(3000)
 
-      val node1StillStucked = Await.result(node1 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-      val node2StillStucked = Await.result(node2 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-      val node3StillStucked = Await.result(node3 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-      val node4StillStucked = Await.result(node4 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-      val node5StillStucked = Await.result(node5 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-      val node6StillStucked = Await.result(node6 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-      val node7StillStucked = Await.result(node7 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-      val node8StillStucked = Await.result(node8 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+      val node1IsOk = Await.result(node1 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+      val node2IsOk = Await.result(node2 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+      val node3IsOk = Await.result(node3 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+      val node4IsOk = Await.result(node4 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+      val node5IsOk = Await.result(node5 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+      val node6IsOk = Await.result(node6 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+      val node7IsOk = Await.result(node7 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+      val node8IsOk = Await.result(node8 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
 
-      println(s"1: $node1StillStucked")
-      println(s"2: $node2StillStucked")
-      println(s"3: $node3StillStucked")
-      println(s"4: $node4StillStucked")
-      println(s"5: $node5StillStucked")
-      println(s"6: $node6StillStucked")
-      println(s"7: $node7StillStucked")
-      println(s"8: $node8StillStucked")
+      println(s"1: $node1IsOk")
+      println(s"2: $node2IsOk")
+      println(s"3: $node3IsOk")
+      println(s"4: $node4IsOk")
+      println(s"5: $node5IsOk")
+      println(s"6: $node6IsOk")
+      println(s"7: $node7IsOk")
+      println(s"8: $node8IsOk")
 
-      (node1StillStucked && node2StillStucked && node3StillStucked && node4StillStucked && node5StillStucked &&node6StillStucked &&
-        node7StillStucked  && node8StillStucked) must be (true)
+      (node1IsOk && node2IsOk && node3IsOk && node4IsOk && node5IsOk &&node6IsOk &&
+        node7IsOk  && node8IsOk) must be (true)
     }
   }
 }

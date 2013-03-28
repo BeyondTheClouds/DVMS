@@ -10,6 +10,7 @@ import org.bbk.AkkaArc.util.NodeRef
 import org.bbk.AkkaArc.notification.{WantsToRegister, ToNotificationActor}
 import dvms.entropy.EntropyComputeReconfigurePlan
 import dvms.monitor.CpuViolation
+import parallel.Future
 
 /**
  * Created with IntelliJ IDEA.
@@ -30,18 +31,19 @@ case class ToEntropyActor(msg:Any)
 case class ThisIsYourNeighbor(neighbor:NodeRef)
 case class CpuViolationDetected()
 
-// Message used for the first-out node detection
-case class YesIAmFree(firstOut:Option[NodeRef])
-case class NoIamNotFree(firstOut:Option[NodeRef])
-
+// Message used for the base of DVMS
 case class DissolvePartition()
 case class DvmsPartition(leader:NodeRef, initiator:NodeRef, nodes:List[NodeRef], state:DvmsPartititionState)
 
 case class TransmissionOfAnISP(currentPartition:DvmsPartition)
 case class IAmTheNewLeader(partition:DvmsPartition, firstOut:NodeRef)
 
-//case class YouIfFirstOutOrYourFirstOut()
-case class MergeOurPartitions(partition:DvmsPartition)
+// Message used for the merge of partitions
+case class IsStillValid(partition:DvmsPartition)
+case class CanIMergePartitionWithYou(partition:DvmsPartition, contact:NodeRef)
+//case class LockForMerging(ref:NodeRef)
+//case class MakeAnElection()
+//case class MergeOurPartitions(partition:DvmsPartition)
 
 case class WhoMerge(otherNode:NodeRef)
 
@@ -75,54 +77,105 @@ class DvmsActor(applicationRef:NodeRef) extends Actor with ActorLogging {
    var firstOut:Option[NodeRef] = None
    var currentPartition:Option[DvmsPartition] = None
 
+   def mergeWithThisPartition(partition:DvmsPartition) {
+
+      log.info(s"merging $partition with ${currentPartition.get}")
+      currentPartition = Some(DvmsPartition(
+        currentPartition.get.leader,
+        currentPartition.get.initiator,
+        currentPartition.get.nodes ::: partition.nodes,
+        Growing()))
+
+      currentPartition.get.nodes.foreach(node => {
+        node.ref ! ToDvmsActor(IAmTheNewLeader(currentPartition.get, firstOut.get))
+      })
+
+      if(computeEntropy()) {
+        log.info(s"(1) the partition $currentPartition is enough to reconfigure")
+
+        currentPartition.get.nodes.foreach( node => {
+          node.ref ! ToDvmsActor(DissolvePartition())
+        })
+      } else {
+
+        log.info(s"(1a) the partition $currentPartition is not enough to reconfigure," +
+          s" I try to find another node for the partition, deadlock? ${partition.nodes.contains(firstOut)}")
+
+        log.info(s"(1) $applicationRef transmitting ISP ${currentPartition.get} to $firstOut")
+        firstOut.get.ref ! ToDvmsActor(TransmissionOfAnISP(currentPartition.get))
+      }
+   }
+
+
+   var lockedForFusion:Boolean = false
+
    override def receive = {
 
-      case DissolvePartition() =>  {
-         firstOut = None
-         currentPartition = None
+
+      case IsStillValid(partition) => {
+         var result:Boolean = false
+
+         if(lockedForFusion) {
+            result = false
+         } else {
+            currentPartition match {
+               case Some(p) => {
+                  if(p.nodes.size == partition.nodes.size) {
+                     result = p.nodes.forall(n => {
+                        partition.nodes.contains(n)
+                     })
+                  } else {
+                     result = false
+                  }
+               }
+               case None => result = false
+            }
+         }
+
+
+         sender ! result
       }
 
-      case IAmTheNewLeader(partition, firstOutOfTheLeader) => {
-         this.currentPartition = Some(partition)
+      case CanIMergePartitionWithYou(partition, contact) => {
 
-         if (firstOut.get.location isEqualTo partition.leader.location) {
-            firstOut = Some(firstOutOfTheLeader)
+//         log.info(s"$applicationRef: $contact asked me if i am locked: $lockedForFusion")
+
+         sender ! (!lockedForFusion)
+
+         if(!lockedForFusion) {
+           lockedForFusion = true
          }
       }
 
-//      case YouIfFirstOutOrYourFirstOut() => {
+      case DissolvePartition() =>  {
+
 //         currentPartition match {
-//            case None => sender ! applicationRef
-//            case _ => {
-//               sender ! firstOut
+//            case Some(p) => {
+//               log.info(s"$applicationRef: I dissolve the partition $p")
 //            }
+//            case None =>  log.info(s"$applicationRef: I dissolve the partition None")
 //         }
-//      }
 
-      case MergeOurPartitions(partition) => {
 
-         log.info(s"merging $partition with ${currentPartition.get}")
-         currentPartition = Some(DvmsPartition(
-            currentPartition.get.leader,
-            currentPartition.get.initiator,
-            currentPartition.get.nodes ::: partition.nodes,
-            Growing()))
+         firstOut = None
+         currentPartition = None
+         this.lockedForFusion = false
+      }
 
-         currentPartition.get.nodes.foreach(node => {
-            node.ref ! ToDvmsActor(IAmTheNewLeader(currentPartition.get, firstOut.get))
-         })
+      case IAmTheNewLeader(partition, firstOutOfTheLeader) => {
 
-         if(computeEntropy()) {
-            log.info(s"the partition $currentPartition is enough to reconfigure")
+         log.info(s"$applicationRef: ${partition.leader} is the new leader of $partition")
 
-            currentPartition.get.nodes.foreach( node => {
-               node.ref ! ToDvmsActor(DissolvePartition())
-            })
-         } else {
+         this.currentPartition = Some(partition)
+         this.lockedForFusion = false
 
-            log.info(s"the partition $currentPartition is not enough to reconfigure, I try to find another node for the partition, deadlock? ${partition.nodes.contains(firstOut)}")
-
-            firstOut.get.ref ! ToDvmsActor(TransmissionOfAnISP(currentPartition.get))
+         firstOut match {
+            case None => firstOut = Some(firstOutOfTheLeader)
+            case Some(node) => {
+               if (firstOut.get.location isEqualTo partition.leader.location) {
+                  firstOut = Some(firstOutOfTheLeader)
+               }
+            }
          }
       }
 
@@ -134,23 +187,48 @@ class DvmsActor(applicationRef:NodeRef) extends Actor with ActorLogging {
             case Some(p) => {
                if(partition.initiator.location isDifferentFrom applicationRef.location) {
 
-                  if(currentPartition.get.state isEqualTo Blocked()) {
+                  if((currentPartition.get.state isEqualTo Blocked()) && (partition.state isEqualTo Blocked())) {
 
                      log.info(s"we can merge $currentPartition and $partition")
 
-                     if(currentPartition.get.initiator.location isInferiorThan partition.initiator.location) {
+                    // the firstOut is in the same partition
+                     if(currentPartition.get.initiator.location isEqualTo partition.initiator.location) {
 
-                        sender ! MergeOurPartitions(currentPartition.get)
-                     } else if(currentPartition.get.initiator.location isEqualTo partition.initiator.location) {
+                        currentPartition.get.nodes.foreach( node => {
+                        node.ref ! ToDvmsActor(DissolvePartition())
+                        })
 
-                       currentPartition.get.nodes.foreach( node => {
-                         node.ref ! ToDvmsActor(DissolvePartition())
-                       })
+                     } else {
+
+                        if(currentPartition.get.initiator.location isSuperiorThan partition.initiator.location) {
+                           log.info(s"$applicationRef is waiting for $partition")
+
+                           lockedForFusion = true
+
+                           for {
+                              locked <- sender ? CanIMergePartitionWithYou(currentPartition.get, applicationRef)
+                           } yield {
+
+                              log.info(s"$applicationRef got a result $locked")
+
+                              locked match {
+                                 case true => {
+                                    lockedForFusion = true
+
+//                                    log.info(s"$applicationRef is effectively merging partition $currentPartition with $partition")
+
+                                    mergeWithThisPartition(partition)
+                                 }
+                                 case false =>
+                              }
+                           }
+                        }
                      }
 
                   } else {
 
-                     log.info(s"I'm not in a Blocked state, but I belong to a partition, so I forward $currentPartition")
+                     log.info(s"I'm not in a Blocked state," +
+                       s" but I belong to a partition, so I forward $currentPartition")
                      firstOut.get.ref.forward(ToDvmsActor(msg))
                   }
 
@@ -176,6 +254,8 @@ class DvmsActor(applicationRef:NodeRef) extends Actor with ActorLogging {
                           n.ref ! ToDvmsActor(IAmTheNewLeader(currentPartition.get, firstOut.get))
                         })
 
+
+                        log.info(s"(2) $applicationRef transmitting ISP ${currentPartition.get} to $firstOut")
                         firstOut.get.ref ! ToDvmsActor(TransmissionOfAnISP(currentPartition.get))
                       }
                     }
@@ -189,23 +269,49 @@ class DvmsActor(applicationRef:NodeRef) extends Actor with ActorLogging {
             }
 
             case None => {
-               currentPartition = Some(DvmsPartition(applicationRef, partition.initiator, applicationRef::partition.nodes, partition.state))
-               firstOut = Some(nextDvmsNode)
 
-               partition.nodes.foreach( node => {
-                  node.ref ! ToDvmsActor(IAmTheNewLeader(currentPartition.get, firstOut.get))
-               })
 
-               if(computeEntropy()) {
-                  log.info(s"the partition $currentPartition is enough to reconfigure")
+               var partitionIsStillValid:Boolean = true
 
-                  currentPartition.get.nodes.foreach( node => {
-                     node.ref ! ToDvmsActor(DissolvePartition())
+               if(partition.state isEqualTo Blocked()) {
+                  try {
+                     partitionIsStillValid = Await.result(partition.leader.ref ? ToDvmsActor(IsStillValid(partition)), 1 second).asInstanceOf[Boolean]
+                  } catch {
+                     case e => partitionIsStillValid = false
+                  }
+
+               }
+
+               if(partitionIsStillValid) {
+
+                  currentPartition = Some(DvmsPartition(applicationRef, partition.initiator,
+                     applicationRef::partition.nodes, partition.state))
+                  firstOut = Some(nextDvmsNode)
+
+
+
+                  log.info(s"(5) $applicationRef: $currentPartition is valid")
+
+                  partition.nodes.foreach( node => {
+                     //                  log.info(s"$applicationRef: sending ${IAmTheNewLeader(currentPartition.get, firstOut.get)}")
+                     node.ref ! ToDvmsActor(IAmTheNewLeader(currentPartition.get, firstOut.get))
                   })
-               } else {
-                  log.info(s"the partition $currentPartition is not enough to reconfigure, I try to find another node for the partition")
 
-                  firstOut.get.ref ! ToDvmsActor(TransmissionOfAnISP(currentPartition.get))
+                  log.info(s"$applicationRef: sending ${IAmTheNewLeader(currentPartition.get, firstOut.get)}")
+
+                  if(computeEntropy()) {
+                     log.info(s"(2) the partition $currentPartition is enough to reconfigure")
+
+                     currentPartition.get.nodes.foreach( node => {
+                        node.ref ! ToDvmsActor(DissolvePartition())
+                     })
+                  } else {
+                     log.info(s"the partition $currentPartition is not enough to reconfigure," +
+                       s" I try to find another node for the partition")
+
+                     log.info(s"(3) $applicationRef transmitting ISP ${currentPartition.get} to $firstOut")
+                     firstOut.get.ref ! ToDvmsActor(TransmissionOfAnISP(currentPartition.get))
+                  }
                }
             }
          }
@@ -219,6 +325,7 @@ class DvmsActor(applicationRef:NodeRef) extends Actor with ActorLogging {
 
                currentPartition = Some(DvmsPartition(applicationRef, applicationRef, List(applicationRef), Growing()))
 
+               log.info(s"(4) $applicationRef transmitting ISP ${currentPartition.get} to $firstOut")
                nextDvmsNode.ref ! ToDvmsActor(TransmissionOfAnISP(currentPartition.get))
             }
             case _ =>
@@ -239,7 +346,9 @@ class DvmsActor(applicationRef:NodeRef) extends Actor with ActorLogging {
 
    def computeEntropy():Boolean =  {
 
-      return Await.result(applicationRef.ref ? ToEntropyActor(EntropyComputeReconfigurePlan(currentPartition.get.nodes)), 1 second).asInstanceOf[Boolean]
+      return Await.result(
+        applicationRef.ref ? ToEntropyActor(EntropyComputeReconfigurePlan(currentPartition.get.nodes)),
+        1 second).asInstanceOf[Boolean]
    }
 
    // registering an event: when a CpuViolation is triggered, CpuViolationDetected() is sent to dvmsActor
