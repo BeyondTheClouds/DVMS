@@ -45,7 +45,8 @@ object TestData {
     (intToLocation(5) -> List(110, -1, 30, -1, -1, -1, -1)),
     (intToLocation(6) -> List(110, 20, -1, -1, -1, -1, -1)),
     (intToLocation(7) -> List(110, -1, -1, -1, -1, -1, -1)),
-    (intToLocation(8) -> List(110, -1, -1, -1, -1, -1, -1))
+    (intToLocation(8) -> List(110, -1, -1, -1, -1, -1, -1)),
+    (intToLocation(9) -> List(110, 20, -1, -1, -1, -1, -1))
   )
 }
 
@@ -257,5 +258,241 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
       (node1IsOk && node2IsOk && node3IsOk && node4IsOk && node5IsOk &&node6IsOk &&
         node7IsOk  && node8IsOk) must be (true)
     }
+
+
+     "resolve a nested deadlock (4 nodes)" in {
+
+        def quickNodeRef(l:Int, ref:ActorRef):NodeRef = NodeRef(FakeNetworkLocation(l), ref)
+
+        val node1 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(1), TestDvmsFactory)))
+        val node2 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(2), TestDvmsFactory)))
+        val node3 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(3), TestDvmsFactory)))
+        val node4 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(4), TestDvmsFactory)))
+
+
+        // create the links
+        node2 ! InitCommunicationWithHim(node1)
+        node3 ! InitCommunicationWithHim(node1)
+        node4 ! InitCommunicationWithHim(node1)
+
+
+        Thread.sleep(500)
+
+
+        val node1Ref = quickNodeRef(1 ,node1)
+        val node2Ref = quickNodeRef(2 ,node2)
+        val node3Ref = quickNodeRef(3 ,node3)
+        val node4Ref = quickNodeRef(4 ,node4)
+
+        // init the partitions
+        val partition_1_3 = DvmsPartition(node3Ref, node1Ref, List(node1Ref, node3Ref), Growing())
+        val partition_2_4 = DvmsPartition(node4Ref, node2Ref, List(node2Ref, node4Ref), Growing())
+
+
+        node1 ! ToDvmsActor(SetCurrentPartition(partition_1_3))
+        node3 ! ToDvmsActor(SetCurrentPartition(partition_1_3))
+
+        node2 ! ToDvmsActor(SetCurrentPartition(partition_2_4))
+        node4 ! ToDvmsActor(SetCurrentPartition(partition_2_4))
+
+        node1 ! ToDvmsActor(SetFirstOut(node2Ref))
+        node3 ! ToDvmsActor(SetFirstOut(node4Ref))
+
+        node2 ! ToDvmsActor(SetFirstOut(node3Ref))
+        node4 ! ToDvmsActor(SetFirstOut(node1Ref))
+
+        // transmission of ISP to the respectives firstOuts
+        node3 ! ToDvmsActor(BeginTransmission())
+        node4 ! ToDvmsActor(BeginTransmission())
+
+        Thread.sleep(3000)
+
+        val node1IsOk = Await.result(node1 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+        val node2IsOk = Await.result(node2 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+        val node3IsOk = Await.result(node3 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+        val node4IsOk = Await.result(node4 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+
+        println(s"1: $node1IsOk")
+        println(s"2: $node2IsOk")
+        println(s"3: $node3IsOk")
+        println(s"4: $node4IsOk")
+
+        (node1IsOk && node2IsOk && node3IsOk && node4IsOk) must be (true)
+     }
+
+
+     "resolve a nested deadlock (6 nodes)" in {
+
+        def quickNodeRef(l:Int, ref:ActorRef):NodeRef = NodeRef(FakeNetworkLocation(l), ref)
+
+        val node1 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(1), TestDvmsFactory)))
+        val node2 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(2), TestDvmsFactory)))
+        val node3 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(3), TestDvmsFactory)))
+        val node4 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(4), TestDvmsFactory)))
+        val node5 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(5), TestDvmsFactory)))
+        val node6 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(6), TestDvmsFactory)))
+
+
+        // create the links
+        node2 ! InitCommunicationWithHim(node1)
+        node3 ! InitCommunicationWithHim(node1)
+        node4 ! InitCommunicationWithHim(node1)
+        node5 ! InitCommunicationWithHim(node1)
+        node6 ! InitCommunicationWithHim(node1)
+
+
+        Thread.sleep(500)
+
+
+        val node1Ref = quickNodeRef(1 ,node1)
+        val node2Ref = quickNodeRef(2 ,node2)
+        val node3Ref = quickNodeRef(3 ,node3)
+        val node4Ref = quickNodeRef(4 ,node4)
+        val node5Ref = quickNodeRef(5 ,node5)
+        val node6Ref = quickNodeRef(6 ,node6)
+
+        // init the partitions
+        val partition_1_3_5 = DvmsPartition(node5Ref, node1Ref, List(node1Ref, node3Ref, node5Ref), Growing())
+        val partition_2_4_6 = DvmsPartition(node6Ref, node2Ref, List(node2Ref, node4Ref, node6Ref), Growing())
+
+
+        node1 ! ToDvmsActor(SetCurrentPartition(partition_1_3_5))
+        node3 ! ToDvmsActor(SetCurrentPartition(partition_1_3_5))
+        node5 ! ToDvmsActor(SetCurrentPartition(partition_1_3_5))
+
+        node2 ! ToDvmsActor(SetCurrentPartition(partition_2_4_6))
+        node4 ! ToDvmsActor(SetCurrentPartition(partition_2_4_6))
+        node6 ! ToDvmsActor(SetCurrentPartition(partition_2_4_6))
+
+        node1 ! ToDvmsActor(SetFirstOut(node2Ref))
+        node3 ! ToDvmsActor(SetFirstOut(node4Ref))
+        node5 ! ToDvmsActor(SetFirstOut(node6Ref))
+
+        node2 ! ToDvmsActor(SetFirstOut(node3Ref))
+        node4 ! ToDvmsActor(SetFirstOut(node5Ref))
+        node6 ! ToDvmsActor(SetFirstOut(node1Ref))
+
+        // transmission of ISP to the respectives firstOuts
+        node5 ! ToDvmsActor(BeginTransmission())
+        node6 ! ToDvmsActor(BeginTransmission())
+
+        Thread.sleep(3000)
+
+        val node1IsOk = Await.result(node1 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+        val node2IsOk = Await.result(node2 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+        val node3IsOk = Await.result(node3 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+        val node4IsOk = Await.result(node4 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+        val node5IsOk = Await.result(node5 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+        val node6IsOk = Await.result(node6 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+
+        println(s"1: $node1IsOk")
+        println(s"2: $node2IsOk")
+        println(s"3: $node3IsOk")
+        println(s"4: $node4IsOk")
+        println(s"5: $node5IsOk")
+        println(s"6: $node6IsOk")
+
+        (node1IsOk && node2IsOk && node3IsOk && node4IsOk && node5IsOk &&node6IsOk ) must be (true)
+     }
+
+     "resolve a nested deadlock (9 nodes)" in {
+
+        def quickNodeRef(l:Int, ref:ActorRef):NodeRef = NodeRef(FakeNetworkLocation(l), ref)
+
+        val node1 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(1), TestDvmsFactory)))
+        val node2 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(2), TestDvmsFactory)))
+        val node3 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(3), TestDvmsFactory)))
+        val node4 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(4), TestDvmsFactory)))
+        val node5 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(5), TestDvmsFactory)))
+        val node6 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(6), TestDvmsFactory)))
+        val node7 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(7), TestDvmsFactory)))
+        val node8 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(8), TestDvmsFactory)))
+        val node9 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(9), TestDvmsFactory)))
+
+
+        // create the links
+        node2 ! InitCommunicationWithHim(node1)
+        node3 ! InitCommunicationWithHim(node1)
+        node4 ! InitCommunicationWithHim(node1)
+        node5 ! InitCommunicationWithHim(node1)
+        node6 ! InitCommunicationWithHim(node1)
+        node7 ! InitCommunicationWithHim(node1)
+        node8 ! InitCommunicationWithHim(node1)
+        node9 ! InitCommunicationWithHim(node1)
+
+
+        Thread.sleep(500)
+
+
+        val node1Ref = quickNodeRef(1 ,node1)
+        val node2Ref = quickNodeRef(2 ,node2)
+        val node3Ref = quickNodeRef(3 ,node3)
+        val node4Ref = quickNodeRef(4 ,node4)
+        val node5Ref = quickNodeRef(5 ,node5)
+        val node6Ref = quickNodeRef(6 ,node6)
+        val node7Ref = quickNodeRef(7 ,node7)
+        val node8Ref = quickNodeRef(8 ,node8)
+        val node9Ref = quickNodeRef(9 ,node9)
+
+        // init the partitions
+        val partition_1_3_5 = DvmsPartition(node5Ref, node1Ref, List(node1Ref, node3Ref, node5Ref), Growing())
+        val partition_2_6_8 = DvmsPartition(node8Ref, node2Ref, List(node2Ref, node6Ref, node8Ref), Growing())
+        val partition_4_7_9 = DvmsPartition(node9Ref, node4Ref, List(node4Ref, node7Ref, node9Ref), Growing())
+
+
+        node1 ! ToDvmsActor(SetCurrentPartition(partition_1_3_5))
+        node3 ! ToDvmsActor(SetCurrentPartition(partition_1_3_5))
+        node5 ! ToDvmsActor(SetCurrentPartition(partition_1_3_5))
+
+        node2 ! ToDvmsActor(SetCurrentPartition(partition_2_6_8))
+        node6 ! ToDvmsActor(SetCurrentPartition(partition_2_6_8))
+        node8 ! ToDvmsActor(SetCurrentPartition(partition_2_6_8))
+
+        node4 ! ToDvmsActor(SetCurrentPartition(partition_4_7_9))
+        node7 ! ToDvmsActor(SetCurrentPartition(partition_4_7_9))
+        node9 ! ToDvmsActor(SetCurrentPartition(partition_4_7_9))
+
+        node1 ! ToDvmsActor(SetFirstOut(node2Ref))
+        node3 ! ToDvmsActor(SetFirstOut(node4Ref))
+        node5 ! ToDvmsActor(SetFirstOut(node6Ref))
+
+        node2 ! ToDvmsActor(SetFirstOut(node3Ref))
+        node6 ! ToDvmsActor(SetFirstOut(node7Ref))
+        node8 ! ToDvmsActor(SetFirstOut(node9Ref))
+
+        node4 ! ToDvmsActor(SetFirstOut(node5Ref))
+        node7 ! ToDvmsActor(SetFirstOut(node8Ref))
+        node9 ! ToDvmsActor(SetFirstOut(node1Ref))
+
+        // transmission of ISP to the respectives firstOuts
+        node5 ! ToDvmsActor(BeginTransmission())
+        node8 ! ToDvmsActor(BeginTransmission())
+        node9 ! ToDvmsActor(BeginTransmission())
+
+        Thread.sleep(6000)
+
+        val node1IsOk = Await.result(node1 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+        val node2IsOk = Await.result(node2 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+        val node3IsOk = Await.result(node3 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+        val node4IsOk = Await.result(node4 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+        val node5IsOk = Await.result(node5 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+        val node6IsOk = Await.result(node6 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+        val node7IsOk = Await.result(node7 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+        val node8IsOk = Await.result(node8 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+        val node9IsOk = Await.result(node9 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+
+        println(s"1: $node1IsOk")
+        println(s"2: $node2IsOk")
+        println(s"3: $node3IsOk")
+        println(s"4: $node4IsOk")
+        println(s"5: $node5IsOk")
+        println(s"6: $node6IsOk")
+        println(s"7: $node7IsOk")
+        println(s"8: $node8IsOk")
+        println(s"9: $node9IsOk")
+
+        (node1IsOk && node2IsOk && node3IsOk && node4IsOk && node5IsOk &&node6IsOk &&
+          node7IsOk  && node8IsOk && node9IsOk) must be (true)
+     }
   }
 }
