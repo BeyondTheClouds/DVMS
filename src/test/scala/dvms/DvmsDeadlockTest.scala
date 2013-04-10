@@ -7,14 +7,12 @@ import akka.testkit.ImplicitSender
 import dvms._
 import dvms.DvmsPartition
 import dvms.ToDvmsActor
-import dvms.ToEntropyActor
 import entropy.{AbstractEntropyActor, FakeEntropyActor}
 import factory.DvmsAbstractFactory
 import monitor.{AbstractMonitorActor, FakeMonitorActor}
 import org.scalatest.WordSpec
 import org.scalatest.matchers.MustMatchers
 import org.scalatest.BeforeAndAfterAll
-import akka.util.Timeout
 import scala.concurrent.duration._
 import concurrent.{Await, ExecutionContext}
 import java.util.concurrent.Executors

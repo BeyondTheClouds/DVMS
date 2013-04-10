@@ -10,7 +10,6 @@ import org.bbk.AkkaArc.util.NodeRef
 import org.bbk.AkkaArc.notification.{WantsToRegister, ToNotificationActor}
 import dvms.entropy.EntropyComputeReconfigurePlan
 import dvms.monitor.CpuViolation
-import parallel.Future
 import java.util.UUID
 
 /**
@@ -45,12 +44,13 @@ case class TransmissionOfAnISP(currentPartition:DvmsPartition)
 case class IAmTheNewLeader(partition:DvmsPartition, firstOut:NodeRef)
 
 // Message used for the merge of partitions
-case class IsStillValid(partition:DvmsPartition)
+case class IsThisVersionOfThePartitionStillValid(partition:DvmsPartition)
 case class CanIMergePartitionWithYou(partition:DvmsPartition, contact:NodeRef)
-
 case class ChangeTheStateOfThePartition(newState:DvmsPartititionState)
 
-case class WhoMerge(otherNode:NodeRef)
+// Message for the resiliency
+case class EverythingIsOkToken(id:UUID)
+case class VerifyEverythingIsOk(id:UUID, count:Int)
 
 class DvmsPartititionState(val name:String) {
 
@@ -70,6 +70,10 @@ case class Blocked() extends DvmsPartititionState("Blocked")
 case class Growing() extends DvmsPartititionState("Growing")
 case class Destroyed() extends DvmsPartititionState("Destroyed")
 
+object DvmsActor {
+   val PeriodOfPartitionNodeChecking:FiniteDuration = 1000 milliseconds
+}
+
 class DvmsActor(applicationRef:NodeRef) extends Actor with ActorLogging {
 
    implicit val timeout = Timeout(2 seconds)
@@ -81,6 +85,9 @@ class DvmsActor(applicationRef:NodeRef) extends Actor with ActorLogging {
    // Variables that are specific to a node member of a partition
    var firstOut:Option[NodeRef] = None
    var currentPartition:Option[DvmsPartition] = None
+
+   // Variables for the resiliency
+   var countOfCheck:Option[(UUID, Int)] = None
 
    def mergeWithThisPartition(partition:DvmsPartition) {
 
@@ -113,21 +120,6 @@ class DvmsActor(applicationRef:NodeRef) extends Actor with ActorLogging {
       }
    }
 
-   def safeForward(to:NodeRef, msg:Any) {
-      currentPartition match {
-         case None =>
-         case Some(partition) => {
-            if((to.location isEqualTo applicationRef.location) || partition.nodes.contains(to)) {
-               partition.initiator.ref.forward(msg)
-            } else {
-               to.ref.forward(msg)
-            }
-         }
-      }
-
-
-   }
-
    def changeCurrentPartitionState(newState:DvmsPartititionState) {
       currentPartition match {
          case Some(partition) => currentPartition = Some(DvmsPartition(partition.leader, partition.initiator, partition.nodes, newState, partition.id))
@@ -140,16 +132,82 @@ class DvmsActor(applicationRef:NodeRef) extends Actor with ActorLogging {
    override def receive = {
 
 
-      case IsStillValid(partition) => {
+      case IsThisVersionOfThePartitionStillValid(partition) => {
          currentPartition match {
             case Some(p) => sender ! partition.id.equals(currentPartition.get.id)
             case None => sender ! false
          }
       }
 
-      case CanIMergePartitionWithYou(partition, contact) => {
+      case VerifyEverythingIsOk(id, count) => {
+         countOfCheck match {
+            case Some((pid, pcount)) if(pid == id) => {
+               // the predecessor in the partition order has crashed
+               if(!(count > pcount)) {
+                  currentPartition match {
+                     case Some(p) => {
+                        (p.nodes.indexOf(applicationRef) match {
+                           case i:Int if(i == 0) => p.nodes(p.nodes.size - 1)
+                           case i:Int => p.nodes(i-1)
+                        }) match {
+                           // the initiator of the partition has crashed
+                           case node:NodeRef if(node.location isEqualTo p.initiator.location) => {
 
-//         log.info(s"$applicationRef: $contact asked me if i am locked: $lockedForFusion")
+                              log.info(s"$applicationRef: The initiator has crashed, I am becoming the new leader of $currentPartition")
+
+                              // the partition will be dissolved
+                              p.nodes.filterNot(n => n.location isEqualTo node.location).foreach(n => {
+                                 n.ref ! ToDvmsActor(DissolvePartition())
+                              })
+                           }
+
+                           // the leader or a normal node of the partition has crashed
+                           case node:NodeRef => {
+
+                              // creation of a new partition without the crashed node
+                              val newPartition:DvmsPartition = new DvmsPartition(p.initiator, applicationRef, p.nodes.filterNot(n => n.location isEqualTo node.location), p.state, UUID.randomUUID())
+
+                              currentPartition = Some(newPartition)
+                              firstOut = Some(nextDvmsNode)
+
+
+                              log.info(s"$applicationRef: A node crashed, I am becoming the new leader of $currentPartition")
+
+                              newPartition.nodes.foreach(node => {
+                                 node.ref ! ToDvmsActor(IAmTheNewLeader(newPartition, firstOut.get))
+                              })
+
+                              countOfCheck = Some((newPartition.id, -1))
+                              self ! VerifyEverythingIsOk(newPartition.id, 0)
+                           }
+                        }
+                     }
+                     case None =>
+                  }
+               }
+            }
+            case None =>
+         }
+      }
+
+      case EverythingIsOkToken(id) => {
+         currentPartition match {
+            case Some(p) if(p.id == id) => {
+               val nextNodeRef:NodeRef = p.nodes.indexOf(applicationRef) match {
+                  case i:Int if(i == (p.nodes.size - 1)) => p.nodes(0)
+                  case i:Int => p.nodes(i+1)
+               }
+
+               countOfCheck = Some((p.id, countOfCheck.get._2+1))
+
+               context.system.scheduler.scheduleOnce((2*DvmsActor.PeriodOfPartitionNodeChecking), self, VerifyEverythingIsOk(id, countOfCheck.get._2+1))
+               context.system.scheduler.scheduleOnce((DvmsActor.PeriodOfPartitionNodeChecking/(p.nodes.size)), nextNodeRef.ref, ToDvmsActor(EverythingIsOkToken(id)))
+            }
+            case _ =>
+         }
+      }
+
+      case CanIMergePartitionWithYou(partition, contact) => {
 
          sender ! (!lockedForFusion)
 
@@ -170,15 +228,17 @@ class DvmsActor(applicationRef:NodeRef) extends Actor with ActorLogging {
 
          firstOut = None
          currentPartition = None
-         this.lockedForFusion = false
+         lockedForFusion = false
       }
 
       case IAmTheNewLeader(partition, firstOutOfTheLeader) => {
 
          log.info(s"$applicationRef: ${partition.leader} is the new leader of $partition")
 
-         this.currentPartition = Some(partition)
-         this.lockedForFusion = false
+         currentPartition = Some(partition)
+         lockedForFusion = false
+
+         countOfCheck = Some((partition.id,-1))
 
          firstOut match {
             case None => firstOut = Some(firstOutOfTheLeader)
@@ -293,7 +353,7 @@ class DvmsActor(applicationRef:NodeRef) extends Actor with ActorLogging {
 
                if(partition.state isEqualTo Blocked()) {
                   try {
-                     partitionIsStillValid = Await.result(partition.initiator.ref ? ToDvmsActor(IsStillValid(partition)), 1 second).asInstanceOf[Boolean]
+                     partitionIsStillValid = Await.result(partition.initiator.ref ? ToDvmsActor(IsThisVersionOfThePartitionStillValid(partition)), 1 second).asInstanceOf[Boolean]
                   } catch {
                      case e:Throwable => {
                         partitionIsStillValid = false
@@ -316,6 +376,9 @@ class DvmsActor(applicationRef:NodeRef) extends Actor with ActorLogging {
                      node.ref ! ToDvmsActor(IAmTheNewLeader(newPartition, firstOut.get))
                   })
 
+                  countOfCheck = Some((newPartition.id, -1))
+                  self ! VerifyEverythingIsOk(newPartition.id, 0)
+
                   // ask entropy if the new partition is enough to resolve the overload
                   if(computeEntropy()) {
 
@@ -329,10 +392,6 @@ class DvmsActor(applicationRef:NodeRef) extends Actor with ActorLogging {
                   }
                } else {
                   log.warning(s"$applicationRef: $partition is no more valid (source: ${partition.initiator})")
-
-//                  partition.nodes.foreach( node => {
-//                     node.ref ! ToDvmsActor(DissolvePartition())
-//                  })
                }
             }
          }
