@@ -23,6 +23,7 @@ import org.bbk.AkkaArc.util.Configuration
 import org.bbk.AkkaArc.InitCommunicationWithHim
 import scala.Some
 import org.bbk.AkkaArc.util.FakeNetworkLocation
+import java.util.Date
 
 
 object DvmsDeadlockTest {
@@ -84,8 +85,11 @@ class TestDvmsActor(applicationRef:NodeRef) extends DvmsActor(applicationRef) {
 
   override def receive = {
     case msg@SetCurrentPartition(partition) => {
-      currentPartition = Some(partition)
+       currentPartition = Some(partition)
+       lastPartitionUpdateDate = Some(new Date())
     }
+
+
     case msg@SetFirstOut(node) => {
       firstOut = Some(node)
     }

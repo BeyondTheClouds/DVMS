@@ -91,8 +91,7 @@ class DvmsActor(applicationRef:NodeRef) extends Actor with ActorLogging {
    var firstOut:Option[NodeRef] = None
    var currentPartition:Option[DvmsPartition] = None
 
-   // Variables for the resiliency
-   var countOfCheck:Option[(UUID, Int)] = None
+   // Variables used for resiliency
    var lastPartitionUpdateDate:Option[Date] = None
 
    def mergeWithThisPartition(partition:DvmsPartition) {
@@ -167,9 +166,6 @@ class DvmsActor(applicationRef:NodeRef) extends Actor with ActorLogging {
                      newPartition.nodes.foreach(node => {
                         node.ref ! ToDvmsActor(IAmTheNewLeader(newPartition, firstOut.get))
                      })
-
-                     countOfCheck = Some((newPartition.id, -1))
-//                     self ! EverythingIsOkToken(newPartition.id)
                   }
                }
             }
@@ -271,8 +267,6 @@ class DvmsActor(applicationRef:NodeRef) extends Actor with ActorLogging {
 
          currentPartition = Some(partition)
          lockedForFusion = false
-
-         countOfCheck = Some((partition.id,-1))
 
          lastPartitionUpdateDate = Some(new Date())
 
@@ -418,9 +412,7 @@ class DvmsActor(applicationRef:NodeRef) extends Actor with ActorLogging {
                      node.ref ! ToDvmsActor(IAmTheNewLeader(newPartition, firstOut.get))
                   })
 
-                  countOfCheck = Some((newPartition.id, -1))
                   lastPartitionUpdateDate = Some(new Date())
-//                  newPartition.nodes(1).ref ! ToDvmsActor(EverythingIsOkToken(newPartition.id))
 
                   // ask entropy if the new partition is enough to resolve the overload
                   if(computeEntropy()) {
