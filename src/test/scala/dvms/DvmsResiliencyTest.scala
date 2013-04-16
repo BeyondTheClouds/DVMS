@@ -23,6 +23,7 @@ import org.bbk.AkkaArc.util.Configuration
 import org.bbk.AkkaArc.InitCommunicationWithHim
 import scala.Some
 import org.bbk.AkkaArc.util.FakeNetworkLocation
+import com.typesafe.config.ConfigFactory
 
 
 object DvmsResiliencyTest {
@@ -40,7 +41,11 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
 
    Configuration.debug = true
 
-   def this() = this(ActorSystem("MySpec"))
+   def this() = this(ActorSystem("MySpec", ConfigFactory.parseString("""
+     prio-dispatcher {
+       mailbox-type = "dvms.utility.DvmsPriorityMailBox"
+     }
+   """)))
 
    override def afterAll() {
       system.shutdown()
@@ -52,18 +57,18 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
 
          def quickNodeRef(l:Int, ref:ActorRef):NodeRef = NodeRef(FakeNetworkLocation(l), ref)
 
-         val node1 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(1), TestDvmsFactory)))
-         val node2 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(2), TestDvmsFactory)))
-         val node3 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(3), TestDvmsFactory)))
-         val node4 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(4), TestDvmsFactory)))
-         val node5 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(5), TestDvmsFactory)))
-         val node6 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(6), TestDvmsFactory)))
-         val node7 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(7), TestDvmsFactory)))
-         val node8 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(8), TestDvmsFactory)))
-         val node9 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(9), TestDvmsFactory)))
-         val node10 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(10), TestDvmsFactory)))
-         val node11 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(11), TestDvmsFactory)))
-         val node12 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(12), TestDvmsFactory)))
+         val node1 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(1), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
+         val node2 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(2), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
+         val node3 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(3), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
+         val node4 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(4), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
+         val node5 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(5), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
+         val node6 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(6), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
+         val node7 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(7), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
+         val node8 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(8), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
+         val node9 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(9), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
+         val node10 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(10), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
+         val node11 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(11), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
+         val node12 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(12), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
 
 
          // create the links
@@ -97,56 +102,39 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
          val node12Ref = quickNodeRef(12 ,node12)
 
          // init the partitions
-         val partition_1_5_9  = DvmsPartition(node9Ref, node1Ref, List(node1Ref, node5Ref, node9Ref), Growing())
-         val partition_2_6_10 = DvmsPartition(node10Ref, node2Ref, List(node2Ref, node6Ref, node10Ref), Growing())
-         val partition_3_7_11 = DvmsPartition(node11Ref, node3Ref, List(node3Ref, node7Ref, node11Ref), Growing())
-         val partition_4_8_12 = DvmsPartition(node12Ref, node4Ref, List(node4Ref, node8Ref, node12Ref), Growing())
+         val partition_1_2_3_4_10  = DvmsPartition(node10Ref, node1Ref, List(node1Ref, node2Ref, node3Ref, node4Ref, node10Ref), Growing())
 
+         node1 ! ToDvmsActor(SetCurrentPartition(partition_1_2_3_4_10))
+         node2 ! ToDvmsActor(SetCurrentPartition(partition_1_2_3_4_10))
+         node3 ! ToDvmsActor(SetCurrentPartition(partition_1_2_3_4_10))
+         node4 ! ToDvmsActor(SetCurrentPartition(partition_1_2_3_4_10))
+         node10 ! ToDvmsActor(SetCurrentPartition(partition_1_2_3_4_10))
 
-         node1 ! ToDvmsActor(SetCurrentPartition(partition_1_5_9))
-         node5 ! ToDvmsActor(SetCurrentPartition(partition_1_5_9))
-         node9 ! ToDvmsActor(SetCurrentPartition(partition_1_5_9))
-
-         node2 ! ToDvmsActor(SetCurrentPartition(partition_2_6_10))
-         node6 ! ToDvmsActor(SetCurrentPartition(partition_2_6_10))
-         node10 ! ToDvmsActor(SetCurrentPartition(partition_2_6_10))
-
-         node3 ! ToDvmsActor(SetCurrentPartition(partition_3_7_11))
-         node7 ! ToDvmsActor(SetCurrentPartition(partition_3_7_11))
-         node11 ! ToDvmsActor(SetCurrentPartition(partition_3_7_11))
-
-         node4 ! ToDvmsActor(SetCurrentPartition(partition_4_8_12))
-         node8 ! ToDvmsActor(SetCurrentPartition(partition_4_8_12))
-         node12 ! ToDvmsActor(SetCurrentPartition(partition_4_8_12))
-
-         node1 ! ToDvmsActor(SetFirstOut(node2Ref))
-         node5 ! ToDvmsActor(SetFirstOut(node6Ref))
-         node9 ! ToDvmsActor(SetFirstOut(node10Ref))
-
-         node2 ! ToDvmsActor(SetFirstOut(node3Ref))
-         node6 ! ToDvmsActor(SetFirstOut(node7Ref))
-         node10 ! ToDvmsActor(SetFirstOut(node11Ref))
-
-         node3 ! ToDvmsActor(SetFirstOut(node4Ref))
-         node7 ! ToDvmsActor(SetFirstOut(node8Ref))
-         node11 ! ToDvmsActor(SetFirstOut(node12Ref))
-
+         node1 ! ToDvmsActor(SetFirstOut(node5Ref))
+         node2 ! ToDvmsActor(SetFirstOut(node5Ref))
+         node3 ! ToDvmsActor(SetFirstOut(node5Ref))
          node4 ! ToDvmsActor(SetFirstOut(node5Ref))
-         node8 ! ToDvmsActor(SetFirstOut(node9Ref))
-         node12 ! ToDvmsActor(SetFirstOut(node1Ref))
+
+         node10 ! ToDvmsActor(SetFirstOut(node11Ref))
+//         node10 ! ToDvmsActor(EverythingIsOkToken(partition_1_2_3_4_10.id))
+
+
+         // killing node4
+         println("Killing node4")
+         node4.tell(PoisonPill.getInstance, null)
+
+         Thread.sleep(200)
 
          // transmission of ISP to the respectives firstOuts
-         node9 ! ToDvmsActor(BeginTransmission())
          node10 ! ToDvmsActor(BeginTransmission())
-         node11 ! ToDvmsActor(BeginTransmission())
-         node12 ! ToDvmsActor(BeginTransmission())
 
-         Thread.sleep(6000)
+
+         Thread.sleep(10000)
 
          val node1IsOk = Await.result(node1 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          val node2IsOk = Await.result(node2 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          val node3IsOk = Await.result(node3 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node4IsOk = Await.result(node4 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+//         val node4IsOk = Await.result(node4 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          val node5IsOk = Await.result(node5 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          val node6IsOk = Await.result(node6 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          val node7IsOk = Await.result(node7 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
@@ -159,7 +147,6 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
          println(s"1: $node1IsOk")
          println(s"2: $node2IsOk")
          println(s"3: $node3IsOk")
-         println(s"4: $node4IsOk")
          println(s"5: $node5IsOk")
          println(s"6: $node6IsOk")
          println(s"7: $node7IsOk")
@@ -169,7 +156,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
          println(s"11: $node11IsOk")
          println(s"12: $node12IsOk")
 
-         (node1IsOk && node2IsOk && node3IsOk && node4IsOk && node5IsOk &&node6IsOk &&
+         (node1IsOk && node2IsOk && node3IsOk && node5IsOk &&node6IsOk &&
            node7IsOk  && node8IsOk && node9IsOk && node10IsOk  && node11IsOk && node12IsOk) must be (true)
       }
 
