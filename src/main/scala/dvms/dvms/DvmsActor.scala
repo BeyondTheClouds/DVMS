@@ -30,6 +30,7 @@ case class ToEntropyActor(msg:Any)
 
 
 case class ThisIsYourNeighbor(neighbor:NodeRef)
+case class YouMayNeedToUpdateYourFirstOut(oldNeighbor:Option[NodeRef], newNeighbor:NodeRef)
 case class CpuViolationDetected()
 
 // Message used for the base of DVMS
@@ -450,6 +451,13 @@ class DvmsActor(applicationRef:NodeRef) extends Actor with ActorLogging {
       case ThisIsYourNeighbor(node) => {
          log.info(s"my neighbor has changed: $node")
          nextDvmsNode = node
+      }
+
+      case YouMayNeedToUpdateYourFirstOut(oldNeighbor:Option[NodeRef], newNeighbor:NodeRef) => {
+         (firstOut, oldNeighbor) match {
+            case (Some(fo), Some(n)) if(fo.location isEqualTo n.location) => firstOut = Some(newNeighbor)
+            case _ =>
+         }
       }
 
       case msg => {

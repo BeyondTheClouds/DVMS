@@ -59,6 +59,8 @@ class DvmsSupervisor(location:INetworkLocation, factory:DvmsAbstractFactory) ext
     override def onNeighborChanged(oldNeighbor:Option[NodeRef], newNeighbor:NodeRef) {
       log.info(s"$location: one of my neighbors ($oldNeighbor) has changed, here is the new one ($newNeighbor) and here are my neighbors [${getNeighborHood.mkString(",")}]")
 
+      dvmsActor ! YouMayNeedToUpdateYourFirstOut(oldNeighbor, newNeighbor)
+
       if (getNeighborHood.size > 1 && (newNeighbor.location isEqualTo getNeighborHood(1).location)) {
         dvmsActor ! ThisIsYourNeighbor(getNeighborHood(1))
       }

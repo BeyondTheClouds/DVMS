@@ -300,7 +300,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
          node12 ! InitCommunicationWithHim(node1)
 
 
-         Thread.sleep(500)
+         Thread.sleep(2000)
 
 
          val node1Ref = quickNodeRef(1 ,node1)
