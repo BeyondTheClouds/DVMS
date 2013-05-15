@@ -2,11 +2,14 @@ package dvms.entropy
 
 import org.bbk.AkkaArc.util.NodeRef
 import concurrent.{Future, Await}
-import dvms.dvms.{AskTimeoutDetected, ToDvmsActor, ToEntropyActor, ToMonitorActor}
-import dvms.monitor.{UpdateConfiguration, GetCpuLoad}
+import dvms.dvms._
 import scala.concurrent.duration._
-import akka.util.Timeout
 import akka.pattern.{AskTimeoutException, ask}
+import dvms.monitor.GetVmsWithConsumption
+import dvms.dvms.AskTimeoutDetected
+import dvms.dvms.ToMonitorActor
+import dvms.dvms.ToDvmsActor
+import dvms.monitor.UpdateConfiguration
 
 /**
  * Created with IntelliJ IDEA.
@@ -23,7 +26,6 @@ class FakeEntropyActor(applicationRef:NodeRef) extends AbstractEntropyActor(appl
 
    def computeAndApplyReconfigurationPlan(nodes:List[NodeRef]):Boolean = {
 
-      var nodeLoad:Double = 0.0
       log.info("computing reconfiguration plan")
 
 
@@ -31,15 +33,23 @@ class FakeEntropyActor(applicationRef:NodeRef) extends AbstractEntropyActor(appl
 
       try {
 
-         val listOfLoad = Await.result(Future.sequence(nodes.map({n => (n.ref ? ToMonitorActor(GetCpuLoad()))})).mapTo[List[Double]], 1 second)
-         nodeLoad = listOfLoad.foldLeft(0.0)((a,b) => a+b)
+         val physicalNodesWithVmsConsumption = Await.result(Future.sequence(nodes.map({n =>
+            n.ref ? ToMonitorActor(GetVmsWithConsumption())
+         })).mapTo[List[PhysicalNode]], 1 second)
 
-         log.info(s"computed load: ${nodeLoad/nodes.size}")
+         var overallCpuConsumption = 0.0;
+         physicalNodesWithVmsConsumption.foreach(physicalNodeWithVmsConsumption => {
+            physicalNodeWithVmsConsumption.machines.foreach(vm => {
+               overallCpuConsumption += vm.cpuConsumption
+            })
+         })
 
-         if (nodeLoad/nodes.size <= 100) {
+         log.info(s"computed cpu consumption: ${overallCpuConsumption/nodes.size}")
+
+         if (overallCpuConsumption/nodes.size <= 100) {
 
             nodes.foreach(n => {
-               n.ref ! ToMonitorActor(UpdateConfiguration(nodeLoad/nodes.size))
+               n.ref ! ToMonitorActor(UpdateConfiguration(overallCpuConsumption/nodes.size))
             })
 
             isCorrect = true

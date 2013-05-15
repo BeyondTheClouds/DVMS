@@ -37,7 +37,8 @@ case class CpuViolationDetected()
 case class DissolvePartition()
 
 object DvmsPartition {
-   def apply(leader:NodeRef, initiator:NodeRef, nodes:List[NodeRef], state:DvmsPartititionState):DvmsPartition = DvmsPartition(leader, initiator, nodes, state, UUID.randomUUID())
+   def apply(leader:NodeRef, initiator:NodeRef, nodes:List[NodeRef], state:DvmsPartititionState):DvmsPartition =
+      DvmsPartition(leader, initiator, nodes, state, UUID.randomUUID())
 }
 
 case class DvmsPartition(leader:NodeRef, initiator:NodeRef, nodes:List[NodeRef], state:DvmsPartititionState, id:UUID)
@@ -51,11 +52,13 @@ case class CanIMergePartitionWithYou(partition:DvmsPartition, contact:NodeRef)
 case class ChangeTheStateOfThePartition(newState:DvmsPartititionState)
 
 // Message for the resiliency
-//case class EverythingIsOkToken(id:UUID)
-//case class VerifyEverythingIsOk(id:UUID, count:Int)
 case class AskTimeoutDetected(e:AskTimeoutException)
 case class FailureDetected(node:NodeRef)
 case class CheckTimeout()
+
+case class PhysicalNode(ref:NodeRef, machines:List[VirtualMachine])
+case class VirtualMachine(name:String, cpuConsumption:Double)
+
 
 class DvmsPartititionState(val name:String) {
 

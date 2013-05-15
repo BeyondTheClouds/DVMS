@@ -7,9 +7,6 @@ import akka.testkit.ImplicitSender
 import dvms._
 import dvms.DvmsPartition
 import dvms.ToDvmsActor
-import entropy.{AbstractEntropyActor, FakeEntropyActor}
-import factory.DvmsAbstractFactory
-import monitor.{AbstractMonitorActor, FakeMonitorActor}
 import org.scalatest.WordSpec
 import org.scalatest.matchers.MustMatchers
 import org.scalatest.BeforeAndAfterAll
@@ -17,11 +14,9 @@ import scala.concurrent.duration._
 import concurrent.{Await, ExecutionContext}
 import java.util.concurrent.Executors
 import akka.pattern.ask
-import collection.immutable.HashMap
 import org.bbk.AkkaArc.util.{NodeRef, INetworkLocation}
 import org.bbk.AkkaArc.util.Configuration
 import org.bbk.AkkaArc.InitCommunicationWithHim
-import scala.Some
 import org.bbk.AkkaArc.util.FakeNetworkLocation
 import com.typesafe.config.ConfigFactory
 

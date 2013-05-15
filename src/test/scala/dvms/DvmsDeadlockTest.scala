@@ -57,7 +57,7 @@ class TestMonitorActor(nodeRef:NodeRef) extends FakeMonitorActor(nodeRef) {
 
   var count:Int = -1
 
-  override def uploadCpuLoad():Double = {
+  override def uploadCpuConsumption():Double = {
 
     count = count + 1
 
@@ -66,12 +66,12 @@ class TestMonitorActor(nodeRef:NodeRef) extends FakeMonitorActor(nodeRef) {
       TestData.hashLoad(nodeRef.location)(count) match {
         case -1 =>
         case n:Double => {
-          cpuLoad = n
+          cpuConsumption = n
         }
       }
     }
 
-    cpuLoad
+    cpuConsumption
   }
 }
 
