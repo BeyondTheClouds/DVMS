@@ -8,6 +8,7 @@ import java.util.concurrent.Executors
 import util.Random
 import org.bbk.AkkaArc.notification.{SimpleEvent, TriggerEvent, ToNotificationActor}
 import scala.concurrent.duration._
+import dvms.dvms.{PhysicalNode, VirtualMachine}
 
 /**
  * Created with IntelliJ IDEA.
@@ -18,8 +19,9 @@ import scala.concurrent.duration._
  */
 
 class CpuViolation() extends SimpleEvent("cpuViolation")
-case class UpdateConfiguration(newLoad:Double)
-case class GetCpuLoad()
+case class UpdateConfiguration(newConsumption:Double)
+case class GetVmsWithConsumption()
+case class GetCpuConsumption()
 
 abstract class AbstractMonitorActor(applicationRef:NodeRef) extends Actor with ActorLogging {
 
@@ -28,35 +30,38 @@ abstract class AbstractMonitorActor(applicationRef:NodeRef) extends Actor with A
 
   case class Tick()
 
-  var cpuLoad:Double = 50
+  var cpuConsumption:Double = 50
   val delta:Double = 17
   val seed:Long = applicationRef.location.getId
   val random:Random = new Random(seed)
 
-  def uploadCpuLoad():Double
+  def getVmsWithConsumption():PhysicalNode
+  def uploadCpuConsumption():Double
 
   override def receive = {
     case Tick() => {
 
-      uploadCpuLoad()
+      uploadCpuConsumption()
 
-      log.info(s"the new load is : $cpuLoad")
+      log.info(s"the new consumption is : $cpuConsumption")
 
-      if (cpuLoad > 100) {
-        log.info(s"the cpu load is under violation")
+      if (cpuConsumption > 100) {
+        log.info(s"the cpu consumption is under violation")
 
         // triggering CpuViolation event
         applicationRef.ref ! ToNotificationActor(TriggerEvent(new CpuViolation()))
       }
     }
 
-    case GetCpuLoad() => {
-      log.info(s"send cpu load $cpuLoad")
-      sender ! cpuLoad
+    case GetVmsWithConsumption() => sender ! getVmsWithConsumption()
+
+    case GetCpuConsumption() => {
+      log.info(s"send cpu consumption $cpuConsumption")
+      sender ! cpuConsumption
     }
 
     case UpdateConfiguration(newLoad) => {
-      cpuLoad = newLoad
+      cpuConsumption = newLoad
     }
 
     case msg => {
