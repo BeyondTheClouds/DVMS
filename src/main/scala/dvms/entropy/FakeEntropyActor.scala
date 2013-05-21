@@ -20,21 +20,20 @@ import dvms.monitor.UpdateConfiguration
  */
 
 
+class FakeEntropyActor(applicationRef: NodeRef) extends AbstractEntropyActor(applicationRef) {
 
-
-class FakeEntropyActor(applicationRef:NodeRef) extends AbstractEntropyActor(applicationRef) {
-
-   def computeAndApplyReconfigurationPlan(nodes:List[NodeRef]):Boolean = {
+   def computeAndApplyReconfigurationPlan(nodes: List[NodeRef]): Boolean = {
 
       log.info("computing reconfiguration plan")
 
 
-      var isCorrect:Boolean = false
+      var isCorrect: Boolean = false
 
       try {
 
-         val physicalNodesWithVmsConsumption = Await.result(Future.sequence(nodes.map({n =>
-            n.ref ? ToMonitorActor(GetVmsWithConsumption())
+         val physicalNodesWithVmsConsumption = Await.result(Future.sequence(nodes.map({
+            n =>
+               n.ref ? ToMonitorActor(GetVmsWithConsumption())
          })).mapTo[List[PhysicalNode]], 1 second)
 
          var overallCpuConsumption = 0.0;
@@ -44,12 +43,12 @@ class FakeEntropyActor(applicationRef:NodeRef) extends AbstractEntropyActor(appl
             })
          })
 
-         log.info(s"computed cpu consumption: ${overallCpuConsumption/nodes.size}")
+         log.info(s"computed cpu consumption: ${overallCpuConsumption / nodes.size}")
 
-         if (overallCpuConsumption/nodes.size <= 100) {
+         if (overallCpuConsumption / nodes.size <= 100) {
 
             nodes.foreach(n => {
-               n.ref ! ToMonitorActor(UpdateConfiguration(overallCpuConsumption/nodes.size))
+               n.ref ! ToMonitorActor(UpdateConfiguration(overallCpuConsumption / nodes.size))
             })
 
             isCorrect = true
@@ -59,11 +58,11 @@ class FakeEntropyActor(applicationRef:NodeRef) extends AbstractEntropyActor(appl
             isCorrect = false
          }
       } catch {
-         case e:AskTimeoutException => {
+         case e: AskTimeoutException => {
             isCorrect = false
             applicationRef.ref ! ToDvmsActor(AskTimeoutDetected(e))
          }
-         case e:Exception =>
+         case e: Exception =>
       }
 
       return isCorrect

@@ -11,19 +11,20 @@ import dvms.dvms.{PhysicalNode, VirtualMachine}
  * To change this template use File | Settings | File Templates.
  */
 
-class FakeMonitorActor(applicationRef:NodeRef) extends AbstractMonitorActor(applicationRef) {
+class FakeMonitorActor(applicationRef: NodeRef) extends AbstractMonitorActor(applicationRef) {
 
-  def getVmsWithConsumption():PhysicalNode = {
-     PhysicalNode(applicationRef, List(VirtualMachine("fakeVM", cpuConsumption)))
-  }
-  def uploadCpuConsumption():Double = {
-    val cpuConsumptionChange = random.nextDouble()*2*delta - delta
+   def getVmsWithConsumption(): PhysicalNode = {
+      PhysicalNode(applicationRef, List(VirtualMachine("fakeVM", cpuConsumption, null)), null)
+   }
 
-    (cpuConsumption+cpuConsumptionChange) match {
-      case n:Double if (n<0) => cpuConsumption = 0
-      case n:Double => cpuConsumption = n
-    }
+   def uploadCpuConsumption(): Double = {
+      val cpuConsumptionChange = random.nextDouble() * 2 * delta - delta
 
-    cpuConsumption
-  }
+      (cpuConsumption + cpuConsumptionChange) match {
+         case n: Double if (n < 0) => cpuConsumption = 0
+         case n: Double => cpuConsumption = n
+      }
+
+      cpuConsumption
+   }
 }

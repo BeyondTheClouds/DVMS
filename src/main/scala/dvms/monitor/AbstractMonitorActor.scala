@@ -8,7 +8,7 @@ import java.util.concurrent.Executors
 import util.Random
 import org.bbk.AkkaArc.notification.{SimpleEvent, TriggerEvent, ToNotificationActor}
 import scala.concurrent.duration._
-import dvms.dvms.{PhysicalNode, VirtualMachine}
+import dvms.dvms.PhysicalNode
 
 /**
  * Created with IntelliJ IDEA.
@@ -19,59 +19,63 @@ import dvms.dvms.{PhysicalNode, VirtualMachine}
  */
 
 class CpuViolation() extends SimpleEvent("cpuViolation")
-case class UpdateConfiguration(newConsumption:Double)
+
+case class UpdateConfiguration(newConsumption: Double)
+
 case class GetVmsWithConsumption()
+
 case class GetCpuConsumption()
 
-abstract class AbstractMonitorActor(applicationRef:NodeRef) extends Actor with ActorLogging {
+abstract class AbstractMonitorActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
-  implicit val timeout = Timeout(2 seconds)
-  implicit val ec = ExecutionContext.fromExecutorService(Executors.newCachedThreadPool())
+   implicit val timeout = Timeout(2 seconds)
+   implicit val ec = ExecutionContext.fromExecutorService(Executors.newCachedThreadPool())
 
-  case class Tick()
+   case class Tick()
 
-  var cpuConsumption:Double = 50
-  val delta:Double = 17
-  val seed:Long = applicationRef.location.getId
-  val random:Random = new Random(seed)
+   var cpuConsumption: Double = 50
+   val delta: Double = 17
+   val seed: Long = applicationRef.location.getId
+   val random: Random = new Random(seed)
 
-  def getVmsWithConsumption():PhysicalNode
-  def uploadCpuConsumption():Double
+   def getVmsWithConsumption(): PhysicalNode
 
-  override def receive = {
-    case Tick() => {
+   def uploadCpuConsumption(): Double
 
-      uploadCpuConsumption()
+   override def receive = {
+      case Tick() => {
 
-      log.info(s"the new consumption is : $cpuConsumption")
+         uploadCpuConsumption()
 
-      if (cpuConsumption > 100) {
-        log.info(s"the cpu consumption is under violation")
+         log.info(s"the new consumption is : $cpuConsumption")
 
-        // triggering CpuViolation event
-        applicationRef.ref ! ToNotificationActor(TriggerEvent(new CpuViolation()))
+         if (cpuConsumption > 100) {
+            log.info(s"the cpu consumption is under violation")
+
+            // triggering CpuViolation event
+            applicationRef.ref ! ToNotificationActor(TriggerEvent(new CpuViolation()))
+         }
       }
-    }
 
-    case GetVmsWithConsumption() => sender ! getVmsWithConsumption()
+      case GetVmsWithConsumption() => sender ! getVmsWithConsumption()
 
-    case GetCpuConsumption() => {
-      log.info(s"send cpu consumption $cpuConsumption")
-      sender ! cpuConsumption
-    }
+      case GetCpuConsumption() => {
+         log.info(s"send cpu consumption $cpuConsumption")
+         sender ! cpuConsumption
+      }
 
-    case UpdateConfiguration(newLoad) => {
-      cpuConsumption = newLoad
-    }
+      case UpdateConfiguration(newLoad) => {
+         cpuConsumption = newLoad
+      }
 
-    case msg => {
-      //         log.warning(s"FakeMonitorActor: received unknown message <$msg>")
-      applicationRef.ref ! msg
-    }
-  }
+      case msg => {
+         //         log.warning(s"FakeMonitorActor: received unknown message <$msg>")
+         applicationRef.ref ! msg
+      }
+   }
 
-  context.system.scheduler.schedule(0 milliseconds,
-    1 second,
-    self,
-    Tick())
+   context.system.scheduler.schedule(0 milliseconds,
+      1 second,
+      self,
+      Tick())
 }
