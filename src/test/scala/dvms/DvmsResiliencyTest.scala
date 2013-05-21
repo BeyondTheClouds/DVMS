@@ -36,11 +36,11 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
 
    Configuration.debug = true
 
-   def this() = this(ActorSystem("MySpec", ConfigFactory.parseString("""
+   def this() = this(ActorSystem("MySpec", ConfigFactory.parseString( """
      prio-dispatcher {
        mailbox-type = "dvms.utility.DvmsPriorityMailBox"
      }
-   """)))
+                                                                      """)))
 
    override def afterAll() {
       system.shutdown()
@@ -50,7 +50,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
 
       "handle a combined crash in partitions (ring of 12 nodes) (lambda)" in {
 
-         def quickNodeRef(l:Int, ref:ActorRef):NodeRef = NodeRef(FakeNetworkLocation(l), ref)
+         def quickNodeRef(l: Int, ref: ActorRef): NodeRef = NodeRef(FakeNetworkLocation(l), ref)
 
          val node1 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(1), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
          val node2 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(2), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
@@ -83,21 +83,21 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
          Thread.sleep(500)
 
 
-         val node1Ref = quickNodeRef(1 ,node1)
-         val node2Ref = quickNodeRef(2 ,node2)
-         val node3Ref = quickNodeRef(3 ,node3)
-         val node4Ref = quickNodeRef(4 ,node4)
-         val node5Ref = quickNodeRef(5 ,node5)
-         val node6Ref = quickNodeRef(6 ,node6)
-         val node7Ref = quickNodeRef(7 ,node7)
-         val node8Ref = quickNodeRef(8 ,node8)
-         val node9Ref = quickNodeRef(9 ,node9)
-         val node10Ref = quickNodeRef(10 ,node10)
-         val node11Ref = quickNodeRef(11 ,node11)
-         val node12Ref = quickNodeRef(12 ,node12)
+         val node1Ref = quickNodeRef(1, node1)
+         val node2Ref = quickNodeRef(2, node2)
+         val node3Ref = quickNodeRef(3, node3)
+         val node4Ref = quickNodeRef(4, node4)
+         val node5Ref = quickNodeRef(5, node5)
+         val node6Ref = quickNodeRef(6, node6)
+         val node7Ref = quickNodeRef(7, node7)
+         val node8Ref = quickNodeRef(8, node8)
+         val node9Ref = quickNodeRef(9, node9)
+         val node10Ref = quickNodeRef(10, node10)
+         val node11Ref = quickNodeRef(11, node11)
+         val node12Ref = quickNodeRef(12, node12)
 
          // init the partitions
-         val partition_1_2_3_4_10  = DvmsPartition(node10Ref, node1Ref, List(node1Ref, node2Ref, node3Ref, node4Ref, node10Ref), Growing())
+         val partition_1_2_3_4_10 = DvmsPartition(node10Ref, node1Ref, List(node1Ref, node2Ref, node3Ref, node4Ref, node10Ref), Growing())
 
          node1 ! ToDvmsActor(SetCurrentPartition(partition_1_2_3_4_10))
          node2 ! ToDvmsActor(SetCurrentPartition(partition_1_2_3_4_10))
@@ -111,7 +111,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
          node4 ! ToDvmsActor(SetFirstOut(node5Ref))
 
          node10 ! ToDvmsActor(SetFirstOut(node11Ref))
-//         node10 ! ToDvmsActor(EverythingIsOkToken(partition_1_2_3_4_10.id))
+         //         node10 ! ToDvmsActor(EverythingIsOkToken(partition_1_2_3_4_10.id))
 
 
          // killing node4
@@ -129,7 +129,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
          val node1IsOk = Await.result(node1 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          val node2IsOk = Await.result(node2 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          val node3IsOk = Await.result(node3 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-//         val node4IsOk = Await.result(node4 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+         //         val node4IsOk = Await.result(node4 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          val node5IsOk = Await.result(node5 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          val node6IsOk = Await.result(node6 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          val node7IsOk = Await.result(node7 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
@@ -151,13 +151,13 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
          println(s"11: $node11IsOk")
          println(s"12: $node12IsOk")
 
-         (node1IsOk && node2IsOk && node3IsOk && node5IsOk &&node6IsOk &&
-           node7IsOk  && node8IsOk && node9IsOk && node10IsOk  && node11IsOk && node12IsOk) must be (true)
+         (node1IsOk && node2IsOk && node3IsOk && node5IsOk && node6IsOk &&
+           node7IsOk && node8IsOk && node9IsOk && node10IsOk && node11IsOk && node12IsOk) must be(true)
       }
 
       "handle a combined crash in partitions (ring of 12 nodes) (initiator)" in {
 
-         def quickNodeRef(l:Int, ref:ActorRef):NodeRef = NodeRef(FakeNetworkLocation(l), ref)
+         def quickNodeRef(l: Int, ref: ActorRef): NodeRef = NodeRef(FakeNetworkLocation(l), ref)
 
          val node1 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(1), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
          val node2 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(2), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
@@ -190,21 +190,21 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
          Thread.sleep(500)
 
 
-         val node1Ref = quickNodeRef(1 ,node1)
-         val node2Ref = quickNodeRef(2 ,node2)
-         val node3Ref = quickNodeRef(3 ,node3)
-         val node4Ref = quickNodeRef(4 ,node4)
-         val node5Ref = quickNodeRef(5 ,node5)
-         val node6Ref = quickNodeRef(6 ,node6)
-         val node7Ref = quickNodeRef(7 ,node7)
-         val node8Ref = quickNodeRef(8 ,node8)
-         val node9Ref = quickNodeRef(9 ,node9)
-         val node10Ref = quickNodeRef(10 ,node10)
-         val node11Ref = quickNodeRef(11 ,node11)
-         val node12Ref = quickNodeRef(12 ,node12)
+         val node1Ref = quickNodeRef(1, node1)
+         val node2Ref = quickNodeRef(2, node2)
+         val node3Ref = quickNodeRef(3, node3)
+         val node4Ref = quickNodeRef(4, node4)
+         val node5Ref = quickNodeRef(5, node5)
+         val node6Ref = quickNodeRef(6, node6)
+         val node7Ref = quickNodeRef(7, node7)
+         val node8Ref = quickNodeRef(8, node8)
+         val node9Ref = quickNodeRef(9, node9)
+         val node10Ref = quickNodeRef(10, node10)
+         val node11Ref = quickNodeRef(11, node11)
+         val node12Ref = quickNodeRef(12, node12)
 
          // init the partitions
-         val partition_1_2_3_4_10  = DvmsPartition(node10Ref, node1Ref, List(node1Ref, node2Ref, node3Ref, node4Ref, node10Ref), Growing())
+         val partition_1_2_3_4_10 = DvmsPartition(node10Ref, node1Ref, List(node1Ref, node2Ref, node3Ref, node4Ref, node10Ref), Growing())
 
          node1 ! ToDvmsActor(SetCurrentPartition(partition_1_2_3_4_10))
          node2 ! ToDvmsActor(SetCurrentPartition(partition_1_2_3_4_10))
@@ -233,7 +233,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
 
          Thread.sleep(10000)
 
-//         val node1IsOk = Await.result(node1 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+         //         val node1IsOk = Await.result(node1 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          val node2IsOk = Await.result(node2 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          val node3IsOk = Await.result(node3 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          val node4IsOk = Await.result(node4 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
@@ -246,7 +246,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
          val node11IsOk = Await.result(node11 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          val node12IsOk = Await.result(node12 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
 
-//         println(s"1: $node1IsOk")
+         //         println(s"1: $node1IsOk")
          println(s"2: $node2IsOk")
          println(s"3: $node3IsOk")
          println(s"4: $node4IsOk")
@@ -259,13 +259,13 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
          println(s"11: $node11IsOk")
          println(s"12: $node12IsOk")
 
-         (node4IsOk && node2IsOk && node3IsOk && node5IsOk &&node6IsOk &&
-           node7IsOk  && node8IsOk && node9IsOk && node10IsOk  && node11IsOk && node12IsOk) must be (true)
+         (node4IsOk && node2IsOk && node3IsOk && node5IsOk && node6IsOk &&
+           node7IsOk && node8IsOk && node9IsOk && node10IsOk && node11IsOk && node12IsOk) must be(true)
       }
 
       "handle a combined crash in partitions (ring of 12 nodes) (leader)" in {
 
-         def quickNodeRef(l:Int, ref:ActorRef):NodeRef = NodeRef(FakeNetworkLocation(l), ref)
+         def quickNodeRef(l: Int, ref: ActorRef): NodeRef = NodeRef(FakeNetworkLocation(l), ref)
 
          val node1 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(1), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
          val node2 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(2), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
@@ -298,21 +298,21 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
          Thread.sleep(2000)
 
 
-         val node1Ref = quickNodeRef(1 ,node1)
-         val node2Ref = quickNodeRef(2 ,node2)
-         val node3Ref = quickNodeRef(3 ,node3)
-         val node4Ref = quickNodeRef(4 ,node4)
-         val node5Ref = quickNodeRef(5 ,node5)
-         val node6Ref = quickNodeRef(6 ,node6)
-         val node7Ref = quickNodeRef(7 ,node7)
-         val node8Ref = quickNodeRef(8 ,node8)
-         val node9Ref = quickNodeRef(9 ,node9)
-         val node10Ref = quickNodeRef(10 ,node10)
-         val node11Ref = quickNodeRef(11 ,node11)
-         val node12Ref = quickNodeRef(12 ,node12)
+         val node1Ref = quickNodeRef(1, node1)
+         val node2Ref = quickNodeRef(2, node2)
+         val node3Ref = quickNodeRef(3, node3)
+         val node4Ref = quickNodeRef(4, node4)
+         val node5Ref = quickNodeRef(5, node5)
+         val node6Ref = quickNodeRef(6, node6)
+         val node7Ref = quickNodeRef(7, node7)
+         val node8Ref = quickNodeRef(8, node8)
+         val node9Ref = quickNodeRef(9, node9)
+         val node10Ref = quickNodeRef(10, node10)
+         val node11Ref = quickNodeRef(11, node11)
+         val node12Ref = quickNodeRef(12, node12)
 
          // init the partitions
-         val partition_1_2_3_4_10  = DvmsPartition(node10Ref, node1Ref, List(node1Ref, node2Ref, node3Ref, node4Ref, node10Ref), Growing())
+         val partition_1_2_3_4_10 = DvmsPartition(node10Ref, node1Ref, List(node1Ref, node2Ref, node3Ref, node4Ref, node10Ref), Growing())
 
          node1 ! ToDvmsActor(SetCurrentPartition(partition_1_2_3_4_10))
          node2 ! ToDvmsActor(SetCurrentPartition(partition_1_2_3_4_10))
@@ -336,7 +336,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
          Thread.sleep(200)
 
          // transmission of ISP to the respectives firstOuts
-//         node10 ! ToDvmsActor(BeginTransmission())
+         //         node10 ! ToDvmsActor(BeginTransmission())
 
 
          Thread.sleep(10000)
@@ -350,7 +350,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
          val node7IsOk = Await.result(node7 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          val node8IsOk = Await.result(node8 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          val node9IsOk = Await.result(node9 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-//         val node10IsOk = Await.result(node10 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+         //         val node10IsOk = Await.result(node10 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          val node11IsOk = Await.result(node11 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          val node12IsOk = Await.result(node12 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
 
@@ -363,17 +363,17 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
          println(s"7: $node7IsOk")
          println(s"8: $node8IsOk")
          println(s"9: $node9IsOk")
-//         println(s"10: $node10IsOk")
+         //         println(s"10: $node10IsOk")
          println(s"11: $node11IsOk")
          println(s"12: $node12IsOk")
 
-         (node1IsOk && node2IsOk && node3IsOk && node5IsOk &&node6IsOk &&
-           node7IsOk  && node8IsOk && node9IsOk && node4IsOk  && node11IsOk && node12IsOk) must be (true)
+         (node1IsOk && node2IsOk && node3IsOk && node5IsOk && node6IsOk &&
+           node7IsOk && node8IsOk && node9IsOk && node4IsOk && node11IsOk && node12IsOk) must be(true)
       }
 
       "handle several combined crashes in partitions (ring of 12 nodes) (one leader, one initiator and one lambda)" in {
 
-         def quickNodeRef(l:Int, ref:ActorRef):NodeRef = NodeRef(FakeNetworkLocation(l), ref)
+         def quickNodeRef(l: Int, ref: ActorRef): NodeRef = NodeRef(FakeNetworkLocation(l), ref)
 
          val node1 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(1), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
          val node2 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(2), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
@@ -406,25 +406,25 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
          Thread.sleep(500)
 
 
-         val node1Ref = quickNodeRef(1 ,node1)
-         val node2Ref = quickNodeRef(2 ,node2)
-         val node3Ref = quickNodeRef(3 ,node3)
-         val node4Ref = quickNodeRef(4 ,node4)
-         val node5Ref = quickNodeRef(5 ,node5)
-         val node6Ref = quickNodeRef(6 ,node6)
-         val node7Ref = quickNodeRef(7 ,node7)
-         val node8Ref = quickNodeRef(8 ,node8)
-         val node9Ref = quickNodeRef(9 ,node9)
-         val node10Ref = quickNodeRef(10 ,node10)
-         val node11Ref = quickNodeRef(11 ,node11)
-         val node12Ref = quickNodeRef(12 ,node12)
+         val node1Ref = quickNodeRef(1, node1)
+         val node2Ref = quickNodeRef(2, node2)
+         val node3Ref = quickNodeRef(3, node3)
+         val node4Ref = quickNodeRef(4, node4)
+         val node5Ref = quickNodeRef(5, node5)
+         val node6Ref = quickNodeRef(6, node6)
+         val node7Ref = quickNodeRef(7, node7)
+         val node8Ref = quickNodeRef(8, node8)
+         val node9Ref = quickNodeRef(9, node9)
+         val node10Ref = quickNodeRef(10, node10)
+         val node11Ref = quickNodeRef(11, node11)
+         val node12Ref = quickNodeRef(12, node12)
 
          // init the partitions
-         val partition_1  = DvmsPartition(node10Ref, node1Ref, List(node1Ref, node2Ref, node3Ref, node4Ref, node10Ref), Growing())
-         val partition_2  = DvmsPartition(node12Ref, node5Ref, List(node5Ref, node7Ref, node12Ref), Growing())
-         val partition_3  = DvmsPartition(node11Ref, node6Ref, List(node6Ref, node8Ref, node9Ref, node11Ref), Growing())
+         val partition_1 = DvmsPartition(node10Ref, node1Ref, List(node1Ref, node2Ref, node3Ref, node4Ref, node10Ref), Growing())
+         val partition_2 = DvmsPartition(node12Ref, node5Ref, List(node5Ref, node7Ref, node12Ref), Growing())
+         val partition_3 = DvmsPartition(node11Ref, node6Ref, List(node6Ref, node8Ref, node9Ref, node11Ref), Growing())
 
-            // partition 1
+         // partition 1
          node1 ! ToDvmsActor(SetCurrentPartition(partition_1))
          node2 ! ToDvmsActor(SetCurrentPartition(partition_1))
          node3 ! ToDvmsActor(SetCurrentPartition(partition_1))
@@ -439,23 +439,23 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
          node10 ! ToDvmsActor(SetFirstOut(node11Ref))
 
 
-            // partition 2
+         // partition 2
          node5 ! ToDvmsActor(SetCurrentPartition(partition_2))
          node7 ! ToDvmsActor(SetCurrentPartition(partition_2))
          node12 ! ToDvmsActor(SetCurrentPartition(partition_2))
 
-         node5  ! ToDvmsActor(SetFirstOut(node6Ref))
-         node7  ! ToDvmsActor(SetFirstOut(node8Ref))
+         node5 ! ToDvmsActor(SetFirstOut(node6Ref))
+         node7 ! ToDvmsActor(SetFirstOut(node8Ref))
          node12 ! ToDvmsActor(SetFirstOut(node1Ref))
 
-            // partition 3
+         // partition 3
          node6 ! ToDvmsActor(SetCurrentPartition(partition_3))
          node8 ! ToDvmsActor(SetCurrentPartition(partition_3))
          node9 ! ToDvmsActor(SetCurrentPartition(partition_3))
          node11 ! ToDvmsActor(SetCurrentPartition(partition_3))
 
-         node6  ! ToDvmsActor(SetFirstOut(node7Ref))
-         node8  ! ToDvmsActor(SetFirstOut(node9Ref))
+         node6 ! ToDvmsActor(SetFirstOut(node7Ref))
+         node8 ! ToDvmsActor(SetFirstOut(node9Ref))
          node9 ! ToDvmsActor(SetFirstOut(node10Ref))
          node11 ! ToDvmsActor(SetFirstOut(node12Ref))
 
@@ -483,10 +483,10 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
          val node2IsOk = Await.result(node2 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          val node3IsOk = Await.result(node3 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          val node4IsOk = Await.result(node4 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-//         val node5IsOk = Await.result(node5 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+         //         val node5IsOk = Await.result(node5 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          val node6IsOk = Await.result(node6 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          val node7IsOk = Await.result(node7 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-//         val node8IsOk = Await.result(node8 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+         //         val node8IsOk = Await.result(node8 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          val node9IsOk = Await.result(node9 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          //         val node10IsOk = Await.result(node10 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          val node11IsOk = Await.result(node11 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
@@ -496,22 +496,22 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
          println(s"2: $node2IsOk")
          println(s"3: $node3IsOk")
          println(s"4: $node4IsOk")
-//         println(s"5: $node5IsOk")
+         //         println(s"5: $node5IsOk")
          println(s"6: $node6IsOk")
          println(s"7: $node7IsOk")
-//         println(s"8: $node8IsOk")
+         //         println(s"8: $node8IsOk")
          println(s"9: $node9IsOk")
          //         println(s"10: $node10IsOk")
          println(s"11: $node11IsOk")
          println(s"12: $node12IsOk")
 
          (node1IsOk && node2IsOk && node3IsOk && node6IsOk &&
-           node7IsOk  && node9IsOk && node4IsOk  && node11IsOk && node12IsOk) must be (true)
+           node7IsOk && node9IsOk && node4IsOk && node11IsOk && node12IsOk) must be(true)
       }
 
       "handle several combined crashes in partitions (ring of 12 nodes) (three leaders, two initiators and one lambda)" in {
 
-         def quickNodeRef(l:Int, ref:ActorRef):NodeRef = NodeRef(FakeNetworkLocation(l), ref)
+         def quickNodeRef(l: Int, ref: ActorRef): NodeRef = NodeRef(FakeNetworkLocation(l), ref)
 
          val node1 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(1), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
          val node2 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(2), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
@@ -544,23 +544,23 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
          Thread.sleep(500)
 
 
-         val node1Ref = quickNodeRef(1 ,node1)
-         val node2Ref = quickNodeRef(2 ,node2)
-         val node3Ref = quickNodeRef(3 ,node3)
-         val node4Ref = quickNodeRef(4 ,node4)
-         val node5Ref = quickNodeRef(5 ,node5)
-         val node6Ref = quickNodeRef(6 ,node6)
-         val node7Ref = quickNodeRef(7 ,node7)
-         val node8Ref = quickNodeRef(8 ,node8)
-         val node9Ref = quickNodeRef(9 ,node9)
-         val node10Ref = quickNodeRef(10 ,node10)
-         val node11Ref = quickNodeRef(11 ,node11)
-         val node12Ref = quickNodeRef(12 ,node12)
+         val node1Ref = quickNodeRef(1, node1)
+         val node2Ref = quickNodeRef(2, node2)
+         val node3Ref = quickNodeRef(3, node3)
+         val node4Ref = quickNodeRef(4, node4)
+         val node5Ref = quickNodeRef(5, node5)
+         val node6Ref = quickNodeRef(6, node6)
+         val node7Ref = quickNodeRef(7, node7)
+         val node8Ref = quickNodeRef(8, node8)
+         val node9Ref = quickNodeRef(9, node9)
+         val node10Ref = quickNodeRef(10, node10)
+         val node11Ref = quickNodeRef(11, node11)
+         val node12Ref = quickNodeRef(12, node12)
 
          // init the partitions
-         val partition_1  = DvmsPartition(node10Ref, node1Ref, List(node1Ref, node2Ref, node3Ref, node4Ref, node10Ref), Growing())
-         val partition_2  = DvmsPartition(node12Ref, node5Ref, List(node5Ref, node7Ref, node12Ref), Growing())
-         val partition_3  = DvmsPartition(node11Ref, node6Ref, List(node6Ref, node8Ref, node9Ref, node11Ref), Growing())
+         val partition_1 = DvmsPartition(node10Ref, node1Ref, List(node1Ref, node2Ref, node3Ref, node4Ref, node10Ref), Growing())
+         val partition_2 = DvmsPartition(node12Ref, node5Ref, List(node5Ref, node7Ref, node12Ref), Growing())
+         val partition_3 = DvmsPartition(node11Ref, node6Ref, List(node6Ref, node8Ref, node9Ref, node11Ref), Growing())
 
          // partition 1
          node1 ! ToDvmsActor(SetCurrentPartition(partition_1))
@@ -582,8 +582,8 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
          node7 ! ToDvmsActor(SetCurrentPartition(partition_2))
          node12 ! ToDvmsActor(SetCurrentPartition(partition_2))
 
-         node5  ! ToDvmsActor(SetFirstOut(node6Ref))
-         node7  ! ToDvmsActor(SetFirstOut(node8Ref))
+         node5 ! ToDvmsActor(SetFirstOut(node6Ref))
+         node7 ! ToDvmsActor(SetFirstOut(node8Ref))
          node12 ! ToDvmsActor(SetFirstOut(node1Ref))
 
          // partition 3
@@ -592,8 +592,8 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
          node9 ! ToDvmsActor(SetCurrentPartition(partition_3))
          node11 ! ToDvmsActor(SetCurrentPartition(partition_3))
 
-         node6  ! ToDvmsActor(SetFirstOut(node7Ref))
-         node8  ! ToDvmsActor(SetFirstOut(node9Ref))
+         node6 ! ToDvmsActor(SetFirstOut(node7Ref))
+         node8 ! ToDvmsActor(SetFirstOut(node9Ref))
          node9 ! ToDvmsActor(SetFirstOut(node10Ref))
          node11 ! ToDvmsActor(SetFirstOut(node12Ref))
 
@@ -620,34 +620,34 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
 
          Thread.sleep(10000)
 
-//         val node1IsOk = Await.result(node1 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+         //         val node1IsOk = Await.result(node1 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          val node2IsOk = Await.result(node2 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          val node3IsOk = Await.result(node3 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          val node4IsOk = Await.result(node4 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          //         val node5IsOk = Await.result(node5 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-//         val node6IsOk = Await.result(node6 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+         //         val node6IsOk = Await.result(node6 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          val node7IsOk = Await.result(node7 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          //         val node8IsOk = Await.result(node8 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          val node9IsOk = Await.result(node9 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          //         val node10IsOk = Await.result(node10 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
          val node11IsOk = Await.result(node11 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-//         val node12IsOk = Await.result(node12 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+         //         val node12IsOk = Await.result(node12 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
 
-//         println(s"1: $node1IsOk")
+         //         println(s"1: $node1IsOk")
          println(s"2: $node2IsOk")
          println(s"3: $node3IsOk")
          println(s"4: $node4IsOk")
          //         println(s"5: $node5IsOk")
-//         println(s"6: $node6IsOk")
+         //         println(s"6: $node6IsOk")
          println(s"7: $node7IsOk")
          //         println(s"8: $node8IsOk")
          println(s"9: $node9IsOk")
          //         println(s"10: $node10IsOk")
          println(s"11: $node11IsOk")
-//         println(s"12: $node12IsOk")
+         //         println(s"12: $node12IsOk")
 
          (node2IsOk && node3IsOk &&
-           node7IsOk  && node9IsOk && node4IsOk  && node11IsOk ) must be (true)
+           node7IsOk && node9IsOk && node4IsOk && node11IsOk) must be(true)
       }
    }
 }
