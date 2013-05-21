@@ -35,6 +35,8 @@ class LibvirtMonitorActor(applicationRef: NodeRef) extends AbstractMonitorActor(
                VirtualMachineConfiguration.getCpuCoreCapacity
             )
          )),
+         LibvirtMonitorActor.driver.getMigrationUrl()
+         ,
          ComputerSpecification(
             HardwareConfiguration.getNumberOfCpus,
             HardwareConfiguration.getRamCapacity,
