@@ -16,16 +16,16 @@ import dvms.dvms.DvmsActor
 
 object DvmsFactory extends DvmsAbstractFactory {
 
-  def createMonitorActor(nodeRef:NodeRef):Option[AbstractMonitorActor] = {
-    Some(new FakeMonitorActor(nodeRef))
-  }
+   def createMonitorActor(nodeRef: NodeRef): Option[AbstractMonitorActor] = {
+      Some(new FakeMonitorActor(nodeRef))
+   }
 
-  def createDvmsActor(nodeRef:NodeRef):Option[DvmsActor] = {
-    Some(new DvmsActor(nodeRef))
-  }
+   def createDvmsActor(nodeRef: NodeRef): Option[DvmsActor] = {
+      Some(new DvmsActor(nodeRef))
+   }
 
 
-  def createEntropyActor(nodeRef:NodeRef):Option[AbstractEntropyActor] = {
-    Some(new FakeEntropyActor(nodeRef))
-  }
+   def createEntropyActor(nodeRef: NodeRef): Option[AbstractEntropyActor] = {
+      Some(new FakeEntropyActor(nodeRef))
+   }
 }

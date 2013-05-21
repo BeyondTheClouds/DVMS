@@ -10,7 +10,9 @@ package dvms.configuration
 
 object VirtualMachineConfiguration {
 
-   def getNumberOfCpus:Int = 1
-   def getCpuCoreCapacity:Int = 100
-   def getRamCapacity:Int = 512
+   def getNumberOfCpus: Int = 1
+
+   def getCpuCoreCapacity: Int = 100
+
+   def getRamCapacity: Int = 512
 }

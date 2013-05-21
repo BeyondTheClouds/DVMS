@@ -1,7 +1,7 @@
 package dvms
 
 import akka.actor.{ActorSystem, Props}
-import org.bbk.AkkaArc.util.{FakeNetworkLocation}
+import org.bbk.AkkaArc.util.FakeNetworkLocation
 import scala.concurrent.duration._
 import java.util.concurrent.Executors
 import scala.concurrent.ExecutionContext
@@ -36,13 +36,12 @@ object Main extends App {
          }
 
 
-
       }
       catch {
-         case e:IllegalFormatConversionException => {
+         case e: IllegalFormatConversionException => {
             e.printStackTrace()
          }
-         case e:Exception => {
+         case e: Exception => {
             e.printStackTrace()
          }
       }

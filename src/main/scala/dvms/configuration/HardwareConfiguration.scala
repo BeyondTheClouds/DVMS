@@ -10,7 +10,9 @@ package dvms.configuration
 
 object HardwareConfiguration {
 
-   def getNumberOfCpus:Int = 4
-   def getCpuCoreCapacity:Int = 100
-   def getRamCapacity:Int = 4096
+   def getNumberOfCpus: Int = 4
+
+   def getCpuCoreCapacity: Int = 100
+
+   def getRamCapacity: Int = 4096
 }

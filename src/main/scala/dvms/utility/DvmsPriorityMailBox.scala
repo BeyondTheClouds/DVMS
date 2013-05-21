@@ -23,11 +23,11 @@ class DvmsPriorityMailBox(settings: Settings, config: Config)
         case 'highpriority ⇒ 0
 
         // 'lowpriority messages should be treated last if possible
-        case 'lowpriority  ⇒ 2
+        case 'lowpriority ⇒ 2
 
         // PoisonPill when no other left
-        case PoisonPill    ⇒ 3
+        case PoisonPill ⇒ 3
 
         // We default to 1, which is in between high and low
-        case otherwise     ⇒ 1
+        case otherwise ⇒ 1
      })
