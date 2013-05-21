@@ -66,7 +66,7 @@ case class CheckTimeout()
 
 case class ComputerSpecification(numberOfCPU: Int, ramCapacity: Int, coreCapacity: Int)
 
-case class PhysicalNode(ref: NodeRef, machines: List[VirtualMachine], specs: ComputerSpecification)
+case class PhysicalNode(ref: NodeRef, machines: List[VirtualMachine], url: String, specs: ComputerSpecification)
 
 case class VirtualMachine(name: String, cpuConsumption: Double, specs: ComputerSpecification)
 

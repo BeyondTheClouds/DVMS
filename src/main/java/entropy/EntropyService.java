@@ -1,6 +1,8 @@
 package entropy;
 
+import dvms.dvms.PhysicalNode;
 import dvms.log.Logger;
+import dvms.monitor.LibvirtMonitorActor;
 import dvms.scheduling.ComputingState;
 import entropy.configuration.Configuration;
 import entropy.configuration.SimpleManagedElementSet;
@@ -14,6 +16,8 @@ import entropy.plan.choco.ChocoCustomRP;
 import entropy.plan.durationEvaluator.MockDurationEvaluator;
 import entropy.vjob.DefaultVJob;
 import entropy.vjob.VJob;
+import org.bbk.driver.Node;
+import org.bbk.driver.VirtualMachine;
 
 import java.util.*;
 
@@ -47,7 +51,7 @@ public class EntropyService {
         return planner;
     }
 
-    public static boolean computeAndApplyReconfigurationPlan(Configuration configuration) {
+    public static boolean computeAndApplyReconfigurationPlan(Configuration configuration, List<PhysicalNode> machines) {
 
         ComputingState res = ComputingState.VMRP_SUCCESS;
 
@@ -87,12 +91,12 @@ public class EntropyService {
 
             reconfigurationPlanCost = reconfigurationPlan.getDuration();
             newConfiguration = reconfigurationPlan.getDestination();
-            nbMigrations = computeNbMigrations(reconfigurationPlan);
-            reconfigurationGraphDepth = computeReconfigurationGraphDepth(reconfigurationPlan);
+            nbMigrations = computeNbMigrations(reconfigurationPlan, machines);
+            reconfigurationGraphDepth = computeReconfigurationGraphDepth(reconfigurationPlan, machines);
 
 
             try {
-                applyReconfigurationPlanLogically(reconfigurationPlan, configuration);
+                applyReconfigurationPlanLogically(reconfigurationPlan, configuration, machines);
 
             } catch (Exception e) {
 
@@ -105,7 +109,7 @@ public class EntropyService {
     }
 
     //Get the number of migrations
-    private static int computeNbMigrations(TimedReconfigurationPlan reconfigurationPlan) {
+    private static int computeNbMigrations(TimedReconfigurationPlan reconfigurationPlan, List<PhysicalNode> machines) {
         int nbMigrations = 0;
 
         for (Action a : reconfigurationPlan.getActions()) {
@@ -120,7 +124,7 @@ public class EntropyService {
     //Get the depth of the reconfiguration graph
     //May be compared to the number of steps in Entropy 1.1.1
     //Return 0 if there is no action, and (1 + maximum number of dependencies) otherwise
-    private static int computeReconfigurationGraphDepth(TimedReconfigurationPlan reconfigurationPlan) {
+    private static int computeReconfigurationGraphDepth(TimedReconfigurationPlan reconfigurationPlan, List<PhysicalNode> machines) {
         if (reconfigurationPlan.getActions().isEmpty()) {
             return 0;
         } else {
@@ -141,7 +145,7 @@ public class EntropyService {
     }
 
     //Apply the reconfiguration plan logically (i.e. create/delete Java objects)
-    private static void applyReconfigurationPlanLogically(TimedReconfigurationPlan reconfigurationPlan, Configuration conf) throws InterruptedException {
+    private static void applyReconfigurationPlanLogically(TimedReconfigurationPlan reconfigurationPlan, Configuration conf, List<PhysicalNode> machines) throws InterruptedException {
         Map<Action, List<Dependencies>> revDependencies = new HashMap<Action, List<Dependencies>>();
         TimedExecutionGraph g = reconfigurationPlan.extractExecutionGraph();
 
@@ -159,7 +163,7 @@ public class EntropyService {
         // ie, actions with a start moment equals to 0.
         for (Action a : reconfigurationPlan) {
             if (a.getStartMoment() == 0) {
-                instantiateAndStart(a, conf);
+                instantiateAndStart(a, conf, machines);
             }
 
             if (revDependencies.containsKey(a)) {
@@ -168,17 +172,34 @@ public class EntropyService {
                     dep.removeDependency(a);
                     //Launch new feasible actions.
                     if (dep.isFeasible()) {
-                        instantiateAndStart(dep.getAction(), conf);
+                        instantiateAndStart(dep.getAction(), conf, machines);
                     }
                 }
             }
         }
     }
 
-    private static void instantiateAndStart(Action a, Configuration conf) throws InterruptedException {
+    private static void instantiateAndStart(Action a, Configuration conf, List<PhysicalNode> machines) throws InterruptedException {
 
         if (a instanceof Migration) {
             Migration migration = (Migration) a;
+
+
+            for(PhysicalNode machine: machines) {
+
+                // looking for the destination node
+                if(machine.ref().toString().equals(migration.getDestination().toString())) {
+                    // we found the destination node, now we have to found the good virtualMachine
+
+                    Iterable<VirtualMachine> iterable = (Iterable<VirtualMachine>) machine.machines().toIterable();
+
+                    for(VirtualMachine vm : iterable) {
+                        if(vm.getName().equals(migration.getVirtualMachine().getName())) {
+                            LibvirtMonitorActor.driver().migrate(vm, new Node(machine.url()));
+                        }
+                    }
+                }
+            }
 
 
         } else {

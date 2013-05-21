@@ -1,7 +1,6 @@
 package dvms.entropy
 
 import org.bbk.AkkaArc.util.NodeRef
-import dvms.scheduling.ComputingState
 import scala.concurrent.duration._
 import akka.pattern.ask
 import entropy.plan.choco.ChocoCustomRP
@@ -11,6 +10,7 @@ import concurrent.{Future, Await}
 import dvms.dvms.{PhysicalNode, ToMonitorActor}
 import dvms.monitor.GetVmsWithConsumption
 import entropy.EntropyService
+import scala.collection.JavaConversions._
 
 /**
  * Created with IntelliJ IDEA.
@@ -26,9 +26,7 @@ class EntropyActor(applicationRef: NodeRef) extends AbstractEntropyActor(applica
 
    def computeAndApplyReconfigurationPlan(nodes: List[NodeRef]): Boolean = {
 
-      var res: ComputingState = ComputingState.VMRP_SUCCESS;
       val initialConfiguration: Configuration = null;
-
 
       // building the entropy configuration
 
@@ -58,6 +56,6 @@ class EntropyActor(applicationRef: NodeRef) extends AbstractEntropyActor(applica
          })
       })
 
-      EntropyService.computeAndApplyReconfigurationPlan(initialConfiguration)
+      EntropyService.computeAndApplyReconfigurationPlan(initialConfiguration, physicalNodesWithVmsConsumption)
    }
 }
