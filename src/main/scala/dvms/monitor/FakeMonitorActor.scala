@@ -14,7 +14,7 @@ import dvms.dvms.{PhysicalNode, VirtualMachine}
 class FakeMonitorActor(applicationRef: NodeRef) extends AbstractMonitorActor(applicationRef) {
 
    def getVmsWithConsumption(): PhysicalNode = {
-      PhysicalNode(applicationRef, List(VirtualMachine("fakeVM", cpuConsumption, null)), null)
+      PhysicalNode(applicationRef, List(VirtualMachine("fakeVM", cpuConsumption, null)), "", null)
    }
 
    def uploadCpuConsumption(): Double = {
