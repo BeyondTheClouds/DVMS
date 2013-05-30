@@ -4,11 +4,11 @@
   <head>
     <meta charset='utf-8' />
     <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="description" content="Dvms : Distributed Virtual Machine Scheduler" />
+    <meta name="description" content="DVMS : Distributed Virtual Machine Scheduler" />
 
     <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
 
-    <title>Dvms</title>
+    <title>DVMS</title>
   </head>
 
   <body>
@@ -18,7 +18,7 @@
         <header class="inner">
           <a id="forkme_banner" href="https://github.com/BeyondTheCloud/DVMS">View on GitHub</a>
 
-          <h1 id="project_title">Dvms</h1>
+          <h1 id="project_title">DVMS</h1>
           <h2 id="project_tagline">Distributed Virtual Machine Scheduler</h2>
 
             <section id="downloads">
@@ -31,44 +31,96 @@
     <!-- MAIN CONTENT -->
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
-        <h3>
-<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Welcome to GitHub Pages.</h3>
+        <h1>
+<a name="welcome-to-dvms-pages" class="anchor" href="#welcome-to-dvms-pages"><span class="octicon octicon-link"></span></a>Welcome to DVMS Pages</h1>
 
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
+<p>DVMS stands for Distributed Virtual Machine Scheduler. It is a decentralized Java framework that performs dynamic scheduling of virtual machines by leveraging the scheduling policies implemented in <a href="http://entropy.gforge.inria.fr/">Entropy</a>.</p>
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
-</code></pre>
+<p>When a node cannot guarantee the Quality of Service (QoS) for its hosted VMs or when it is under-utilized, it starts an iterative scheduling procedure (ISP) by querying its neighbor to find a better placement. If the request cannot be satisfied by the neighbor, it is forwarded to the following free one until the ISP succeeds. This approach allows each ISP to send requests only to a minimal number of nodes, thus decreasing the scheduling time without requiring a central point.</p>
 
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
+<p>In addition, this approach allows several ISPs to occur independently at the same moment throughout the infrastructure. In other words, scheduling is performed on partitions of the system that are created dynamically, which significantly improves the reactivity of the system. It should be noted that nodes are reserved for exclusive use by a single ISP, in order to prevent conflicts that could occur if several ISPs performed concurrent operations on the same nodes or VMs.</p>
 
-<h3>
-<a name="designer-templates" class="anchor" href="#designer-templates"><span class="octicon octicon-link"></span></a>Designer Templates</h3>
+<p><img src="http://www.emn.fr/z-info/ascola/lib/exe/fetch.php?cache=cache&amp;media=internet:members:fquesnel:dvms-resource-acquisition-std.jpg" alt="DVMS"></p>
 
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
+<p>Even if such a strategy allows to maintain a consistent state of the infrastructure, it may lead to deadlocks when all nodes are reserved by active ISPs. To tackle this issue, we propose a (distributed) deadlock prevention mechanism.</p>
 
-<h3>
-<a name="rather-drive-stick" class="anchor" href="#rather-drive-stick"><span class="octicon octicon-link"></span></a>Rather Drive Stick?</h3>
+<h1>
+<a name="research-fields" class="anchor" href="#research-fields"><span class="octicon octicon-link"></span></a>Research Fields</h1>
 
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
+<ul>
+<li>Virtualization</li>
+<li>Distributed infrastructures</li>
+<li>Dynamic scheduling</li>
+<li>Multi-agent systems</li>
+<li>Event-based systems</li>
+<li>Cooperative systems</li>
+<li>Autonomous systems</li>
+<li>Scalability</li>
+<li>Reactivity</li>
+<li>Fault-tolerance &amp; resilience</li>
+</ul><h1>
+<a name="news" class="anchor" href="#news"><span class="octicon octicon-link"></span></a>News</h1>
 
-<h3>
-<a name="authors-and-contributors" class="anchor" href="#authors-and-contributors"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
+<ul>
+<li>July 2013 – Paper to be presented at ISPA 2013. [ <a href="http://hal.inria.fr/hal-00817369">HAL</a> ]</li>
+<li>May 2013 – Demonstration at the SCALE challenge (CCGrid 2013). [ <a href="http://www.emn.fr/z-info/ascola/lib/exe/fetch.php?id=internet%3Advms&amp;cache=cache&amp;media=internet:members:fquesnel:challenge_scale2013.pdf">Presentation</a> ]
 
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
+<ul>
+<li>Deployment and scheduling of 1,731 VMs on 206 nodes (distributed across 4 geographical sites).</li>
+</ul>
+</li>
+<li>February 2013 – <a href="http://www.emn.fr/z-info/fquesnel">Flavien QUESNEL</a> successfully defended his Ph.D. thesis. [ <a href="http://tel.archives-ouvertes.fr/tel-00821103">Thesis</a> | <a href="http://www.emn.fr/z-info/ascola/lib/exe/fetch.php?id=internet%3Advms&amp;cache=cache&amp;media=internet:members:fquesnel:phd_defense_fquesnel-french.pdf">Presentation</a> ] (French)</li>
+<li>January 2013 – Wrote a detailed formal correctness proof of the DVMS algorithms. [ <a href="http://www.emn.fr/z-info/ascola/lib/exe/fetch.php?id=internet%3Advms&amp;cache=cache&amp;media=internet:members:fquesnel:dvms_formal_proof_1.3.pdf">PDF</a> ]</li>
+<li>December 2012 – Demonstration at the Grid'5000 challenge. [ <a href="http://people.rennes.inria.fr/Adrien.Lebre/G5K-2012/SLIDES/CHALLENGES/slides-vmdeploy.pdf">Presentation</a> ]</li>
+<li>Deployment and scheduling of 960 VMs on 132 nodes (distributed across 4 geographical sites).</li>
+<li>October 2012 – <a href="http://www.emn.fr/z-info/ascola/doku.php?id=internet:members:jpastor:overview">Jonathan PASTOR</a> started his Ph.D.</li>
+</ul><h1>
+<a name="achievements" class="anchor" href="#achievements"><span class="octicon octicon-link"></span></a>Achievements</h1>
 
-<h3>
-<a name="support-or-contact" class="anchor" href="#support-or-contact"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
+<ul>
+<li>Development of a prototype that can be deployed on the <a href="https://www.grid5000.fr/">Grid'5000 testbed</a>; see the <a href="http://www.emn.fr/z-info/ascola/doku.php?id=internet:members:fquesnel:deploysimulatorg5kv3">tutorial</a>.</li>
+<li>Evaluated the prototype by means of in vivo experiments on the Grid'5000 testbed: Scheduling of 4,754 VMs hosted on 467 nodes (from 8 clusters geographically distributed on 4 sites).</li>
+<li>Evaluated the prototype by means of simulations with the <a href="http://simgrid.gforge.inria.fr/">SimGrid toolkit</a>: Scheduling of 81,920 VMs hosted on 8,192 homogeneous nodes.</li>
+</ul><h1>
+<a name="ongoing-work" class="anchor" href="#ongoing-work"><span class="octicon octicon-link"></span></a>Ongoing Work</h1>
 
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
+<p>We are currently working on the implementation of new mechanisms into the DVMS prototype, in order to take into account the resilience concerns of the underlying infrastructure.</p>
+
+<h1>
+<a name="publications" class="anchor" href="#publications"><span class="octicon octicon-link"></span></a>Publications</h1>
+
+<ul>
+<li>Flavien QUESNEL, Adrien LÈBRE, Jonathan PASTOR, Mario SÜDHOLT, and Daniel BALOUEK. <strong>Advanced validation of the DVMS approach to fully distributed VM scheduling</strong>. In The 11th IEEE International Symposium on Parallel and Distributed Processing with Applications, Melbourne, Australia, July 2013. [ <a href="http://hal.inria.fr/hal-00817369">HAL</a> ]</li>
+<li>Flavien QUESNEL. <strong>Toward Cooperative Management of Large-scale Virtualized Infrastructures: the Case of Scheduling</strong> / Vers une gestion coopérative des infrastructures virtualisées à large échelle : le cas de l'ordonnancement. PhD thesis, Ecole Nationale Supérieure des Mines de Nantes, Nantes, France, February 2013. [ <a href="http://tel.archives-ouvertes.fr/tel-00821103">Thesis</a> | <a href="http://www.emn.fr/z-info/ascola/lib/exe/fetch.php?id=internet%3Advms&amp;cache=cache&amp;media=internet:members:fquesnel:phd_defense_fquesnel-french.pdf">Presentation</a> ] (French)</li>
+<li>Flavien QUESNEL, Adrien LÈBRE and Mario SÜDHOLT. <strong>Cooperative and Reactive Scheduling in Large-Scale Virtualized Platforms with DVMS</strong>. Concurrency and Computation: Practice and Experience. 2012. John Wiley and Sons. [ <a href="http://hal.archives-ouvertes.fr/hal-00675315/fr/">HAL</a> | <a href="http://onlinelibrary.wiley.com/doi/10.1002/cpe.2848/abstract">Wiley</a> ]</li>
+<li>Flavien QUESNEL and Adrien LÈBRE. <strong>Cooperative Dynamic Scheduling of Virtual Machines in Distributed Systems</strong>. In Euro-Par 2011 Workshops, Part II, Vol. 7156 of Lecture Notes in Computer Science, August 2011. Springer. [ <a href="http://hal.archives-ouvertes.fr/hal-00622862/fr/">HAL</a> | <a href="http://link.springer.com/chapter/10.1007/978-3-642-29740-3_51">Springer</a> ]</li>
+</ul><h1>
+<a name="advanced-material" class="anchor" href="#advanced-material"><span class="octicon octicon-link"></span></a>Advanced Material</h1>
+
+<ul>
+<li>Detailed formal correctness proof of the DVMS algorithms. [ <a href="http://www.emn.fr/z-info/ascola/lib/exe/fetch.php?id=internet%3Advms&amp;cache=cache&amp;media=internet:members:fquesnel:dvms_formal_proof_1.3.pdf">PDF</a> ]</li>
+</ul><h1>
+<a name="authors-and-contributors" class="anchor" href="#authors-and-contributors"><span class="octicon octicon-link"></span></a>Authors and Contributors</h1>
+
+<ul>
+<li>
+<a href="http://graal.ens-lyon.fr/%7Edbalouek/web/">Daniel BALOUEK</a> ( contributor, helped with testing a preliminary version of the prototype on the Grid'5000 testbed )</li>
+<li>
+<a href="http://www.emn.fr/z-info/alebre08">Adrien LÈBRE</a> ( <strong>supervisor</strong>, has led the development of the prototypes )</li>
+<li>
+<a href="http://www.emn.fr/z-info/ascola/doku.php?id=internet:members:jpastor:overview">Jonathan PASTOR</a> ( <strong>maintainer</strong>, has designed the current prototype in Scala )</li>
+<li>
+<a href="http://www.emn.fr/z-info/fquesnel">Flavien QUESNEL</a> ( former maintainer + current contributor, designed a preliminary version of the prototype in Java )</li>
+<li>
+<a href="http://www.emn.fr/z-info/sudholt/">Mario SÜDHOLT</a> ( contributor, has proved formally the correctness of the DVMS algorithms )</li>
+</ul>
       </section>
     </div>
 
     <!-- FOOTER  -->
     <div id="footer_wrap" class="outer">
       <footer class="inner">
-        <p class="copyright">Dvms maintained by <a href="https://github.com/BeyondTheCloud">BeyondTheCloud</a></p>
+        <p class="copyright">DVMS maintained by <a href="https://github.com/BeyondTheCloud">BeyondTheCloud</a></p>
         <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
       </footer>
     </div>
