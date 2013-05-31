@@ -13,6 +13,10 @@ import dvms.monitor.CpuViolation
 import java.util.{Date, UUID}
 import dvms.ActorIdParser
 
+import dvms.dvms.DvmsProtocol._
+import dvms.dvms.DvmsModel._
+import dvms.dvms.DvmsModel.DvmsPartititionState._
+
 /**
  * Created with IntelliJ IDEA.
  * User: jonathan
@@ -22,75 +26,8 @@ import dvms.ActorIdParser
  */
 
 
-// Routing messages
-case class ToMonitorActor(msg: Any)
-
-case class ToDvmsActor(msg: Any)
-
-case class ToEntropyActor(msg: Any)
 
 
-case class ThisIsYourNeighbor(neighbor: NodeRef)
-
-case class YouMayNeedToUpdateYourFirstOut(oldNeighbor: Option[NodeRef], newNeighbor: NodeRef)
-
-case class CpuViolationDetected()
-
-// Message used for the base of DVMS
-case class DissolvePartition()
-
-object DvmsPartition {
-   def apply(leader: NodeRef, initiator: NodeRef, nodes: List[NodeRef], state: DvmsPartititionState): DvmsPartition =
-      DvmsPartition(leader, initiator, nodes, state, UUID.randomUUID())
-}
-
-case class DvmsPartition(leader: NodeRef, initiator: NodeRef, nodes: List[NodeRef], state: DvmsPartititionState, id: UUID)
-
-case class TransmissionOfAnISP(currentPartition: DvmsPartition)
-
-case class IAmTheNewLeader(partition: DvmsPartition, firstOut: NodeRef)
-
-// Message used for the merge of partitions
-case class IsThisVersionOfThePartitionStillValid(partition: DvmsPartition)
-
-case class CanIMergePartitionWithYou(partition: DvmsPartition, contact: NodeRef)
-
-case class ChangeTheStateOfThePartition(newState: DvmsPartititionState)
-
-// Message for the resiliency
-case class AskTimeoutDetected(e: AskTimeoutException)
-
-case class FailureDetected(node: NodeRef)
-
-case class CheckTimeout()
-
-case class ComputerSpecification(numberOfCPU: Int, ramCapacity: Int, coreCapacity: Int)
-
-case class PhysicalNode(ref: NodeRef, machines: List[VirtualMachine], url: String, specs: ComputerSpecification)
-
-case class VirtualMachine(name: String, cpuConsumption: Double, specs: ComputerSpecification)
-
-
-class DvmsPartititionState(val name: String) {
-
-   def getName(): String = name
-
-   def isEqualTo(a: DvmsPartititionState): Boolean = {
-      this.name == a.getName
-   }
-
-   def isDifferentFrom(a: DvmsPartititionState): Boolean = {
-      this.name != a.getName
-   }
-}
-
-case class Created() extends DvmsPartititionState("Created")
-
-case class Blocked() extends DvmsPartititionState("Blocked")
-
-case class Growing() extends DvmsPartititionState("Growing")
-
-case class Destroyed() extends DvmsPartititionState("Destroyed")
 
 object DvmsActor {
    //   val PeriodOfPartitionNodeChecking:FiniteDuration = 100 milliseconds
@@ -175,10 +112,6 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
                      currentPartition = Some(newPartition)
                      firstOut = Some(nextDvmsNode)
 
-                     if (node.location.getId == 10) {
-                        println("toto")
-                     }
-
                      log.info(s"$applicationRef: A node crashed ($node), I am becoming the new leader of $currentPartition")
 
                      newPartition.nodes.foreach(node => {
@@ -226,9 +159,15 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
          }
       }
 
+
+
       case FailureDetected(node) => {
          remoteNodeFailureDetected(node)
       }
+
+
+
+
 
       case CheckTimeout() => {
 
@@ -253,6 +192,8 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
             case _ =>
          }
       }
+
+
 
       case CanIMergePartitionWithYou(partition, contact) => {
 
@@ -342,11 +283,6 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
                case _ if ((partition.initiator.location isDifferentFrom p.initiator.location)
                  && (p.state isEqualTo Growing())) => {
 
-                  if (firstOut.get.location.getId == 4) {
-
-                     val neighbor = nextDvmsNode
-                     println("toto")
-                  }
                   log.info(s"$applicationRef: forwarding $msg to $firstOut")
 
                   // I forward the partition to the current firstOut

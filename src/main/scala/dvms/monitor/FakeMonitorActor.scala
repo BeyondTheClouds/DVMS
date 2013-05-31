@@ -1,7 +1,8 @@
 package dvms.monitor
 
 import org.bbk.AkkaArc.util.NodeRef
-import dvms.dvms.{PhysicalNode, VirtualMachine}
+import dvms.dvms.DvmsModel._
+import util.Random
 
 /**
  * Created with IntelliJ IDEA.
@@ -12,6 +13,10 @@ import dvms.dvms.{PhysicalNode, VirtualMachine}
  */
 
 class FakeMonitorActor(applicationRef: NodeRef) extends AbstractMonitorActor(applicationRef) {
+
+   val delta: Double = 17
+   val seed: Long = applicationRef.location.getId
+   val random: Random = new Random(seed)
 
    def getVmsWithConsumption(): PhysicalNode = {
       PhysicalNode(applicationRef, List(VirtualMachine("fakeVM", cpuConsumption, null)), "", null)

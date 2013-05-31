@@ -7,7 +7,8 @@ import entropy.plan.choco.ChocoCustomRP
 import entropy.configuration.{SimpleVirtualMachine, SimpleNode, Configuration}
 import entropy.plan.durationEvaluator.MockDurationEvaluator
 import concurrent.{Future, Await}
-import dvms.dvms.{PhysicalNode, ToMonitorActor}
+import dvms.dvms.DvmsModel._
+import dvms.dvms.DvmsProtocol._
 import dvms.monitor.GetVmsWithConsumption
 import entropy.EntropyService
 import scala.collection.JavaConversions._

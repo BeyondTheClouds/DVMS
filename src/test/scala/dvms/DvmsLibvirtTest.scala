@@ -49,7 +49,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
    }
 
 
-   "LibvirtDriver" must {
+   "LibvirtDriver" should {
       "successfully load" in {
 
          val driver: LibvirtDriver = new LibvirtDriver("configuration/driver.cfg")
@@ -60,7 +60,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
       }
    }
 
-   "Dvms using LibvirtDriver" must {
+   "Dvms using LibvirtDriver" should {
 
       object LibvirtDvmsFactory extends DvmsAbstractFactory {
          def createMonitorActor(nodeRef: NodeRef): Option[AbstractMonitorActor] = {

@@ -1,7 +1,7 @@
 package dvms.factory
 
-import dvms.monitor.{FakeMonitorActor, AbstractMonitorActor}
-import dvms.entropy.{FakeEntropyActor, AbstractEntropyActor}
+import dvms.monitor.{LibvirtMonitorActor, AbstractMonitorActor}
+import dvms.entropy.{EntropyActor, AbstractEntropyActor}
 import org.bbk.AkkaArc.util.NodeRef
 import dvms.dvms.DvmsActor
 
@@ -14,18 +14,17 @@ import dvms.dvms.DvmsActor
  * To change this template use File | Settings | File Templates.
  */
 
-object DvmsFactory extends DvmsAbstractFactory {
+object LibvirtDvmsFactory extends DvmsAbstractFactory {
 
    def createMonitorActor(nodeRef: NodeRef): Option[AbstractMonitorActor] = {
-      Some(new FakeMonitorActor(nodeRef))
+      Some(new LibvirtMonitorActor(nodeRef))
    }
 
    def createDvmsActor(nodeRef: NodeRef): Option[DvmsActor] = {
       Some(new DvmsActor(nodeRef))
    }
 
-
    def createEntropyActor(nodeRef: NodeRef): Option[AbstractEntropyActor] = {
-      Some(new FakeEntropyActor(nodeRef))
+      Some(new EntropyActor(nodeRef))
    }
 }

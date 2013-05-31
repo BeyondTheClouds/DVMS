@@ -6,9 +6,8 @@ import dvms.dvms._
 import scala.concurrent.duration._
 import akka.pattern.{AskTimeoutException, ask}
 import dvms.monitor.GetVmsWithConsumption
-import dvms.dvms.AskTimeoutDetected
-import dvms.dvms.ToMonitorActor
-import dvms.dvms.ToDvmsActor
+import dvms.dvms.DvmsProtocol._
+import dvms.dvms.DvmsModel._
 import dvms.monitor.UpdateConfiguration
 
 /**

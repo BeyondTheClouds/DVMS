@@ -1,8 +1,8 @@
 package entropy;
 
-import dvms.dvms.PhysicalNode;
+import dvms.dvms.DvmsModel.*;
 import dvms.log.Logger;
-import dvms.monitor.LibvirtMonitorActor;
+import dvms.monitor.LibvirtMonitorDriver;
 import dvms.scheduling.ComputingState;
 import entropy.configuration.Configuration;
 import entropy.configuration.SimpleManagedElementSet;
@@ -195,7 +195,7 @@ public class EntropyService {
 
                     for(VirtualMachine vm : iterable) {
                         if(vm.getName().equals(migration.getVirtualMachine().getName())) {
-                            LibvirtMonitorActor.driver().migrate(vm, new Node(machine.url()));
+                            LibvirtMonitorDriver.driver().migrate(vm, new Node(machine.url()));
                         }
                     }
                 }

@@ -4,8 +4,9 @@ import org.bbk.AkkaArc.util.NodeRef
 import org.bbk.driver.LibvirtDriver
 import org.bbk.model.IVirtualMachine
 import scala.collection.JavaConversions._
-import dvms.dvms.{ComputerSpecification, PhysicalNode, VirtualMachine}
+import dvms.dvms.DvmsModel._
 import dvms.configuration.{VirtualMachineConfiguration, HardwareConfiguration}
+import scala.concurrent.duration._
 
 /**
  * Created with IntelliJ IDEA.
@@ -15,7 +16,7 @@ import dvms.configuration.{VirtualMachineConfiguration, HardwareConfiguration}
  * To change this template use File | Settings | File Templates.
  */
 
-object LibvirtMonitorActor {
+object LibvirtMonitorDriver {
 
    val driver: LibvirtDriver = new LibvirtDriver("configuration/driver.cfg");
    driver.connect()
@@ -25,17 +26,19 @@ object LibvirtMonitorActor {
 class LibvirtMonitorActor(applicationRef: NodeRef) extends AbstractMonitorActor(applicationRef) {
 
    def getVmsWithConsumption(): PhysicalNode = {
-      PhysicalNode(applicationRef, LibvirtMonitorActor.driver.getRunningVms.toList.map(vm =>
+
+
+      PhysicalNode(applicationRef, LibvirtMonitorDriver.driver.getRunningVms.toList.map(vm =>
          VirtualMachine(
             vm.getName,
-            LibvirtMonitorActor.driver.getUserCpu(vm) + LibvirtMonitorActor.driver.getStealCpu(vm),
+            LibvirtMonitorDriver.driver.getUserCpu(vm) + LibvirtMonitorDriver.driver.getStealCpu(vm),
             ComputerSpecification(
                VirtualMachineConfiguration.getNumberOfCpus,
                VirtualMachineConfiguration.getRamCapacity,
                VirtualMachineConfiguration.getCpuCoreCapacity
             )
          )),
-         LibvirtMonitorActor.driver.getMigrationUrl()
+         LibvirtMonitorDriver.driver.getMigrationUrl()
          ,
          ComputerSpecification(
             HardwareConfiguration.getNumberOfCpus,
@@ -47,8 +50,8 @@ class LibvirtMonitorActor(applicationRef: NodeRef) extends AbstractMonitorActor(
 
    def uploadCpuConsumption(): Double = {
 
-      val cpuConsumption: Double = LibvirtMonitorActor.driver.getRunningVms.toList.foldLeft[Double](0)((a: Double, b: IVirtualMachine) => a + (b match {
-         case machine: IVirtualMachine => LibvirtMonitorActor.driver.getStealCpu(machine) + LibvirtMonitorActor.driver.getUserCpu(machine)
+      val cpuConsumption: Double = LibvirtMonitorDriver.driver.getRunningVms.toList.par.foldLeft[Double](0)((a: Double, b: IVirtualMachine) => a + (b match {
+         case machine: IVirtualMachine => LibvirtMonitorDriver.driver.getStealCpu(machine) + LibvirtMonitorDriver.driver.getUserCpu(machine)
          case _ => 0.0
       }))
 

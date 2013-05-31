@@ -1,10 +1,7 @@
 package dvms
 
-import dvms._
-import dvms.ThisIsYourNeighbor
-import dvms.ToDvmsActor
-import dvms.ToMonitorActor
-import factory.{DvmsAbstractFactory, DvmsFactory}
+import dvms.DvmsProtocol._
+import factory.{DvmsAbstractFactory, FakeDvmsFactory}
 import org.bbk.AkkaArc.util.{NodeRef, INetworkLocation}
 import org.bbk.AkkaArc.PeerActor
 import akka.actor.{OneForOneStrategy, Props}
@@ -38,7 +35,7 @@ object ActorIdParser extends RegexParsers {
 
 class DvmsSupervisor(location: INetworkLocation, factory: DvmsAbstractFactory) extends PeerActor(location) {
 
-   def this(location: INetworkLocation) = this(location, DvmsFactory)
+   def this(location: INetworkLocation) = this(location, FakeDvmsFactory)
 
    val nodeRef: NodeRef = NodeRef(location, self)
 

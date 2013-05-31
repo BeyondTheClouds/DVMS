@@ -5,8 +5,9 @@ import akka.actor._
 import akka.testkit.TestKit
 import akka.testkit.ImplicitSender
 import dvms._
-import dvms.DvmsPartition
-import dvms.ToDvmsActor
+import dvms.DvmsModel._
+import dvms.DvmsModel.DvmsPartititionState._
+import dvms.DvmsProtocol._
 import entropy.{AbstractEntropyActor, FakeEntropyActor}
 import factory.DvmsAbstractFactory
 import monitor.{AbstractMonitorActor, FakeMonitorActor}

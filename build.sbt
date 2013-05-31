@@ -22,9 +22,9 @@ resolvers += "Typesafe Snapshots" at "http://repo.typesafe.com/typesafe/snapshot
 
 libraryDependencies += "org.scalatest" % "scalatest_2.10" % "1.9.1" % "test"
 
-libraryDependencies += "com.typesafe.akka" %% "akka-remote" % "2.2-SNAPSHOT"
+//libraryDependencies += "com.typesafe.akka" %% "akka-remote" % "2.2-SNAPSHOT"
 
-libraryDependencies += "com.typesafe.akka" %% "akka-testkit" % "2.2-SNAPSHOT"
+//libraryDependencies += "com.typesafe.akka" %% "akka-testkit" % "2.2-SNAPSHOT"
 
 libraryDependencies += "junit" % "junit" % "4.8.1" % "test"
 
@@ -39,5 +39,7 @@ libraryDependencies += "junit" % "junit" % "4.8.1" % "test"
 seq(assemblySettings: _*)
 
 mainClass in assembly := Some("dvms.Main")
+
+test in assembly := {}
 
 jarName in assembly := "dvms.jar"

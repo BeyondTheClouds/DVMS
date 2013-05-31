@@ -5,10 +5,9 @@ import akka.actor.{ActorLogging, Actor}
 import akka.util.Timeout
 import concurrent.ExecutionContext
 import java.util.concurrent.Executors
-import util.Random
 import org.bbk.AkkaArc.notification.{SimpleEvent, TriggerEvent, ToNotificationActor}
 import scala.concurrent.duration._
-import dvms.dvms.PhysicalNode
+import dvms.dvms.DvmsModel._
 
 /**
  * Created with IntelliJ IDEA.
@@ -33,10 +32,8 @@ abstract class AbstractMonitorActor(applicationRef: NodeRef) extends Actor with 
 
    case class Tick()
 
-   var cpuConsumption: Double = 50
-   val delta: Double = 17
-   val seed: Long = applicationRef.location.getId
-   val random: Random = new Random(seed)
+   var cpuConsumption: Double = 0
+
 
    def getVmsWithConsumption(): PhysicalNode
 
@@ -45,7 +42,7 @@ abstract class AbstractMonitorActor(applicationRef: NodeRef) extends Actor with 
    override def receive = {
       case Tick() => {
 
-         uploadCpuConsumption()
+         cpuConsumption = uploadCpuConsumption()
 
          log.info(s"the new consumption is : $cpuConsumption")
 

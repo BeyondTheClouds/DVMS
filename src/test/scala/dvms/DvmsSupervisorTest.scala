@@ -18,7 +18,9 @@ import dvms.factory.DvmsAbstractFactory
 import dvms.monitor.{FakeMonitorActor, AbstractMonitorActor}
 import dvms.entropy.{FakeEntropyActor, AbstractEntropyActor}
 import collection.immutable.HashMap
-import dvms.dvms.{DvmsActor, ToEntropyActor}
+import dvms.dvms.DvmsActor
+import dvms.dvms.DvmsProtocol._
+
 
 object DvmsSupervisorTest {
 
