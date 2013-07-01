@@ -11,9 +11,8 @@ import org.discovery.dvms.dvms.DvmsProtocol._
 import entropy.{AbstractEntropyActor, FakeEntropyActor}
 import factory.DvmsAbstractFactory
 import monitor.{AbstractMonitorActor, FakeMonitorActor}
-import org.scalatest.WordSpec
+import org.scalatest.{BeforeAndAfterEach, WordSpec, BeforeAndAfterAll}
 import org.scalatest.matchers.MustMatchers
-import org.scalatest.BeforeAndAfterAll
 import scala.concurrent.duration._
 import concurrent.{Await, ExecutionContext}
 import java.util.concurrent.Executors
@@ -21,7 +20,7 @@ import akka.pattern.ask
 import collection.immutable.HashMap
 import org.discovery.AkkaArc.util.{NodeRef, INetworkLocation}
 import org.discovery.AkkaArc.util.Configuration
-import org.discovery.AkkaArc.InitCommunicationWithHim
+import org.discovery.AkkaArc.ConnectToThisPeerActor
 import scala.Some
 import org.discovery.AkkaArc.util.FakeNetworkLocation
 import java.util.Date
@@ -154,7 +153,7 @@ object TestDvmsFactory extends DvmsAbstractFactory {
 
 
 class DvmsDeadlockTest(_system: ActorSystem) extends TestKit(_system) with ImplicitSender
-with WordSpec with MustMatchers with BeforeAndAfterAll {
+with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
 
    implicit def intToLocation(i: Long): INetworkLocation = new FakeNetworkLocation(i)
 
@@ -170,11 +169,18 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
      }
                                                                       """)))
 
+   override def beforeEach() {
+      Thread.sleep(500)
+   }
+
    override def afterAll() {
       system.shutdown()
    }
 
    "Deadlock resolver" must {
+
+
+
       "resolve a linear deadlock" in {
 
          def quickNodeRef(l: Int, ref: ActorRef): NodeRef = NodeRef(FakeNetworkLocation(l), ref)
@@ -190,13 +196,13 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
 
 
          // create the links
-         node2 ! InitCommunicationWithHim(node1)
-         node3 ! InitCommunicationWithHim(node1)
-         node4 ! InitCommunicationWithHim(node1)
-         node5 ! InitCommunicationWithHim(node1)
-         node6 ! InitCommunicationWithHim(node1)
-         node7 ! InitCommunicationWithHim(node1)
-         node8 ! InitCommunicationWithHim(node1)
+         node2 ! ConnectToThisPeerActor(node1)
+         node3 ! ConnectToThisPeerActor(node1)
+         node4 ! ConnectToThisPeerActor(node1)
+         node5 ! ConnectToThisPeerActor(node1)
+         node6 ! ConnectToThisPeerActor(node1)
+         node7 ! ConnectToThisPeerActor(node1)
+         node8 ! ConnectToThisPeerActor(node1)
 
 
          Thread.sleep(500)
@@ -269,6 +275,15 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
 
          (node1IsOk && node2IsOk && node3IsOk && node4IsOk && node5IsOk && node6IsOk &&
            node7IsOk && node8IsOk) must be(true)
+
+         node1 ! Kill
+         node2 ! Kill
+         node3 ! Kill
+         node4 ! Kill
+         node5 ! Kill
+         node6 ! Kill
+         node7 ! Kill
+         node8 ! Kill
       }
 
 
@@ -283,9 +298,9 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
 
 
          // create the links
-         node2 ! InitCommunicationWithHim(node1)
-         node3 ! InitCommunicationWithHim(node1)
-         node4 ! InitCommunicationWithHim(node1)
+         node2 ! ConnectToThisPeerActor(node1)
+         node3 ! ConnectToThisPeerActor(node1)
+         node4 ! ConnectToThisPeerActor(node1)
 
 
          Thread.sleep(500)
@@ -330,6 +345,11 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
          println(s"4: $node4IsOk")
 
          (node1IsOk && node2IsOk && node3IsOk && node4IsOk) must be(true)
+
+         node1 ! Kill
+         node2 ! Kill
+         node3 ! Kill
+         node4 ! Kill
       }
 
 
@@ -346,11 +366,11 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
 
 
          // create the links
-         node2 ! InitCommunicationWithHim(node1)
-         node3 ! InitCommunicationWithHim(node1)
-         node4 ! InitCommunicationWithHim(node1)
-         node5 ! InitCommunicationWithHim(node1)
-         node6 ! InitCommunicationWithHim(node1)
+         node2 ! ConnectToThisPeerActor(node1)
+         node3 ! ConnectToThisPeerActor(node1)
+         node4 ! ConnectToThisPeerActor(node1)
+         node5 ! ConnectToThisPeerActor(node1)
+         node6 ! ConnectToThisPeerActor(node1)
 
 
          Thread.sleep(500)
@@ -405,6 +425,13 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
          println(s"6: $node6IsOk")
 
          (node1IsOk && node2IsOk && node3IsOk && node4IsOk && node5IsOk && node6IsOk) must be(true)
+
+         node1 ! Kill
+         node2 ! Kill
+         node3 ! Kill
+         node4 ! Kill
+         node5 ! Kill
+         node6 ! Kill
       }
 
       "resolve a nested deadlock (9 nodes)" in {
@@ -423,14 +450,14 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
 
 
          // create the links
-         node2 ! InitCommunicationWithHim(node1)
-         node3 ! InitCommunicationWithHim(node1)
-         node4 ! InitCommunicationWithHim(node1)
-         node5 ! InitCommunicationWithHim(node1)
-         node6 ! InitCommunicationWithHim(node1)
-         node7 ! InitCommunicationWithHim(node1)
-         node8 ! InitCommunicationWithHim(node1)
-         node9 ! InitCommunicationWithHim(node1)
+         node2 ! ConnectToThisPeerActor(node1)
+         node3 ! ConnectToThisPeerActor(node1)
+         node4 ! ConnectToThisPeerActor(node1)
+         node5 ! ConnectToThisPeerActor(node1)
+         node6 ! ConnectToThisPeerActor(node1)
+         node7 ! ConnectToThisPeerActor(node1)
+         node8 ! ConnectToThisPeerActor(node1)
+         node9 ! ConnectToThisPeerActor(node1)
 
 
          Thread.sleep(500)
@@ -505,6 +532,16 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
 
          (node1IsOk && node2IsOk && node3IsOk && node4IsOk && node5IsOk && node6IsOk &&
            node7IsOk && node8IsOk && node9IsOk) must be(true)
+
+         node1 ! Kill
+         node2 ! Kill
+         node3 ! Kill
+         node4 ! Kill
+         node5 ! Kill
+         node6 ! Kill
+         node7 ! Kill
+         node8 ! Kill
+         node9 ! Kill
       }
 
       "resolve a nested deadlock (12 nodes)" in {
@@ -526,17 +563,17 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
 
 
          // create the links
-         node2 ! InitCommunicationWithHim(node1)
-         node3 ! InitCommunicationWithHim(node1)
-         node4 ! InitCommunicationWithHim(node1)
-         node5 ! InitCommunicationWithHim(node1)
-         node6 ! InitCommunicationWithHim(node1)
-         node7 ! InitCommunicationWithHim(node1)
-         node8 ! InitCommunicationWithHim(node1)
-         node9 ! InitCommunicationWithHim(node1)
-         node10 ! InitCommunicationWithHim(node1)
-         node11 ! InitCommunicationWithHim(node1)
-         node12 ! InitCommunicationWithHim(node1)
+         node2 ! ConnectToThisPeerActor(node1)
+         node3 ! ConnectToThisPeerActor(node1)
+         node4 ! ConnectToThisPeerActor(node1)
+         node5 ! ConnectToThisPeerActor(node1)
+         node6 ! ConnectToThisPeerActor(node1)
+         node7 ! ConnectToThisPeerActor(node1)
+         node8 ! ConnectToThisPeerActor(node1)
+         node9 ! ConnectToThisPeerActor(node1)
+         node10 ! ConnectToThisPeerActor(node1)
+         node11 ! ConnectToThisPeerActor(node1)
+         node12 ! ConnectToThisPeerActor(node1)
 
 
          Thread.sleep(500)
@@ -630,6 +667,19 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
 
          (node1IsOk && node2IsOk && node3IsOk && node4IsOk && node5IsOk && node6IsOk &&
            node7IsOk && node8IsOk && node9IsOk && node10IsOk && node11IsOk && node12IsOk) must be(true)
+
+         node1 ! Kill
+         node2 ! Kill
+         node3 ! Kill
+         node4 ! Kill
+         node5 ! Kill
+         node6 ! Kill
+         node7 ! Kill
+         node8 ! Kill
+         node9 ! Kill
+         node10 ! Kill
+         node11 ! Kill
+         node12 ! Kill
       }
 
    }

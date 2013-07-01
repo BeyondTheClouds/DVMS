@@ -8,18 +8,17 @@ import dvms._
 import dvms.DvmsModel._
 import dvms.DvmsModel.DvmsPartititionState._
 import dvms.DvmsProtocol._
-import org.scalatest.WordSpec
+import org.scalatest.{BeforeAndAfterEach, WordSpec, BeforeAndAfterAll}
 import org.scalatest.matchers.MustMatchers
-import org.scalatest.BeforeAndAfterAll
 import scala.concurrent.duration._
 import concurrent.{Await, ExecutionContext}
 import java.util.concurrent.Executors
 import akka.pattern.ask
 import org.discovery.AkkaArc.util.{NodeRef, INetworkLocation}
 import org.discovery.AkkaArc.util.Configuration
-import org.discovery.AkkaArc.InitCommunicationWithHim
 import org.discovery.AkkaArc.util.FakeNetworkLocation
 import com.typesafe.config.ConfigFactory
+import org.discovery.AkkaArc.ConnectToThisPeerActor
 
 
 object DvmsResiliencyTest {
@@ -27,7 +26,7 @@ object DvmsResiliencyTest {
 }
 
 class DvmsResiliencyTest(_system: ActorSystem) extends TestKit(_system) with ImplicitSender
-with WordSpec with MustMatchers with BeforeAndAfterAll {
+with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
 
    implicit def intToLocation(i: Long): INetworkLocation = new FakeNetworkLocation(i)
 
@@ -42,6 +41,10 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
        mailbox-type = "org.discovery.dvms.utility.DvmsPriorityMailBox"
      }
                                                                       """)))
+
+   override def beforeEach() {
+      Thread.sleep(500)
+   }
 
    override def afterAll() {
       system.shutdown()
@@ -68,17 +71,17 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
 
 
          // create the links
-         node2 ! InitCommunicationWithHim(node1)
-         node3 ! InitCommunicationWithHim(node1)
-         node4 ! InitCommunicationWithHim(node1)
-         node5 ! InitCommunicationWithHim(node1)
-         node6 ! InitCommunicationWithHim(node1)
-         node7 ! InitCommunicationWithHim(node1)
-         node8 ! InitCommunicationWithHim(node1)
-         node9 ! InitCommunicationWithHim(node1)
-         node10 ! InitCommunicationWithHim(node1)
-         node11 ! InitCommunicationWithHim(node1)
-         node12 ! InitCommunicationWithHim(node1)
+         node2 ! ConnectToThisPeerActor(node1)
+         node3 ! ConnectToThisPeerActor(node1)
+         node4 ! ConnectToThisPeerActor(node1)
+         node5 ! ConnectToThisPeerActor(node1)
+         node6 ! ConnectToThisPeerActor(node1)
+         node7 ! ConnectToThisPeerActor(node1)
+         node8 ! ConnectToThisPeerActor(node1)
+         node9 ! ConnectToThisPeerActor(node1)
+         node10 ! ConnectToThisPeerActor(node1)
+         node11 ! ConnectToThisPeerActor(node1)
+         node12 ! ConnectToThisPeerActor(node1)
 
 
          Thread.sleep(500)
@@ -154,6 +157,19 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
 
          (node1IsOk && node2IsOk && node3IsOk && node5IsOk && node6IsOk &&
            node7IsOk && node8IsOk && node9IsOk && node10IsOk && node11IsOk && node12IsOk) must be(true)
+
+         node1 ! Kill
+         node2 ! Kill
+         node3 ! Kill
+//         node4 ! Kill
+         node5 ! Kill
+         node6 ! Kill
+         node7 ! Kill
+         node8 ! Kill
+         node9 ! Kill
+         node10 ! Kill
+         node11 ! Kill
+         node12 ! Kill
       }
 
       "handle a combined crash in partitions (ring of 12 nodes) (initiator)" in {
@@ -175,17 +191,17 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
 
 
          // create the links
-         node2 ! InitCommunicationWithHim(node1)
-         node3 ! InitCommunicationWithHim(node1)
-         node4 ! InitCommunicationWithHim(node1)
-         node5 ! InitCommunicationWithHim(node1)
-         node6 ! InitCommunicationWithHim(node1)
-         node7 ! InitCommunicationWithHim(node1)
-         node8 ! InitCommunicationWithHim(node1)
-         node9 ! InitCommunicationWithHim(node1)
-         node10 ! InitCommunicationWithHim(node1)
-         node11 ! InitCommunicationWithHim(node1)
-         node12 ! InitCommunicationWithHim(node1)
+         node2 ! ConnectToThisPeerActor(node1)
+         node3 ! ConnectToThisPeerActor(node1)
+         node4 ! ConnectToThisPeerActor(node1)
+         node5 ! ConnectToThisPeerActor(node1)
+         node6 ! ConnectToThisPeerActor(node1)
+         node7 ! ConnectToThisPeerActor(node1)
+         node8 ! ConnectToThisPeerActor(node1)
+         node9 ! ConnectToThisPeerActor(node1)
+         node10 ! ConnectToThisPeerActor(node1)
+         node11 ! ConnectToThisPeerActor(node1)
+         node12 ! ConnectToThisPeerActor(node1)
 
 
          Thread.sleep(500)
@@ -262,6 +278,19 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
 
          (node4IsOk && node2IsOk && node3IsOk && node5IsOk && node6IsOk &&
            node7IsOk && node8IsOk && node9IsOk && node10IsOk && node11IsOk && node12IsOk) must be(true)
+
+//         node1 ! Kill
+         node2 ! Kill
+         node3 ! Kill
+         node4 ! Kill
+         node5 ! Kill
+         node6 ! Kill
+         node7 ! Kill
+         node8 ! Kill
+         node9 ! Kill
+         node10 ! Kill
+         node11 ! Kill
+         node12 ! Kill
       }
 
       "handle a combined crash in partitions (ring of 12 nodes) (leader)" in {
@@ -283,17 +312,17 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
 
 
          // create the links
-         node2 ! InitCommunicationWithHim(node1)
-         node3 ! InitCommunicationWithHim(node1)
-         node4 ! InitCommunicationWithHim(node1)
-         node5 ! InitCommunicationWithHim(node1)
-         node6 ! InitCommunicationWithHim(node1)
-         node7 ! InitCommunicationWithHim(node1)
-         node8 ! InitCommunicationWithHim(node1)
-         node9 ! InitCommunicationWithHim(node1)
-         node10 ! InitCommunicationWithHim(node1)
-         node11 ! InitCommunicationWithHim(node1)
-         node12 ! InitCommunicationWithHim(node1)
+         node2 ! ConnectToThisPeerActor(node1)
+         node3 ! ConnectToThisPeerActor(node1)
+         node4 ! ConnectToThisPeerActor(node1)
+         node5 ! ConnectToThisPeerActor(node1)
+         node6 ! ConnectToThisPeerActor(node1)
+         node7 ! ConnectToThisPeerActor(node1)
+         node8 ! ConnectToThisPeerActor(node1)
+         node9 ! ConnectToThisPeerActor(node1)
+         node10 ! ConnectToThisPeerActor(node1)
+         node11 ! ConnectToThisPeerActor(node1)
+         node12 ! ConnectToThisPeerActor(node1)
 
 
          Thread.sleep(2000)
@@ -370,6 +399,19 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
 
          (node1IsOk && node2IsOk && node3IsOk && node5IsOk && node6IsOk &&
            node7IsOk && node8IsOk && node9IsOk && node4IsOk && node11IsOk && node12IsOk) must be(true)
+
+         node1 ! Kill
+         node2 ! Kill
+         node3 ! Kill
+         node4 ! Kill
+         node5 ! Kill
+         node6 ! Kill
+         node7 ! Kill
+         node8 ! Kill
+         node9 ! Kill
+//         node10 ! Kill
+         node11 ! Kill
+         node12 ! Kill
       }
 
       "handle several combined crashes in partitions (ring of 12 nodes) (one leader, one initiator and one lambda)" in {
@@ -391,17 +433,17 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
 
 
          // create the links
-         node2 ! InitCommunicationWithHim(node1)
-         node3 ! InitCommunicationWithHim(node1)
-         node4 ! InitCommunicationWithHim(node1)
-         node5 ! InitCommunicationWithHim(node1)
-         node6 ! InitCommunicationWithHim(node1)
-         node7 ! InitCommunicationWithHim(node1)
-         node8 ! InitCommunicationWithHim(node1)
-         node9 ! InitCommunicationWithHim(node1)
-         node10 ! InitCommunicationWithHim(node1)
-         node11 ! InitCommunicationWithHim(node1)
-         node12 ! InitCommunicationWithHim(node1)
+         node2 ! ConnectToThisPeerActor(node1)
+         node3 ! ConnectToThisPeerActor(node1)
+         node4 ! ConnectToThisPeerActor(node1)
+         node5 ! ConnectToThisPeerActor(node1)
+         node6 ! ConnectToThisPeerActor(node1)
+         node7 ! ConnectToThisPeerActor(node1)
+         node8 ! ConnectToThisPeerActor(node1)
+         node9 ! ConnectToThisPeerActor(node1)
+         node10 ! ConnectToThisPeerActor(node1)
+         node11 ! ConnectToThisPeerActor(node1)
+         node12 ! ConnectToThisPeerActor(node1)
 
 
          Thread.sleep(500)
@@ -508,6 +550,19 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
 
          (node1IsOk && node2IsOk && node3IsOk && node6IsOk &&
            node7IsOk && node9IsOk && node4IsOk && node11IsOk && node12IsOk) must be(true)
+
+         node1 ! Kill
+         node2 ! Kill
+         node3 ! Kill
+         node4 ! Kill
+//         node5 ! Kill
+         node6 ! Kill
+         node7 ! Kill
+//         node8 ! Kill
+         node9 ! Kill
+//         node10 ! Kill
+         node11 ! Kill
+         node12 ! Kill
       }
 
       "handle several combined crashes in partitions (ring of 12 nodes) (three leaders, two initiators and one lambda)" in {
@@ -529,17 +584,17 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
 
 
          // create the links
-         node2 ! InitCommunicationWithHim(node1)
-         node3 ! InitCommunicationWithHim(node1)
-         node4 ! InitCommunicationWithHim(node1)
-         node5 ! InitCommunicationWithHim(node1)
-         node6 ! InitCommunicationWithHim(node1)
-         node7 ! InitCommunicationWithHim(node1)
-         node8 ! InitCommunicationWithHim(node1)
-         node9 ! InitCommunicationWithHim(node1)
-         node10 ! InitCommunicationWithHim(node1)
-         node11 ! InitCommunicationWithHim(node1)
-         node12 ! InitCommunicationWithHim(node1)
+         node2 ! ConnectToThisPeerActor(node1)
+         node3 ! ConnectToThisPeerActor(node1)
+         node4 ! ConnectToThisPeerActor(node1)
+         node5 ! ConnectToThisPeerActor(node1)
+         node6 ! ConnectToThisPeerActor(node1)
+         node7 ! ConnectToThisPeerActor(node1)
+         node8 ! ConnectToThisPeerActor(node1)
+         node9 ! ConnectToThisPeerActor(node1)
+         node10 ! ConnectToThisPeerActor(node1)
+         node11 ! ConnectToThisPeerActor(node1)
+         node12 ! ConnectToThisPeerActor(node1)
 
 
          Thread.sleep(500)
@@ -649,6 +704,19 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
 
          (node2IsOk && node3IsOk &&
            node7IsOk && node9IsOk && node4IsOk && node11IsOk) must be(true)
+
+//         node1 ! Kill
+         node2 ! Kill
+         node3 ! Kill
+         node4 ! Kill
+//         node5 ! Kill
+//         node6 ! Kill
+         node7 ! Kill
+//         node8 ! Kill
+         node9 ! Kill
+//         node10 ! Kill
+         node11 ! Kill
+//         node12 ! Kill
       }
    }
 }

@@ -14,19 +14,19 @@ retrieveManaged := true
 
 resolvers += "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases"
 
-resolvers += "Typesafe Snapshots" at "http://repo.typesafe.com/typesafe/snapshots"
+resolvers += "Typesafe Releases" at "http://repo.typesafe.com/typesafe/snapshots"
 
-//resolvers += "Entropy release" at "http://btrcloud.org/maven"
+libraryDependencies += "org.scalatest"     %% "scalatest" % "1.9.1" % "test"
 
-//resolvers += "Choco release" at "http://www.emn.fr/z-info/choco-repo/mvn/repository/"
+libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.2.0-RC1"
 
-libraryDependencies += "org.scalatest" % "scalatest_2.10" % "1.9.1" % "test"
+libraryDependencies += "com.typesafe.akka" %% "akka-remote" % "2.2.0-RC1"
 
-//libraryDependencies += "com.typesafe.akka" %% "akka-remote" % "2.2-SNAPSHOT"
+libraryDependencies += "com.typesafe.akka" %% "akka-testkit" % "2.2.0-RC1" % "test"
 
-//libraryDependencies += "com.typesafe.akka" %% "akka-testkit" % "2.2-SNAPSHOT"
+libraryDependencies += "com.typesafe.akka" %% "akka-multi-node-testkit" % "2.2.0-RC1" % "test"
 
-libraryDependencies += "junit" % "junit" % "4.8.1" % "test"
+libraryDependencies += "junit" % "junit" % "4.5" % "test"
 
 //libraryDependencies += "choco" % "choco" % "2.1.4" % "test"
 

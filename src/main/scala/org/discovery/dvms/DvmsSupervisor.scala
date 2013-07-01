@@ -35,6 +35,8 @@ object ActorIdParser extends RegexParsers {
 
 class DvmsSupervisor(location: INetworkLocation, factory: DvmsAbstractFactory) extends PeerActor(location) {
 
+   import org.discovery.AkkaArc.overlay.chord.ChordActor._
+
    def this(location: INetworkLocation) = this(location, FakeDvmsFactory)
 
    val nodeRef: NodeRef = NodeRef(location, self)
@@ -51,10 +53,14 @@ class DvmsSupervisor(location: INetworkLocation, factory: DvmsAbstractFactory) e
    }
 
    override def onConnection() {
-      log.info(s"$location: I am connected and here are my neighbors [${getNeighborHood.mkString(",")}]")
+      for {
+         neighbours <- overlayService.getNeighbourHood()
+      } yield {
+         log.info(s"$location: I am connected and here are my neighbors [${neighbours.mkString(",")}]")
 
-      if (getNeighborHood.size > 1)
-         dvmsActor ! ThisIsYourNeighbor(getNeighborHood(1))
+         if (neighbours.size > 1)
+            dvmsActor ! ThisIsYourNeighbor(neighbours(1))
+      }
    }
 
    override def onDisconnection() {
@@ -62,19 +68,28 @@ class DvmsSupervisor(location: INetworkLocation, factory: DvmsAbstractFactory) e
    }
 
    override def onNeighborChanged(oldNeighbor: Option[NodeRef], newNeighbor: NodeRef) {
-      log.info(s"$location: one of my neighbors ($oldNeighbor) has changed, here is the new one ($newNeighbor) and here are my neighbors [${getNeighborHood.mkString(",")}]")
 
-      dvmsActor ! YouMayNeedToUpdateYourFirstOut(oldNeighbor, newNeighbor)
+      for {
+         neighbours <- overlayService.getNeighbourHood()
+      } yield {
+         log.info(s"$location: one of my neighbors ($oldNeighbor) has changed, here is the new one ($newNeighbor) and here are my neighbors [${neighbours.mkString(",")}]")
 
-      if (getNeighborHood.size > 1 && (newNeighbor.location isEqualTo getNeighborHood(1).location)) {
-         dvmsActor ! ThisIsYourNeighbor(getNeighborHood(1))
+         dvmsActor ! YouMayNeedToUpdateYourFirstOut(oldNeighbor, newNeighbor)
+
+         if (neighbours.size > 1 && (newNeighbor.location isEqualTo neighbours(1).location)) {
+            dvmsActor ! ThisIsYourNeighbor(neighbours(1))
+         }
       }
    }
 
    override def onNeighborCrashed(neighbor: NodeRef) {
-      log.info(s"$location: one of my neighbors ($neighbor) has crashed and here are my neighbors [${getNeighborHood.mkString(",")}]")
+      for {
+         neighbours <- overlayService.getNeighbourHood()
+      } yield {
+         log.info(s"$location: one of my neighbors ($neighbor) has crashed and here are my neighbors [${neighbours.mkString(",")}]")
 
-      dvmsActor ! FailureDetected(neighbor)
+         dvmsActor ! FailureDetected(neighbor)
+      }
    }
 
    override val supervisorStrategy =

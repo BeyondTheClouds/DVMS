@@ -7,15 +7,16 @@ import scala.concurrent.duration._
 import concurrent.{Future, Await, ExecutionContext}
 import java.util.concurrent.Executors
 import org.discovery.AkkaArc.util.NodeRef
-import org.discovery.AkkaArc.notification.{WantsToRegister, ToNotificationActor}
+import org.discovery.AkkaArc.notification.{WantsToRegister}
 import org.discovery.dvms.entropy.EntropyComputeReconfigurePlan
-import org.discovery.dvms.monitor.CpuViolation
+import org.discovery.dvms.monitor.{MonitorEventsTypes}
 import java.util.{Date, UUID}
 import org.discovery.dvms.ActorIdParser
 
 import org.discovery.dvms.dvms.DvmsProtocol._
 import org.discovery.dvms.dvms.DvmsModel._
 import org.discovery.dvms.dvms.DvmsModel.DvmsPartititionState._
+import org.discovery.AkkaArc.PeerActorProtocol.ToNotificationActor
 
 /**
  * Created with IntelliJ IDEA.
@@ -441,7 +442,7 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
    }
 
    // registering an event: when a CpuViolation is triggered, CpuViolationDetected() is sent to dvmsActor
-   applicationRef.ref ! ToNotificationActor(WantsToRegister(applicationRef, new CpuViolation(), n => {
+   applicationRef.ref ! ToNotificationActor(WantsToRegister(applicationRef, MonitorEventsTypes.OnCpuViolation(), (n,e) => {
       n.ref ! ToDvmsActor(CpuViolationDetected())
    }))
 

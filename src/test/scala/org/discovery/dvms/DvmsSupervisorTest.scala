@@ -4,7 +4,6 @@ import akka.actor._
 import akka.testkit.TestKit
 import akka.testkit.ImplicitSender
 import org.discovery.dvms.entropy.{FakeEntropyActor, AbstractEntropyActor}
-import org.discovery.AkkaArc.overlay.chord.GetRingSize
 import org.scalatest.WordSpec
 import org.scalatest.matchers.MustMatchers
 import org.scalatest.BeforeAndAfterAll
@@ -13,16 +12,16 @@ import scala.concurrent.duration._
 import concurrent.{Await, ExecutionContext}
 import java.util.concurrent.Executors
 import org.discovery.AkkaArc.overlay.OverlayProtocol._
-import org.discovery.AkkaArc.overlay.chord.ChordProtocol._
-import org.discovery.dvms.DvmsSupervisor
+import org.discovery.dvms.{DvmsSupervisorForTests, DvmsSupervisorForTestsProtocol, DvmsSupervisor}
 import akka.pattern.ask
 import org.discovery.dvms.factory.DvmsAbstractFactory
 import org.discovery.dvms.monitor.{FakeMonitorActor, AbstractMonitorActor}
 import collection.immutable.HashMap
 import org.discovery.dvms.dvms.DvmsActor
 import org.discovery.dvms.dvms.DvmsProtocol._
-import org.discovery.AkkaArc.overlay.ToModelActor
-import org.discovery.AkkaArc.InitCommunicationWithHim
+import org.discovery.AkkaArc.ConnectToThisPeerActor
+import org.discovery.AkkaArc.overlay.chord.ChordActor
+import com.typesafe.config.ConfigFactory
 
 
 object DvmsSupervisorTest {
@@ -125,43 +124,47 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
 
    Configuration.debug = true
 
-   def this() = this(ActorSystem("MySpec"))
+   def this() = this(ActorSystem("MySpec", ConfigFactory.parseString( """
+     prio-dispatcher {
+       mailbox-type = "org.discovery.dvms.utility.DvmsPriorityMailBox"
+     }
+                                                                      """)))
 
    override def afterAll() {
       system.shutdown()
    }
 
+
    "DvmsSupervisor" must {
+
+      val startId = 1
+
+      val firstNode = system.actorOf(Props(new DvmsSupervisorForTests(FakeNetworkLocation(startId), TestDvmsFactory)))
+
+
+      var precedingNode = firstNode
+      for (i <- startId+1 to startId+3) {
+         val otherNode = system.actorOf(Props(new DvmsSupervisorForTests(FakeNetworkLocation(i), TestDvmsFactory)))
+         otherNode ! ConnectToThisPeerActor(precedingNode)
+         Thread.sleep(100)
+         precedingNode = otherNode
+      }
+
+
       "join other nodes correctly" in {
-         val exampleApplication1 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(1))))
-
-
-         for (i <- 2 to 5) {
-            val exampleApplicationI = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(i))))
-            exampleApplicationI ! InitCommunicationWithHim(exampleApplication1)
-         }
 
          Thread.sleep(2000)
 
-         val size: Int = Await.result(exampleApplication1 ? ToModelActor(GetRingSize()), 1 second).asInstanceOf[Int]
+         val size: Int = Await.result(firstNode ? DvmsSupervisorForTestsProtocol.GetRingSize(), 1 second).asInstanceOf[Int]
 
-         size must be(5)
+         size must be(4)
       }
 
       "compute a reconfiguration plan with success" in {
 
-
-         val exampleApplication1 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(1), TestDvmsFactory)))
-
-
-         for (i <- 2 to 4) {
-            val exampleApplicationI = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(i), TestDvmsFactory)))
-            exampleApplicationI ! InitCommunicationWithHim(exampleApplication1)
-         }
-
          Thread.sleep(8000)
 
-         val (failureCount, successCount) = Await.result(exampleApplication1 ? ToEntropyActor(ReportIn()), 1 second).asInstanceOf[(Int, Int)]
+         val (failureCount, successCount) = Await.result(firstNode ? ToEntropyActor(ReportIn()), 1 second).asInstanceOf[(Int, Int)]
 
          failureCount must be(10)
          successCount must be(2)
