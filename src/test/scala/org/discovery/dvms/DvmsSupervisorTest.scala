@@ -12,8 +12,9 @@ import scala.concurrent.duration._
 import concurrent.{Await, ExecutionContext}
 import java.util.concurrent.Executors
 import org.discovery.AkkaArc.overlay.OverlayProtocol._
-import org.discovery.dvms.{DvmsSupervisorForTests, DvmsSupervisorForTestsProtocol, DvmsSupervisor}
+import org.discovery.dvms._
 import akka.pattern.ask
+import dvms.DvmsProtocol.ToDvmsActor
 import org.discovery.dvms.factory.DvmsAbstractFactory
 import org.discovery.dvms.monitor.{FakeMonitorActor, AbstractMonitorActor}
 import collection.immutable.HashMap
@@ -22,6 +23,9 @@ import org.discovery.dvms.dvms.DvmsProtocol._
 import org.discovery.AkkaArc.ConnectToThisPeerActor
 import org.discovery.AkkaArc.overlay.chord.ChordActor
 import com.typesafe.config.ConfigFactory
+import org.discovery.AkkaArc.ConnectToThisPeerActor
+import org.discovery.AkkaArc.util.FakeNetworkLocation
+import org.discovery.dvms.ReportIn
 
 
 object DvmsSupervisorTest {
@@ -64,7 +68,7 @@ class TestMonitorActor(nodeRef: NodeRef) extends FakeMonitorActor(nodeRef) {
    }
 }
 
-case class ReportIn()
+//case class ReportIn()
 
 
 object TestEntropyActor {
@@ -98,21 +102,6 @@ class TestEntropyActor(nodeRef: NodeRef) extends FakeEntropyActor(nodeRef) {
    }
 }
 
-object TestDvmsFactory extends DvmsAbstractFactory {
-   def createMonitorActor(nodeRef: NodeRef): Option[AbstractMonitorActor] = {
-      Some(new TestMonitorActor(nodeRef))
-   }
-
-   def createDvmsActor(nodeRef: NodeRef): Option[DvmsActor] = {
-      Some(new DvmsActor(nodeRef))
-   }
-
-   def createEntropyActor(nodeRef: NodeRef): Option[AbstractEntropyActor] = {
-      Some(new TestEntropyActor(nodeRef))
-   }
-}
-
-
 class DvmsSupervisorTest(_system: ActorSystem) extends TestKit(_system) with ImplicitSender
 with WordSpec with MustMatchers with BeforeAndAfterAll {
 
@@ -137,44 +126,49 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
 
    "DvmsSupervisor" must {
 
-      val startId = 1
+      val node1 = system.actorOf(Props(new DvmsSupervisorForTests(FakeNetworkLocation(1), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
+      val node2 = system.actorOf(Props(new DvmsSupervisorForTests(FakeNetworkLocation(2), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
+      val node3 = system.actorOf(Props(new DvmsSupervisorForTests(FakeNetworkLocation(3), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
+      val node4 = system.actorOf(Props(new DvmsSupervisorForTests(FakeNetworkLocation(4), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
 
-      val firstNode = system.actorOf(Props(new DvmsSupervisorForTests(FakeNetworkLocation(startId), TestDvmsFactory)))
+      // create the links
+      node2 ! ConnectToThisPeerActor(node1)
+      node3 ! ConnectToThisPeerActor(node1)
+      node4 ! ConnectToThisPeerActor(node1)
 
-
-      var precedingNode = firstNode
-      for (i <- startId+1 to startId+3) {
-         val otherNode = system.actorOf(Props(new DvmsSupervisorForTests(FakeNetworkLocation(i), TestDvmsFactory)))
-         otherNode ! ConnectToThisPeerActor(precedingNode)
-         Thread.sleep(100)
-         precedingNode = otherNode
-      }
+      Thread.sleep(3000)
 
 
       "join other nodes correctly" in {
 
          Thread.sleep(2000)
 
-         val size: Int = Await.result(firstNode ? DvmsSupervisorForTestsProtocol.GetRingSize(), 1 second).asInstanceOf[Int]
+         val size: Int = Await.result(node1 ? DvmsSupervisorForTestsProtocol.GetRingSize(), 1 second).asInstanceOf[Int]
 
          size must be(4)
       }
 
       "compute a reconfiguration plan with success" in {
 
-         Thread.sleep(8000)
-
-         val (failureCount, successCount) = Await.result(firstNode ? ToEntropyActor(ReportIn()), 1 second).asInstanceOf[(Int, Int)]
-
-         failureCount must be(10)
-         successCount must be(2)
-      }
+//         val (failureCount, successCount) = Await.result(node1 ? ToEntropyActor(ReportIn()), 1 second).asInstanceOf[(Int, Int)]
+//
+//         failureCount must be(10)
+//         successCount must be(2)
 
 
-      "handle deadlock efficiently" in {
 
 
-         true must be(true)
+
+         val node1IsOk: Boolean =  Await.result(node1 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+         val node2IsOk: Boolean =  Await.result(node2 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+         val node3IsOk: Boolean =  Await.result(node3 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+         val node4IsOk: Boolean =  Await.result(node4 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+
+
+         node1IsOk must be(true)
+         node2IsOk must be(true)
+         node3IsOk must be(true)
+         node4IsOk must be(true)
       }
    }
 }

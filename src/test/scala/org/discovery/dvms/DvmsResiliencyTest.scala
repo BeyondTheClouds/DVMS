@@ -84,7 +84,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
          node12 ! ConnectToThisPeerActor(node1)
 
 
-         Thread.sleep(500)
+         Thread.sleep(3000)
 
 
          val node1Ref = quickNodeRef(1, node1)
@@ -204,7 +204,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
          node12 ! ConnectToThisPeerActor(node1)
 
 
-         Thread.sleep(500)
+         Thread.sleep(3000)
 
 
          val node1Ref = quickNodeRef(1, node1)
@@ -446,7 +446,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
          node12 ! ConnectToThisPeerActor(node1)
 
 
-         Thread.sleep(500)
+         Thread.sleep(3000)
 
 
          val node1Ref = quickNodeRef(1, node1)
@@ -597,7 +597,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
          node12 ! ConnectToThisPeerActor(node1)
 
 
-         Thread.sleep(500)
+         Thread.sleep(3000)
 
 
          val node1Ref = quickNodeRef(1, node1)
