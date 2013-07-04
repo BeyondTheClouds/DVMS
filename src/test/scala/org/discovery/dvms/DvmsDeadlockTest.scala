@@ -170,7 +170,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
                                                                       """)))
 
    override def beforeEach() {
-      Thread.sleep(500)
+      Thread.sleep(1000)
    }
 
    override def afterAll() {
