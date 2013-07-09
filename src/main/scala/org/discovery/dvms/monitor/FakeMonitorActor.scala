@@ -14,7 +14,7 @@ import util.Random
 
 class FakeMonitorActor(applicationRef: NodeRef) extends AbstractMonitorActor(applicationRef) {
 
-   val delta: Double = 17
+   val delta: Double = 8
    val seed: Long = applicationRef.location.getId
    val random: Random = new Random(seed)
 

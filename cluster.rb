@@ -113,7 +113,7 @@ class NodeActor < RubySimpleActor
 		log "launching a chord node #{ip}@#{port} that will connect to #{remote_ip}:#{remote_port}"
 
 		chord_launch_cmd = %Q{#!/bin/bash
-	java -jar target/akka-arc.jar ip=#{ip} port=#{port} remote_ip=#{remote_ip} remote_port=#{remote_port} debug=true
+	java -jar target/dvms.jar ip=#{ip} port=#{port} remote_ip=#{remote_ip} remote_port=#{remote_port} debug=true
 		}
 		`echo "#{chord_launch_cmd}" > run_#{port}.sh`
 		`chmod +x run_#{port}.sh`
@@ -126,7 +126,7 @@ class NodeActor < RubySimpleActor
 		log "launching a standalone chord node #{ip}@#{port}"
 
 		chord_launch_cmd = %Q{#!/bin/bash
-	java -jar target/akka-arc.jar ip=#{ip} port=#{port} debug=true
+	java -jar target/dvms.jar ip=#{ip} port=#{port} debug=true
 		}
 		`echo "#{chord_launch_cmd}" > run_#{port}.sh`
 		`chmod +x run_#{port}.sh`
@@ -322,10 +322,10 @@ while(!$ok_to_launch_other_local_nodes)
 	sleep(1)
 end
 
-for i in 1..10 do
-	log "Starting a NodeActor: #{ip}@#{port.to_i+i}"
-	networkActor.register_node(NodeActor.new(ip, port.to_i+i))
-end
+#for i in 1..10 do
+#	log "Starting a NodeActor: #{ip}@#{port.to_i+i}"
+#	networkActor.register_node(NodeActor.new(ip, port.to_i+i))
+#end
 
 while(true)
 	sleep(1)

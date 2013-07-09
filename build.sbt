@@ -4,7 +4,7 @@ name := "DVMS"
 
 version := "0.1"
 
-organization := "dvms"
+organization := "org.discovery"
 
 scalaVersion := "2.10.0"
 
@@ -38,7 +38,7 @@ libraryDependencies += "junit" % "junit" % "4.5" % "test"
 
 seq(assemblySettings: _*)
 
-mainClass in assembly := Some("dvms.Main")
+mainClass in assembly := Some("org.discovery.dvms.Main")
 
 test in assembly := {}
 
