@@ -4,7 +4,7 @@ import org.discovery.AkkaArc.util.NodeRef
 import scala.concurrent.duration._
 import akka.pattern.ask
 import entropy.plan.choco.ChocoCustomRP
-import entropy.configuration.{SimpleVirtualMachine, SimpleNode, Configuration}
+import entropy.configuration.{SimpleConfiguration, SimpleVirtualMachine, SimpleNode, Configuration}
 import entropy.plan.durationEvaluator.MockDurationEvaluator
 import concurrent.{Future, Await}
 import org.discovery.dvms.dvms.DvmsModel._
@@ -27,7 +27,7 @@ class EntropyActor(applicationRef: NodeRef) extends AbstractEntropyActor(applica
 
    def computeAndApplyReconfigurationPlan(nodes: List[NodeRef]): Boolean = {
 
-      val initialConfiguration: Configuration = null;
+      val initialConfiguration: Configuration = new SimpleConfiguration();
 
       // building the entropy configuration
 
