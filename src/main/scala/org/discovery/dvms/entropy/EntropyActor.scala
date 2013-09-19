@@ -11,7 +11,6 @@ import org.discovery.dvms.dvms.DvmsModel._
 import org.discovery.dvms.dvms.DvmsProtocol._
 import org.discovery.dvms.monitor.GetVmsWithConsumption
 import scala.collection.JavaConversions._
-import org.discovery.dvms.entropy.EntropyService
 
 /**
  * Created with IntelliJ IDEA.
