@@ -1,7 +1,7 @@
 package org.discovery.dvms
 
 import dvms.DvmsProtocol._
-import factory.{DvmsAbstractFactory, FakeDvmsFactory}
+import factory.{LibvirtDvmsFactory, DvmsAbstractFactory, FakeDvmsFactory}
 import org.discovery.AkkaArc.util.{NodeRef, INetworkLocation}
 import org.discovery.AkkaArc.PeerActor
 import akka.actor.{OneForOneStrategy, Props}
@@ -10,6 +10,7 @@ import akka.pattern.AskTimeoutException
 import scala.concurrent.duration._
 import util.parsing.combinator.RegexParsers
 import java.util.concurrent.TimeoutException
+import org.discovery.dvms.configuration.DvmsConfiguration
 
 /**
  * Created with IntelliJ IDEA.
@@ -37,7 +38,13 @@ class DvmsSupervisor(location: INetworkLocation, factory: DvmsAbstractFactory) e
 
    import org.discovery.AkkaArc.overlay.chord.ChordActor._
 
-   def this(location: INetworkLocation) = this(location, FakeDvmsFactory)
+   def this(location: INetworkLocation) = this(
+      location,
+      DvmsConfiguration.FACTORY_NAME match {
+         case "libvirt" => LibvirtDvmsFactory
+         case _ => FakeDvmsFactory
+      }
+   )
 
    val nodeRef: NodeRef = NodeRef(location, self)
 

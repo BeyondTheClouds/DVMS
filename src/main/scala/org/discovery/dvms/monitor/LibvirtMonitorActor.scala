@@ -1,11 +1,11 @@
 package org.discovery.dvms.monitor
 
 import org.discovery.AkkaArc.util.NodeRef
-import org.discovery.driver.LibvirtDriver
-import org.discovery.model.IVirtualMachine
+import org.discovery.driver.{LibvirtDriver, LibvirtG5kDriver}
+import org.discovery.model.{IDriver, IVirtualMachine}
 import scala.collection.JavaConversions._
 import org.discovery.dvms.dvms.DvmsModel._
-import org.discovery.dvms.configuration.{VirtualMachineConfiguration, HardwareConfiguration}
+import org.discovery.dvms.configuration.{DvmsConfiguration, VirtualMachineConfiguration, HardwareConfiguration}
 import scala.concurrent.duration._
 
 /**
@@ -17,8 +17,20 @@ import scala.concurrent.duration._
  */
 
 object LibvirtMonitorDriver {
+   val driver: IDriver = DvmsConfiguration.IS_G5K_MODE match {
 
-   val driver: LibvirtDriver = new LibvirtDriver("configuration/driver.cfg");
+      case true =>
+         val nodeName: String = "localhost";
+         val hypervisorUrl: String = String.format(
+            "qemu+ssh://root@%s/session?socket=/var/run/libvirt/libvirt-sock",
+            nodeName
+         )
+         new LibvirtG5kDriver(nodeName, hypervisorUrl, "/usr/local/bin/virsh")
+
+      case false =>
+         new LibvirtDriver("configuration/driver.cfg")
+   }
+
    driver.connect()
 
 }
