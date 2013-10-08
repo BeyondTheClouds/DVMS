@@ -21,14 +21,16 @@ package org.discovery.dvms
 
 import akka.actor.{ActorSystem, Props}
 import com.typesafe.config.ConfigFactory
-import org.discovery.AkkaArc.util.{Configuration, NetworkLocation}
+import org.discovery.AkkaArc.{ConnectTo, util, notification}
+import notification.{Events, TriggerEvent}
+import util._
 import scala.concurrent.duration._
 import java.util.concurrent.Executors
 import scala.concurrent.ExecutionContext
-import java.util.IllegalFormatConversionException
 import akka.util.Timeout
 import collection.mutable
-import org.discovery.AkkaArc.{PeerActor, ConnectToThisPeerActor}
+import util.NetworkLocation
+import org.discovery.AkkaArc.PeerActorProtocol.ToNotificationActor
 
 object Main extends App {
 
@@ -48,14 +50,11 @@ object Main extends App {
 
       })
 
-
-      var aborted = false
-
       val ip = argumentHashMap.contains("ip") match {
          case true => argumentHashMap("ip")
          case false => throw new Exception("please specify <ip> argument")
       }
-      val port = argumentHashMap.contains("port") match {
+      val portAsString = argumentHashMap.contains("port") match {
          case true => argumentHashMap("port")
          case false => throw new Exception("please specify <port> argument")
       }
@@ -64,82 +63,25 @@ object Main extends App {
          case false => "false"
       }
 
-      //      Configuration.debug = debug.toBoolean
 
-      Configuration.debug = true
-      Configuration.firstId = -1
-
-      println(s"launching a chord node: $ip@$port")
-      try {
-
-         val customConf = ConfigFactory.parseString(s"""
-
-akka {
-    actor {
-      provider = "akka.remote.RemoteActorRefProvider"
-    }
-    remote {
-      enabled-transports = ["akka.remote.netty.tcp"]
-      netty.tcp {
-        hostname = "$ip"
-        port = $port
-      }
-
-      netty {
-         use-passive-connections = on
-      }
-
-      netty.udp = {
-        hostname = "$ip"
-        port = $port
-      }
-      netty.udp {
-         transport-protocol = udp
-      }
-   }
-  }
-
-""")
-
-         val system = ActorSystem("DvmsSystem", ConfigFactory.load(customConf))
-         val name = "peer"
-         val location = NetworkLocation(ip, port.toInt)
-         println(s"Adding new actor: $port with and id:${location.getId}")
+      val port: Int = Integer.parseInt(portAsString)
 
 
-         if(argumentHashMap.contains("remote_ip") && argumentHashMap.contains("remote_port")) {
+      val location: NetworkLocation = NetworkLocation(ip, port)
+      val system = ActorSystem(s"DvmsSystem", Configuration.generateNetworkActorConfiguration(location))
 
-            val remote_ip = argumentHashMap("remote_ip")
-            val remote_port = argumentHashMap("remote_port")
+      val peer = system.actorOf(Props(new DvmsSupervisor(location)), name = s"node")
 
-            println(s"Initiate the communication with $remote_ip@$remote_port")
-            val remotePeer = system.actorFor(s"akka.tcp://DvmsSystem@$remote_ip:$remote_port/user/peer")
+      if (argumentHashMap.contains("remote_ip") && argumentHashMap.contains("remote_port")) {
 
-            val peer = system.actorOf(Props(new DvmsSupervisor(location)), name=name)
-            peer ! ConnectToThisPeerActor(remotePeer)
-         } else {
+         val remoteIp = argumentHashMap("remote_ip")
+         val remotePort = argumentHashMap("remote_port")
+         val remotePortAsInt = Integer.parseInt(remotePort)
+         val remoteLocation = NetworkLocation(remoteIp, remotePortAsInt)
 
-            val peer = system.actorOf(Props(new DvmsSupervisor(location)), name=name)
-         }
+         val remotePeer = system.actorFor(s"akka.tcp://DvmsSystem@$remoteIp:$remotePort/user/overlay${remoteLocation.getId}/ring_actor")
 
-
-
-
-      }
-      catch {
-         case e:IllegalFormatConversionException => {
-            println(s"It seems that the given port <$port> cannot be converted as a number")
-            e.printStackTrace()
-            aborted = true
-         }
-         case e:Exception => {
-            e.printStackTrace()
-            aborted = true
-         }
-      }
-
-      if(aborted) {
-         println(s"An error occured during the creation of $ip@$port")
+         peer ! ConnectTo(remotePeer, remoteLocation)
       }
    }
 }
