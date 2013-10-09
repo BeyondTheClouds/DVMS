@@ -24,7 +24,6 @@ object FakeDvmsFactory extends DvmsAbstractFactory {
       Some(new DvmsActor(nodeRef))
    }
 
-
    def createEntropyActor(nodeRef: NodeRef): Option[AbstractEntropyActor] = {
       Some(new FakeEntropyActor(nodeRef))
    }

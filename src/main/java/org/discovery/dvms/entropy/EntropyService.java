@@ -1,5 +1,6 @@
 package org.discovery.dvms.entropy;
 
+import akka.actor.ActorSystem;
 import org.discovery.dvms.dvms.DvmsModel.*;
 import dvms.log.Logger;
 import org.discovery.dvms.monitor.LibvirtMonitorDriver;
@@ -18,6 +19,7 @@ import entropy.vjob.DefaultVJob;
 import entropy.vjob.VJob;
 import org.discovery.driver.Node;
 import org.discovery.driver.VirtualMachine;
+import akka.event.Logging;
 
 import java.util.*;
 
@@ -74,8 +76,8 @@ public class EntropyService {
                     vjobs
             );
         } catch (PlanException e) {
-//            e.printStackTrace();
-            Logger.log("Entropy: No solution :(");
+            e.printStackTrace();
+            System.err.println("Entropy: No solution :(");
             res = ComputingState.VMRP_FAILED;
         }
 
@@ -203,7 +205,7 @@ public class EntropyService {
 
 
         } else {
-            Logger.log("UNRECOGNIZED ACTION WHEN APPLYING THE RECONFIGURATION PLAN");
+            System.err.println("UNRECOGNIZED ACTION WHEN APPLYING THE RECONFIGURATION PLAN");
         }
     }
 }
