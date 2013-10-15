@@ -17,6 +17,8 @@ import org.discovery.dvms.dvms.DvmsProtocol._
 import org.discovery.dvms.dvms.DvmsModel._
 import org.discovery.dvms.dvms.DvmsModel.DvmsPartititionState._
 import org.discovery.AkkaArc.PeerActorProtocol.ToNotificationActor
+import org.discovery.dvms.log.LoggingProtocol._
+import org.discovery.dvms.configuration.ExperimentConfiguration
 
 /**
  * Created with IntelliJ IDEA.
@@ -83,7 +85,13 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
    def changeCurrentPartitionState(newState: DvmsPartititionState) {
       currentPartition match {
-         case Some(partition) => currentPartition = Some(DvmsPartition(partition.leader, partition.initiator, partition.nodes, newState, partition.id))
+         case Some(partition) => currentPartition = Some(DvmsPartition(
+            partition.leader,
+            partition.initiator,
+            partition.nodes,
+            newState,
+            partition.id
+         ))
          case None =>
       }
    }
@@ -108,7 +116,13 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
                   case node: NodeRef => {
 
                      // creation of a new partition without the crashed node
-                     val newPartition: DvmsPartition = new DvmsPartition(applicationRef, p.initiator, p.nodes.filterNot(n => n.location isEqualTo node.location), p.state, UUID.randomUUID())
+                     val newPartition: DvmsPartition = new DvmsPartition(
+                        applicationRef,
+                        p.initiator,
+                        p.nodes.filterNot(n => n.location isEqualTo node.location),
+                        p.state,
+                        UUID.randomUUID()
+                     )
 
                      currentPartition = Some(newPartition)
                      firstOut = Some(nextDvmsNode)
@@ -130,7 +144,6 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
    var lockedForFusion: Boolean = false
 
    override def receive = {
-
 
       case IsThisVersionOfThePartitionStillValid(partition) => {
          currentPartition match {
@@ -219,6 +232,9 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
          currentPartition = None
          lockedForFusion = false
          lastPartitionUpdateDate = None
+
+         // Alert LogginActor that the current node is free
+         applicationRef.ref ! IsFree(ExperimentConfiguration.getCurrentTime())
       }
 
       case IAmTheNewLeader(partition, firstOutOfTheLeader) => {
@@ -343,7 +359,9 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
                if (partition.state isEqualTo Blocked()) {
                   try {
-                     partitionIsStillValid = Await.result(partition.initiator.ref ? ToDvmsActor(IsThisVersionOfThePartitionStillValid(partition)), 1 second).asInstanceOf[Boolean]
+                     partitionIsStillValid = Await.result(partition.initiator.ref ? ToDvmsActor(
+                        IsThisVersionOfThePartitionStillValid(partition)), 1 second
+                     ).asInstanceOf[Boolean]
                   } catch {
                      case e: Throwable => {
                         partitionIsStillValid = false
@@ -357,10 +375,20 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
                   // the current node is becoming the leader of the incoming ISP
                   log.info(s"$applicationRef: I am becoming the new leader of $partition")
 
-                  val newPartition: DvmsPartition = new DvmsPartition(applicationRef, partition.initiator, applicationRef :: partition.nodes, Growing(), UUID.randomUUID())
+                  val newPartition: DvmsPartition = new DvmsPartition(
+                     applicationRef,
+                     partition.initiator,
+                     applicationRef :: partition.nodes,
+                     Growing(),
+                     UUID.randomUUID()
+                  )
 
                   currentPartition = Some(newPartition)
                   firstOut = Some(nextDvmsNode)
+
+
+                  // Alert LogginActor that the current node is booked in a partition
+                  applicationRef.ref ! IsBooked(ExperimentConfiguration.getCurrentTime())
 
                   partition.nodes.foreach(node => {
                      log.info(s"$applicationRef: sending the $newPartition to $node")
@@ -388,12 +416,25 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
       }
 
       case CpuViolationDetected() => {
+
+         // Alert LogginActor that a violation has been detected
+         applicationRef.ref ! ViolationDetected(ExperimentConfiguration.getCurrentTime())
+
          currentPartition match {
             case None => {
                log.info("Dvms has detected a new cpu violation")
                firstOut = Some(nextDvmsNode)
 
-               currentPartition = Some(DvmsPartition(applicationRef, applicationRef, List(applicationRef), Growing(), UUID.randomUUID()))
+               currentPartition = Some(DvmsPartition(
+                  applicationRef,
+                  applicationRef,
+                  List(applicationRef),
+                  Growing(),
+                  UUID.randomUUID()
+               ))
+
+               // Alert LogginActor that the current node is booked in a partition
+               applicationRef.ref ! IsBooked(ExperimentConfiguration.getCurrentTime())
 
                log.info(s"$applicationRef transmitting ISP ${currentPartition.get} to $firstOut")
                nextDvmsNode.ref ! ToDvmsActor(TransmissionOfAnISP(currentPartition.get))
@@ -414,16 +455,16 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
          }
       }
 
-      case msg => {
-         log.warning(s"received an unknown message <$msg>")
-         applicationRef.ref.forward(msg)
-      }
+      case msg => applicationRef.ref.forward(msg)
    }
 
 
    def computeEntropy(): Boolean = {
 
-      val entropyComputeAsFuture: Future[Boolean] = (applicationRef.ref ? ToEntropyActor(EntropyComputeReconfigurePlan(currentPartition.get.nodes))).mapTo[Boolean]
+      val entropyComputeAsFuture: Future[Boolean] = (applicationRef.ref ? ToEntropyActor(
+         EntropyComputeReconfigurePlan(currentPartition.get.nodes)
+      )).mapTo[Boolean]
+
       var result: Boolean = false
       var hasComputed = false
 
@@ -442,9 +483,14 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
    }
 
    // registering an event: when a CpuViolation is triggered, CpuViolationDetected() is sent to dvmsActor
-   applicationRef.ref ! ToNotificationActor(WantsToRegister(applicationRef, MonitorEventsTypes.OnCpuViolation(), (n,e) => {
-      n.ref ! ToDvmsActor(CpuViolationDetected())
-   }))
+   applicationRef.ref ! ToNotificationActor(
+      WantsToRegister(
+         applicationRef,
+         MonitorEventsTypes.OnCpuViolation(), (n,e) => {
+            n.ref ! ToDvmsActor(CpuViolationDetected())
+         }
+      )
+   )
 
    // registering a timer that will check if the node is in a partition and then if there is an activity from
    // this partition

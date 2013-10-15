@@ -4,6 +4,7 @@ package org.discovery.dvms
 import akka.actor._
 import akka.testkit.TestKit
 import akka.testkit.ImplicitSender
+import log.LoggingActor
 import org.discovery.dvms.dvms._
 import org.discovery.dvms.dvms.DvmsModel._
 import org.discovery.dvms.dvms.DvmsModel.DvmsPartititionState._
@@ -137,6 +138,14 @@ class TestEntropyActor(nodeRef: NodeRef) extends FakeEntropyActor(nodeRef) {
    }
 }
 
+class TestLogginActor(location: INetworkLocation) extends LoggingActor(location) {
+
+   override def receive = {
+      case _ =>
+   }
+}
+
+
 object TestDvmsFactory extends DvmsAbstractFactory {
    def createMonitorActor(nodeRef: NodeRef): Option[AbstractMonitorActor] = {
       Some(new TestMonitorActor(nodeRef))
@@ -148,6 +157,10 @@ object TestDvmsFactory extends DvmsAbstractFactory {
 
    def createEntropyActor(nodeRef: NodeRef): Option[AbstractEntropyActor] = {
       Some(new TestEntropyActor(nodeRef))
+   }
+
+   def createLoggingActor(nodeRef: NodeRef): Option[LoggingActor] = {
+      Some(new TestLogginActor(nodeRef.location))
    }
 }
 

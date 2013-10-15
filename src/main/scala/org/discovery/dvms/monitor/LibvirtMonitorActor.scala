@@ -5,8 +5,9 @@ import org.discovery.driver.{LibvirtDriver, LibvirtG5kDriver}
 import org.discovery.model.{IDriver, IVirtualMachine}
 import scala.collection.JavaConversions._
 import org.discovery.dvms.dvms.DvmsModel._
-import org.discovery.dvms.configuration.{DvmsConfiguration, VirtualMachineConfiguration, HardwareConfiguration}
+import org.discovery.dvms.configuration.{ExperimentConfiguration, DvmsConfiguration, VirtualMachineConfiguration, HardwareConfiguration}
 import scala.concurrent.duration._
+import org.discovery.dvms.log.LoggingProtocol.CurrentLoadIs
 
 /**
  * Created with IntelliJ IDEA.
@@ -68,6 +69,9 @@ class LibvirtMonitorActor(applicationRef: NodeRef) extends AbstractMonitorActor(
       }))
 
       log.info(s"load: $cpuConsumption")
+
+      // Alert LogginActor that the current node is booked in a partition
+      applicationRef.ref ! CurrentLoadIs(ExperimentConfiguration.getCurrentTime(), cpuConsumption)
 
       cpuConsumption
    }

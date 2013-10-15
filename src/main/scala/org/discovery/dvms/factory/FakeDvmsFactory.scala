@@ -4,6 +4,7 @@ import org.discovery.dvms.monitor.{FakeMonitorActor, AbstractMonitorActor}
 import org.discovery.dvms.entropy.{FakeEntropyActor, AbstractEntropyActor}
 import org.discovery.AkkaArc.util.NodeRef
 import org.discovery.dvms.dvms.DvmsActor
+import org.discovery.dvms.log.LoggingActor
 
 
 /**
@@ -26,5 +27,9 @@ object FakeDvmsFactory extends DvmsAbstractFactory {
 
    def createEntropyActor(nodeRef: NodeRef): Option[AbstractEntropyActor] = {
       Some(new FakeEntropyActor(nodeRef))
+   }
+
+   def createLoggingActor(nodeRef: NodeRef): Option[LoggingActor] = {
+      Some(new LoggingActor(nodeRef.location))
    }
 }

@@ -1,9 +1,6 @@
 package org.discovery.dvms.entropy;
 
-import akka.actor.ActorSystem;
-import org.discovery.dvms.dvms.DvmsModel.*;
-import dvms.log.Logger;
-import org.discovery.dvms.monitor.LibvirtMonitorDriver;
+import akka.actor.ActorRef;
 import dvms.scheduling.ComputingState;
 import entropy.configuration.Configuration;
 import entropy.configuration.SimpleManagedElementSet;
@@ -19,7 +16,11 @@ import entropy.vjob.DefaultVJob;
 import entropy.vjob.VJob;
 import org.discovery.driver.Node;
 import org.discovery.driver.VirtualMachine;
-import akka.event.Logging;
+import org.discovery.dvms.configuration.DvmsConfiguration;
+import org.discovery.dvms.configuration.ExperimentConfiguration;
+import org.discovery.dvms.dvms.DvmsModel.PhysicalNode;
+import org.discovery.dvms.log.LoggingProtocol;
+import org.discovery.dvms.monitor.LibvirtMonitorDriver;
 
 import java.util.*;
 
@@ -31,6 +32,8 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 public class EntropyService {
+
+    public ActorRef loggingActorRef = null;
 
     private static EntropyService instance = null;
 
@@ -54,6 +57,15 @@ public class EntropyService {
     }
 
     public static boolean computeAndApplyReconfigurationPlan(Configuration configuration, List<PhysicalNode> machines) {
+
+        // Alert LoggingActor that EntropyService begin a computation
+        if(DvmsConfiguration.IS_G5K_MODE()) {
+            instance.loggingActorRef.tell(
+                new LoggingProtocol.ComputingSomeReconfigurationPlan(ExperimentConfiguration.getCurrentTime()),
+                null
+            );
+        }
+
 
         ComputingState res = ComputingState.VMRP_SUCCESS;
 
@@ -87,6 +99,9 @@ public class EntropyService {
         int nbMigrations = 0;
         int reconfigurationGraphDepth = 0;
 
+
+
+
         if (reconfigurationPlan != null) {
             if (reconfigurationPlan.getActions().isEmpty())
                 res = ComputingState.NO_RECONFIGURATION_NEEDED;
@@ -98,11 +113,32 @@ public class EntropyService {
 
 
             try {
+                // Alert LoggingActor that EntropyService apply a reconfiguration plan
+                if(DvmsConfiguration.IS_G5K_MODE()) {
+                    instance.loggingActorRef.tell(
+                        new LoggingProtocol.ApplyingSomeReconfigurationPlan(ExperimentConfiguration.getCurrentTime()),
+                        null
+                    );
+                }
+
                 applyReconfigurationPlanLogically(reconfigurationPlan, configuration, machines);
 
             } catch (Exception e) {
 
                 e.printStackTrace();
+            } finally {
+
+                // Alert LoggingActor that migrationCount has changed
+                if(DvmsConfiguration.IS_G5K_MODE()) {
+                    ExperimentConfiguration.incrementMigrationCount(nbMigrations);
+                    instance.loggingActorRef.tell(
+                            new LoggingProtocol.UpdateMigrationCount(
+                                ExperimentConfiguration.getCurrentTime(),
+                                ExperimentConfiguration.getMigrationCount()
+                            ),
+                            null
+                    );
+                }
             }
 
         }
@@ -207,5 +243,17 @@ public class EntropyService {
         } else {
             System.err.println("UNRECOGNIZED ACTION WHEN APPLYING THE RECONFIGURATION PLAN");
         }
+    }
+
+    public static void main(String args[]) {
+
+
+        ExperimentConfiguration.startExperiment();
+        try {
+            Thread.sleep(1332);
+        } catch (InterruptedException e) {
+
+        }
+        System.out.println(ExperimentConfiguration.getCurrentTime());
     }
 }

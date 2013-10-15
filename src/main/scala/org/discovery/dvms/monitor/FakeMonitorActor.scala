@@ -3,6 +3,8 @@ package org.discovery.dvms.monitor
 import org.discovery.AkkaArc.util.NodeRef
 import org.discovery.dvms.dvms.DvmsModel._
 import util.Random
+import org.discovery.dvms.log.LoggingProtocol.CurrentLoadIs
+import org.discovery.dvms.configuration.ExperimentConfiguration
 
 /**
  * Created with IntelliJ IDEA.
@@ -29,6 +31,9 @@ class FakeMonitorActor(applicationRef: NodeRef) extends AbstractMonitorActor(app
          case n: Double if (n < 0) => cpuConsumption = 0
          case n: Double => cpuConsumption = n
       }
+
+      // Alert LogginActor that the current node is booked in a partition
+      applicationRef.ref ! CurrentLoadIs(ExperimentConfiguration.getCurrentTime(), cpuConsumption)
 
       cpuConsumption
    }

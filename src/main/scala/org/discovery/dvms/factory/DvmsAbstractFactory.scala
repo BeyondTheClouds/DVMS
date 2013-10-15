@@ -4,6 +4,7 @@ import org.discovery.dvms.monitor.AbstractMonitorActor
 import org.discovery.AkkaArc.util.NodeRef
 import org.discovery.dvms.entropy.AbstractEntropyActor
 import org.discovery.dvms.dvms.DvmsActor
+import org.discovery.dvms.log.LoggingActor
 
 /**
  * Created with IntelliJ IDEA.
@@ -21,4 +22,6 @@ trait DvmsAbstractFactory {
    def createDvmsActor(nodeRef: NodeRef): Option[DvmsActor]
 
    def createEntropyActor(nodeRef: NodeRef): Option[AbstractEntropyActor]
+
+   def createLoggingActor(nodeRef: NodeRef): Option[LoggingActor]
 }

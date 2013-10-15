@@ -5,6 +5,7 @@ import akka.testkit.{ImplicitSender, TestKit}
 import dvms.DvmsActor
 import entropy.AbstractEntropyActor
 import factory.DvmsAbstractFactory
+import log.LoggingActor
 import monitor.{LibvirtMonitorActor, AbstractMonitorActor}
 import org.scalatest.{BeforeAndAfterAll, WordSpec}
 import org.scalatest.matchers.MustMatchers
@@ -73,6 +74,10 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
 
          def createEntropyActor(nodeRef: NodeRef): Option[AbstractEntropyActor] = {
             Some(new TestEntropyActor(nodeRef))
+         }
+
+         def createLoggingActor(nodeRef: NodeRef): Option[LoggingActor] = {
+            Some(new TestLogginActor(nodeRef.location))
          }
       }
 

@@ -15,10 +15,13 @@ import entropy.configuration.{SimpleVirtualMachine, SimpleNode, SimpleConfigurat
 import org.discovery.dvms.dvms.DvmsModel.{VirtualMachine, PhysicalNode}
 import org.discovery.dvms.dvms.DvmsModel.ComputerSpecification
 import scala.collection.JavaConversions._
+import org.discovery.dvms.configuration.DvmsConfiguration
 
 
 class EntropyServiceTest(_system: ActorSystem) extends TestKit(_system) with ImplicitSender
 with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
+
+   DvmsConfiguration.IS_G5K_MODE = false
 
    implicit def intToLocation(i: Long): INetworkLocation = new FakeNetworkLocation(i)
 

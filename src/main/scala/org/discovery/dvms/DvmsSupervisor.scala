@@ -2,6 +2,7 @@ package org.discovery.dvms
 
 import dvms.DvmsProtocol._
 import factory.{LibvirtDvmsFactory, DvmsAbstractFactory, FakeDvmsFactory}
+import log.LoggingMessage
 import org.discovery.AkkaArc.util.{NodeRef, INetworkLocation}
 import org.discovery.AkkaArc.PeerActor
 import akka.actor.{OneForOneStrategy, Props}
@@ -10,7 +11,7 @@ import akka.pattern.AskTimeoutException
 import scala.concurrent.duration._
 import util.parsing.combinator.RegexParsers
 import java.util.concurrent.TimeoutException
-import org.discovery.dvms.configuration.DvmsConfiguration
+import configuration.{ExperimentConfiguration, DvmsConfiguration}
 
 /**
  * Created with IntelliJ IDEA.
@@ -51,11 +52,16 @@ class DvmsSupervisor(location: INetworkLocation, factory: DvmsAbstractFactory) e
    val monitorActor = context.actorOf(Props(factory.createMonitorActor(nodeRef).get), s"Monitor@${location.getId}")
    val dvmsActor = context.actorOf(Props(factory.createDvmsActor(nodeRef).get), s"DVMS@${location.getId}")
    val entropyActor = context.actorOf(Props(factory.createEntropyActor(nodeRef).get), s"Entropy@${location.getId}")
+   val loggingActor = context.actorOf(Props(factory.createLoggingActor(nodeRef).get), s"Logging@${location.getId}")
+
+   // Register the start time of the experiment
+   ExperimentConfiguration.startExperiment()
 
    override def receive = {
       case ToMonitorActor(msg) => monitorActor.forward(msg)
       case ToDvmsActor(msg) => dvmsActor.forward(msg)
       case ToEntropyActor(msg) => entropyActor.forward(msg)
+      case msg:LoggingMessage => loggingActor.forward(msg)
       case msg => super.receive(msg)
    }
 
