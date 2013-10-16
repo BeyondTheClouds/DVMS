@@ -2,13 +2,11 @@ package org.discovery.dvms.entropy
 
 import org.discovery.AkkaArc.util.NodeRef
 import concurrent.{Future, Await}
-import org.discovery.dvms.dvms._
 import scala.concurrent.duration._
 import akka.pattern.{AskTimeoutException, ask}
-import org.discovery.dvms.monitor.GetVmsWithConsumption
 import org.discovery.dvms.dvms.DvmsProtocol._
 import org.discovery.dvms.dvms.DvmsModel._
-import org.discovery.dvms.monitor.UpdateConfiguration
+import org.discovery.dvms.monitor.MonitorProtocol._
 
 /**
  * Created with IntelliJ IDEA.
@@ -32,7 +30,7 @@ class FakeEntropyActor(applicationRef: NodeRef) extends AbstractEntropyActor(app
 
          val physicalNodesWithVmsConsumption = Await.result(Future.sequence(nodes.map({
             n =>
-               n.ref ? ToMonitorActor(GetVmsWithConsumption())
+               n.ref ? GetVmsWithConsumption()
          })).mapTo[List[PhysicalNode]], 1 second)
 
          var overallCpuConsumption = 0.0;
@@ -47,7 +45,7 @@ class FakeEntropyActor(applicationRef: NodeRef) extends AbstractEntropyActor(app
          if (overallCpuConsumption / nodes.size <= 100) {
 
             nodes.foreach(n => {
-               n.ref ! ToMonitorActor(UpdateConfiguration(overallCpuConsumption / nodes.size))
+               n.ref ! UpdateConfiguration(overallCpuConsumption / nodes.size)
             })
 
             isCorrect = true
@@ -59,7 +57,7 @@ class FakeEntropyActor(applicationRef: NodeRef) extends AbstractEntropyActor(app
       } catch {
          case e: AskTimeoutException => {
             isCorrect = false
-            applicationRef.ref ! ToDvmsActor(AskTimeoutDetected(e))
+            applicationRef.ref ! AskTimeoutDetected(e)
          }
          case e: Exception =>
       }

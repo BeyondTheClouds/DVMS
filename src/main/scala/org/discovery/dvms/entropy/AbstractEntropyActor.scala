@@ -6,6 +6,7 @@ import akka.util.Timeout
 import concurrent.ExecutionContext
 import java.util.concurrent.Executors
 import scala.concurrent.duration._
+import org.discovery.dvms.entropy.EntropyProtocol._
 
 /**
  * Created with IntelliJ IDEA.
@@ -15,7 +16,7 @@ import scala.concurrent.duration._
  * To change this template use File | Settings | File Templates.
  */
 
-case class EntropyComputeReconfigurePlan(nodes: List[NodeRef])
+
 
 abstract class AbstractEntropyActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 

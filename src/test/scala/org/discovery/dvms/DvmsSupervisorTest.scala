@@ -3,25 +3,18 @@ package org.discovery.dvms.supervisortest
 import akka.actor._
 import akka.testkit.TestKit
 import akka.testkit.ImplicitSender
-import org.discovery.dvms.entropy.{FakeEntropyActor, AbstractEntropyActor}
+import org.discovery.dvms.entropy.FakeEntropyActor
 import org.scalatest.WordSpec
 import org.scalatest.matchers.MustMatchers
 import org.scalatest.BeforeAndAfterAll
-import org.discovery.AkkaArc.util.{NodeRef, Configuration, INetworkLocation, FakeNetworkLocation}
+import org.discovery.AkkaArc.util.{NodeRef, Configuration, INetworkLocation}
 import scala.concurrent.duration._
 import concurrent.{Await, ExecutionContext}
 import java.util.concurrent.Executors
-import org.discovery.AkkaArc.overlay.OverlayProtocol._
 import org.discovery.dvms._
 import akka.pattern.ask
-import dvms.DvmsProtocol.ToDvmsActor
-import org.discovery.dvms.factory.DvmsAbstractFactory
-import org.discovery.dvms.monitor.{FakeMonitorActor, AbstractMonitorActor}
+import org.discovery.dvms.monitor.FakeMonitorActor
 import collection.immutable.HashMap
-import org.discovery.dvms.dvms.DvmsActor
-import org.discovery.dvms.dvms.DvmsProtocol._
-import org.discovery.AkkaArc.ConnectToThisPeerActor
-import org.discovery.AkkaArc.overlay.chord.ChordActor
 import com.typesafe.config.ConfigFactory
 import org.discovery.AkkaArc.ConnectToThisPeerActor
 import org.discovery.AkkaArc.util.FakeNetworkLocation
@@ -159,10 +152,10 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
 
 
 
-         val node1IsOk: Boolean =  Await.result(node1 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node2IsOk: Boolean =  Await.result(node2 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node3IsOk: Boolean =  Await.result(node3 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node4IsOk: Boolean =  Await.result(node4 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+         val node1IsOk: Boolean =  Await.result(node1 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node2IsOk: Boolean =  Await.result(node2 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node3IsOk: Boolean =  Await.result(node3 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node4IsOk: Boolean =  Await.result(node4 ? ReportIn(), 1 second).asInstanceOf[Boolean]
 
 
          node1IsOk must be(true)

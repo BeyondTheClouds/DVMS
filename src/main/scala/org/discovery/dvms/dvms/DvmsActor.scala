@@ -8,7 +8,6 @@ import concurrent.{Future, Await, ExecutionContext}
 import java.util.concurrent.Executors
 import org.discovery.AkkaArc.util.NodeRef
 import org.discovery.AkkaArc.notification.{WantsToRegister}
-import org.discovery.dvms.entropy.EntropyComputeReconfigurePlan
 import org.discovery.dvms.monitor.{MonitorEventsTypes}
 import java.util.{Date, UUID}
 import org.discovery.dvms.ActorIdParser
@@ -19,6 +18,7 @@ import org.discovery.dvms.dvms.DvmsModel.DvmsPartititionState._
 import org.discovery.AkkaArc.PeerActorProtocol.ToNotificationActor
 import org.discovery.dvms.log.LoggingProtocol._
 import org.discovery.dvms.configuration.ExperimentConfiguration
+import org.discovery.dvms.entropy.EntropyProtocol.EntropyComputeReconfigurePlan
 
 /**
  * Created with IntelliJ IDEA.
@@ -27,9 +27,6 @@ import org.discovery.dvms.configuration.ExperimentConfiguration
  * Time: 4:43 PM
  * To change this template use File | Settings | File Templates.
  */
-
-
-
 
 
 object DvmsActor {
@@ -63,7 +60,7 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
       currentPartition.get.nodes.foreach(node => {
          log.info(s"(a) $applicationRef: sending ${IAmTheNewLeader(currentPartition.get, firstOut.get)} to $node")
-         node.ref ! ToDvmsActor(IAmTheNewLeader(currentPartition.get, firstOut.get))
+         node.ref ! IAmTheNewLeader(currentPartition.get, firstOut.get)
       })
 
       if (computeEntropy()) {
@@ -71,7 +68,7 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
          log.info(s"(a) I decide to dissolve $currentPartition")
          currentPartition.get.nodes.foreach(node => {
-            node.ref ! ToDvmsActor(DissolvePartition())
+            node.ref ! DissolvePartition()
          })
       } else {
 
@@ -79,7 +76,7 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
            s" I try to find another node for the partition, deadlock? ${currentPartition.get.nodes.contains(firstOut)}")
 
          log.info(s"(1) $applicationRef transmitting ISP ${currentPartition.get} to $firstOut")
-         firstOut.get.ref ! ToDvmsActor(TransmissionOfAnISP(currentPartition.get))
+         firstOut.get.ref !TransmissionOfAnISP(currentPartition.get)
       }
    }
 
@@ -108,7 +105,7 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
                      // the partition will be dissolved
                      p.nodes.filterNot(n => n.location isEqualTo node.location).foreach(n => {
-                        n.ref ! ToDvmsActor(DissolvePartition())
+                        n.ref ! DissolvePartition()
                      })
                   }
 
@@ -130,7 +127,7 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
                      log.info(s"$applicationRef: A node crashed ($node), I am becoming the new leader of $currentPartition")
 
                      newPartition.nodes.foreach(node => {
-                        node.ref ! ToDvmsActor(IAmTheNewLeader(newPartition, firstOut.get))
+                        node.ref ! IAmTheNewLeader(newPartition, firstOut.get)
                      })
                   }
                }
@@ -174,13 +171,9 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
       }
 
 
-
       case FailureDetected(node) => {
          remoteNodeFailureDetected(node)
       }
-
-
-
 
 
       case CheckTimeout() => {
@@ -198,7 +191,7 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
                   log.info(s"$applicationRef: timeout of partition has been reached: I dissolve everything")
 
                   p.nodes.foreach(n => {
-                     n.ref ! ToDvmsActor(DissolvePartition())
+                     n.ref ! DissolvePartition()
                   })
                }
 
@@ -206,7 +199,6 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
             case _ =>
          }
       }
-
 
 
       case CanIMergePartitionWithYou(partition, contact) => {
@@ -278,10 +270,10 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
                   // the state of the current partition become Blocked()
                   p.nodes.foreach(node => {
-                     node.ref ! ToDvmsActor(ChangeTheStateOfThePartition(Blocked()))
+                     node.ref ! ChangeTheStateOfThePartition(Blocked())
                   })
 
-                  firstOut.get.ref ! ToDvmsActor(TransmissionOfAnISP(currentPartition.get))
+                  firstOut.get.ref ! TransmissionOfAnISP(currentPartition.get)
 
                }
                // the ISP went back to it's initiator for the second time
@@ -292,7 +284,7 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
                     s" with a Blocked state: it dissolve it :(")
                   // the currentPartition should be dissolved
                   p.nodes.foreach(node => {
-                     node.ref ! ToDvmsActor(DissolvePartition())
+                     node.ref ! DissolvePartition()
                   })
 
                }
@@ -303,7 +295,7 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
                   log.info(s"$applicationRef: forwarding $msg to $firstOut")
 
                   // I forward the partition to the current firstOut
-                  firstOut.get.ref.forward(ToDvmsActor(msg))
+                  firstOut.get.ref.forward(msg)
 
                }
                // the incoming ISP is different from the current ISP and the current state is Blocked
@@ -337,13 +329,13 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
                            // the order between nodes is not respected, the ISP should be forwarded
                            log.info(s"$applicationRef: order between nodes is not respected, I forward $partition to $firstOut")
-                           firstOut.get.ref.forward(ToDvmsActor(msg))
+                           firstOut.get.ref.forward(msg)
                         }
 
                      }
                      case Growing() => {
                         log.info(s"$applicationRef: forwarding $msg to $firstOut")
-                        firstOut.get.ref.forward(ToDvmsActor(msg))
+                        firstOut.get.ref.forward(msg)
                      }
                   }
                }
@@ -359,8 +351,8 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
                if (partition.state isEqualTo Blocked()) {
                   try {
-                     partitionIsStillValid = Await.result(partition.initiator.ref ? ToDvmsActor(
-                        IsThisVersionOfThePartitionStillValid(partition)), 1 second
+                     partitionIsStillValid = Await.result(partition.initiator.ref ?
+                        IsThisVersionOfThePartitionStillValid(partition), 1 second
                      ).asInstanceOf[Boolean]
                   } catch {
                      case e: Throwable => {
@@ -392,7 +384,7 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
                   partition.nodes.foreach(node => {
                      log.info(s"$applicationRef: sending the $newPartition to $node")
-                     node.ref ! ToDvmsActor(IAmTheNewLeader(newPartition, firstOut.get))
+                     node.ref ! IAmTheNewLeader(newPartition, firstOut.get)
                   })
 
                   lastPartitionUpdateDate = Some(new Date())
@@ -402,11 +394,11 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
                      // it was enough: the partition is no more useful
                      currentPartition.get.nodes.foreach(node => {
-                        node.ref ! ToDvmsActor(DissolvePartition())
+                        node.ref ! DissolvePartition()
                      })
                   } else {
                      // it was not enough: the partition is forwarded to the firstOut
-                     firstOut.get.ref ! ToDvmsActor(TransmissionOfAnISP(currentPartition.get))
+                     firstOut.get.ref ! TransmissionOfAnISP(currentPartition.get)
                   }
                } else {
                   log.warning(s"$applicationRef: $partition is no more valid (source: ${partition.initiator})")
@@ -437,7 +429,7 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
                applicationRef.ref ! IsBooked(ExperimentConfiguration.getCurrentTime())
 
                log.info(s"$applicationRef transmitting ISP ${currentPartition.get} to $firstOut")
-               nextDvmsNode.ref ! ToDvmsActor(TransmissionOfAnISP(currentPartition.get))
+               nextDvmsNode.ref ! TransmissionOfAnISP(currentPartition.get)
             }
             case _ =>
          }
@@ -461,9 +453,9 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
    def computeEntropy(): Boolean = {
 
-      val entropyComputeAsFuture: Future[Boolean] = (applicationRef.ref ? ToEntropyActor(
-         EntropyComputeReconfigurePlan(currentPartition.get.nodes)
-      )).mapTo[Boolean]
+      val entropyComputeAsFuture: Future[Boolean] = (applicationRef.ref ?
+        EntropyComputeReconfigurePlan(currentPartition.get.nodes)
+      ).mapTo[Boolean]
 
       var result: Boolean = false
       var hasComputed = false
@@ -486,8 +478,8 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
    applicationRef.ref ! ToNotificationActor(
       WantsToRegister(
          applicationRef,
-         MonitorEventsTypes.OnCpuViolation(), (n,e) => {
-            n.ref ! ToDvmsActor(CpuViolationDetected())
+         MonitorEventsTypes.OnCpuViolation(), (n, e) => {
+            n.ref ! CpuViolationDetected()
          }
       )
    )

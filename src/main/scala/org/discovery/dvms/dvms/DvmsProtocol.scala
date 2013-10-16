@@ -13,32 +13,29 @@ import akka.pattern.AskTimeoutException
  * To change this template use File | Settings | File Templates.
  */
 
+
+trait DvmsMessage
+
 object DvmsProtocol {
 
-   // Routing messages
-   case class ToMonitorActor(msg: Any)
-   case class ToDvmsActor(msg: Any)
-   case class ToEntropyActor(msg: Any)
-
-
-   case class ThisIsYourNeighbor(neighbor: NodeRef)
-   case class YouMayNeedToUpdateYourFirstOut(oldNeighbor: Option[NodeRef], newNeighbor: NodeRef)
-   case class CpuViolationDetected()
+   case class ThisIsYourNeighbor(neighbor: NodeRef) extends DvmsMessage
+   case class YouMayNeedToUpdateYourFirstOut(oldNeighbor: Option[NodeRef], newNeighbor: NodeRef) extends DvmsMessage
+   case class CpuViolationDetected() extends DvmsMessage
 
    // Message used for the base of DVMS
-   case class DissolvePartition()
-   case class TransmissionOfAnISP(currentPartition: DvmsPartition)
-   case class IAmTheNewLeader(partition: DvmsPartition, firstOut: NodeRef)
+   case class DissolvePartition() extends DvmsMessage
+   case class TransmissionOfAnISP(currentPartition: DvmsPartition) extends DvmsMessage
+   case class IAmTheNewLeader(partition: DvmsPartition, firstOut: NodeRef) extends DvmsMessage
 
    // Message used for the merge of partitions
-   case class IsThisVersionOfThePartitionStillValid(partition: DvmsPartition)
-   case class CanIMergePartitionWithYou(partition: DvmsPartition, contact: NodeRef)
-   case class ChangeTheStateOfThePartition(newState: DvmsPartititionState)
+   case class IsThisVersionOfThePartitionStillValid(partition: DvmsPartition) extends DvmsMessage
+   case class CanIMergePartitionWithYou(partition: DvmsPartition, contact: NodeRef) extends DvmsMessage
+   case class ChangeTheStateOfThePartition(newState: DvmsPartititionState) extends DvmsMessage
 
    // Message for the resiliency
-   case class AskTimeoutDetected(e: AskTimeoutException)
-   case class FailureDetected(node: NodeRef)
-   case class CheckTimeout()
+   case class AskTimeoutDetected(e: AskTimeoutException) extends DvmsMessage
+   case class FailureDetected(node: NodeRef) extends DvmsMessage
+   case class CheckTimeout() extends DvmsMessage
 
 
 }

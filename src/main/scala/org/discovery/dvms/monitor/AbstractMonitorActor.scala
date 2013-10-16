@@ -10,6 +10,7 @@ import scala.concurrent.duration._
 import org.discovery.dvms.dvms.DvmsModel._
 import org.discovery.AkkaArc.PeerActorProtocol.ToNotificationActor
 import org.discovery.AkkaArc.notification._
+import org.discovery.dvms.monitor.MonitorProtocol._
 
 /**
  * Created with IntelliJ IDEA.
@@ -30,11 +31,6 @@ object MonitorEvent {
 }
 
 
-case class UpdateConfiguration(newConsumption: Double)
-
-case class GetVmsWithConsumption()
-
-case class GetCpuConsumption()
 
 abstract class AbstractMonitorActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 

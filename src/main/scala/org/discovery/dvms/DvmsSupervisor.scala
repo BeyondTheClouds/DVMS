@@ -1,8 +1,11 @@
 package org.discovery.dvms
 
+import dvms.DvmsMessage
 import dvms.DvmsProtocol._
+import entropy.EntropyMessage
 import factory.{LibvirtDvmsFactory, DvmsAbstractFactory, FakeDvmsFactory}
 import log.LoggingMessage
+import monitor.MonitorMessage
 import org.discovery.AkkaArc.util.{NodeRef, INetworkLocation}
 import org.discovery.AkkaArc.PeerActor
 import akka.actor.{OneForOneStrategy, Props}
@@ -58,10 +61,11 @@ class DvmsSupervisor(location: INetworkLocation, factory: DvmsAbstractFactory) e
    ExperimentConfiguration.startExperiment()
 
    override def receive = {
-      case ToMonitorActor(msg) => monitorActor.forward(msg)
-      case ToDvmsActor(msg) => dvmsActor.forward(msg)
-      case ToEntropyActor(msg) => entropyActor.forward(msg)
-      case msg:LoggingMessage => loggingActor.forward(msg)
+      case msg: MonitorMessage   => monitorActor.forward(msg)
+      case msg: DvmsMessage      => dvmsActor.forward(msg)
+      case msg: EntropyMessage   => entropyActor.forward(msg)
+      case msg: LoggingMessage   => loggingActor.forward(msg)
+
       case msg => super.receive(msg)
    }
 

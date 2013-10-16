@@ -103,19 +103,19 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
          // init the partitions
          val partition_1_2_3_4_10 = DvmsPartition(node10Ref, node1Ref, List(node1Ref, node2Ref, node3Ref, node4Ref, node10Ref), Growing())
 
-         node1 ! ToDvmsActor(SetCurrentPartition(partition_1_2_3_4_10))
-         node2 ! ToDvmsActor(SetCurrentPartition(partition_1_2_3_4_10))
-         node3 ! ToDvmsActor(SetCurrentPartition(partition_1_2_3_4_10))
-         node4 ! ToDvmsActor(SetCurrentPartition(partition_1_2_3_4_10))
-         node10 ! ToDvmsActor(SetCurrentPartition(partition_1_2_3_4_10))
+         node1 ! SetCurrentPartition(partition_1_2_3_4_10)
+         node2 ! SetCurrentPartition(partition_1_2_3_4_10)
+         node3 ! SetCurrentPartition(partition_1_2_3_4_10)
+         node4 ! SetCurrentPartition(partition_1_2_3_4_10)
+         node10 ! SetCurrentPartition(partition_1_2_3_4_10)
 
-         node1 ! ToDvmsActor(SetFirstOut(node5Ref))
-         node2 ! ToDvmsActor(SetFirstOut(node5Ref))
-         node3 ! ToDvmsActor(SetFirstOut(node5Ref))
-         node4 ! ToDvmsActor(SetFirstOut(node5Ref))
+         node1 ! SetFirstOut(node5Ref)
+         node2 ! SetFirstOut(node5Ref)
+         node3 ! SetFirstOut(node5Ref)
+         node4 ! SetFirstOut(node5Ref)
 
-         node10 ! ToDvmsActor(SetFirstOut(node11Ref))
-         //         node10 ! ToDvmsActor(EverythingIsOkToken(partition_1_2_3_4_10.id))
+         node10 ! SetFirstOut(node11Ref)
+         //         node10 ! EverythingIsOkToken(partition_1_2_3_4_10.id))
 
 
          // killing node4
@@ -125,23 +125,23 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
          Thread.sleep(200)
 
          // transmission of ISP to the respectives firstOuts
-         node10 ! ToDvmsActor(BeginTransmission())
+         node10 ! BeginTransmission()
 
 
          Thread.sleep(10000)
 
-         val node1IsOk = Await.result(node1 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node2IsOk = Await.result(node2 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node3IsOk = Await.result(node3 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         //         val node4IsOk = Await.result(node4 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node5IsOk = Await.result(node5 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node6IsOk = Await.result(node6 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node7IsOk = Await.result(node7 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node8IsOk = Await.result(node8 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node9IsOk = Await.result(node9 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node10IsOk = Await.result(node10 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node11IsOk = Await.result(node11 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node12IsOk = Await.result(node12 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+         val node1IsOk = Await.result(node1 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node2IsOk = Await.result(node2 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node3IsOk = Await.result(node3 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         //         val node4IsOk = Await.result(node4 ? ReportIn()), 1 second).asInstanceOf[Boolean]
+         val node5IsOk = Await.result(node5 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node6IsOk = Await.result(node6 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node7IsOk = Await.result(node7 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node8IsOk = Await.result(node8 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node9IsOk = Await.result(node9 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node10IsOk = Await.result(node10 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node11IsOk = Await.result(node11 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node12IsOk = Await.result(node12 ? ReportIn(), 1 second).asInstanceOf[Boolean]
 
          println(s"1: $node1IsOk")
          println(s"2: $node2IsOk")
@@ -223,19 +223,19 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
          // init the partitions
          val partition_1_2_3_4_10 = DvmsPartition(node10Ref, node1Ref, List(node1Ref, node2Ref, node3Ref, node4Ref, node10Ref), Growing())
 
-         node1 ! ToDvmsActor(SetCurrentPartition(partition_1_2_3_4_10))
-         node2 ! ToDvmsActor(SetCurrentPartition(partition_1_2_3_4_10))
-         node3 ! ToDvmsActor(SetCurrentPartition(partition_1_2_3_4_10))
-         node4 ! ToDvmsActor(SetCurrentPartition(partition_1_2_3_4_10))
-         node10 ! ToDvmsActor(SetCurrentPartition(partition_1_2_3_4_10))
+         node1 ! SetCurrentPartition(partition_1_2_3_4_10)
+         node2 ! SetCurrentPartition(partition_1_2_3_4_10)
+         node3 ! SetCurrentPartition(partition_1_2_3_4_10)
+         node4 ! SetCurrentPartition(partition_1_2_3_4_10)
+         node10 ! SetCurrentPartition(partition_1_2_3_4_10)
 
-         node1 ! ToDvmsActor(SetFirstOut(node5Ref))
-         node2 ! ToDvmsActor(SetFirstOut(node5Ref))
-         node3 ! ToDvmsActor(SetFirstOut(node5Ref))
-         node4 ! ToDvmsActor(SetFirstOut(node5Ref))
+         node1 ! SetFirstOut(node5Ref)
+         node2 ! SetFirstOut(node5Ref)
+         node3 ! SetFirstOut(node5Ref)
+         node4 ! SetFirstOut(node5Ref)
 
-         node10 ! ToDvmsActor(SetFirstOut(node11Ref))
-         //         node10 ! ToDvmsActor(EverythingIsOkToken(partition_1_2_3_4_10.id))
+         node10 ! SetFirstOut(node11Ref)
+         //         node10 ! EverythingIsOkToken(partition_1_2_3_4_10.id))
 
 
          // killing node1
@@ -245,23 +245,23 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
          Thread.sleep(200)
 
          // transmission of ISP to the respectives firstOuts
-         node10 ! ToDvmsActor(BeginTransmission())
+         node10 ! BeginTransmission()
 
 
          Thread.sleep(10000)
 
-         //         val node1IsOk = Await.result(node1 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node2IsOk = Await.result(node2 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node3IsOk = Await.result(node3 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node4IsOk = Await.result(node4 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node5IsOk = Await.result(node5 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node6IsOk = Await.result(node6 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node7IsOk = Await.result(node7 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node8IsOk = Await.result(node8 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node9IsOk = Await.result(node9 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node10IsOk = Await.result(node10 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node11IsOk = Await.result(node11 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node12IsOk = Await.result(node12 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+         //         val node1IsOk = Await.result(node1 ? ReportIn()), 1 second).asInstanceOf[Boolean]
+         val node2IsOk = Await.result(node2 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node3IsOk = Await.result(node3 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node4IsOk = Await.result(node4 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node5IsOk = Await.result(node5 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node6IsOk = Await.result(node6 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node7IsOk = Await.result(node7 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node8IsOk = Await.result(node8 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node9IsOk = Await.result(node9 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node10IsOk = Await.result(node10 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node11IsOk = Await.result(node11 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node12IsOk = Await.result(node12 ? ReportIn(), 1 second).asInstanceOf[Boolean]
 
          //         println(s"1: $node1IsOk")
          println(s"2: $node2IsOk")
@@ -344,19 +344,19 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
          // init the partitions
          val partition_1_2_3_4_10 = DvmsPartition(node10Ref, node1Ref, List(node1Ref, node2Ref, node3Ref, node4Ref, node10Ref), Growing())
 
-         node1 ! ToDvmsActor(SetCurrentPartition(partition_1_2_3_4_10))
-         node2 ! ToDvmsActor(SetCurrentPartition(partition_1_2_3_4_10))
-         node3 ! ToDvmsActor(SetCurrentPartition(partition_1_2_3_4_10))
-         node4 ! ToDvmsActor(SetCurrentPartition(partition_1_2_3_4_10))
-         node10 ! ToDvmsActor(SetCurrentPartition(partition_1_2_3_4_10))
+         node1 ! SetCurrentPartition(partition_1_2_3_4_10)
+         node2 ! SetCurrentPartition(partition_1_2_3_4_10)
+         node3 ! SetCurrentPartition(partition_1_2_3_4_10)
+         node4 ! SetCurrentPartition(partition_1_2_3_4_10)
+         node10 ! SetCurrentPartition(partition_1_2_3_4_10)
 
-         node1 ! ToDvmsActor(SetFirstOut(node5Ref))
-         node2 ! ToDvmsActor(SetFirstOut(node5Ref))
-         node3 ! ToDvmsActor(SetFirstOut(node5Ref))
-         node4 ! ToDvmsActor(SetFirstOut(node5Ref))
+         node1 ! SetFirstOut(node5Ref)
+         node2 ! SetFirstOut(node5Ref)
+         node3 ! SetFirstOut(node5Ref)
+         node4 ! SetFirstOut(node5Ref)
 
-         node10 ! ToDvmsActor(SetFirstOut(node11Ref))
-         //         node10 ! ToDvmsActor(EverythingIsOkToken(partition_1_2_3_4_10.id))
+         node10 ! SetFirstOut(node11Ref)
+         //         node10 ! EverythingIsOkToken(partition_1_2_3_4_10.id))
 
 
          // killing node10
@@ -366,23 +366,23 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
          Thread.sleep(200)
 
          // transmission of ISP to the respectives firstOuts
-         //         node10 ! ToDvmsActor(BeginTransmission())
+         //         node10 ! BeginTransmission())
 
 
          Thread.sleep(10000)
 
-         val node1IsOk = Await.result(node1 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node2IsOk = Await.result(node2 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node3IsOk = Await.result(node3 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node4IsOk = Await.result(node4 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node5IsOk = Await.result(node5 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node6IsOk = Await.result(node6 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node7IsOk = Await.result(node7 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node8IsOk = Await.result(node8 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node9IsOk = Await.result(node9 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         //         val node10IsOk = Await.result(node10 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node11IsOk = Await.result(node11 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node12IsOk = Await.result(node12 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+         val node1IsOk = Await.result(node1 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node2IsOk = Await.result(node2 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node3IsOk = Await.result(node3 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node4IsOk = Await.result(node4 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node5IsOk = Await.result(node5 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node6IsOk = Await.result(node6 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node7IsOk = Await.result(node7 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node8IsOk = Await.result(node8 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node9IsOk = Await.result(node9 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         //         val node10IsOk = Await.result(node10 ? ReportIn()), 1 second).asInstanceOf[Boolean]
+         val node11IsOk = Await.result(node11 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node12IsOk = Await.result(node12 ? ReportIn(), 1 second).asInstanceOf[Boolean]
 
          println(s"1: $node1IsOk")
          println(s"2: $node2IsOk")
@@ -468,39 +468,39 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
          val partition_3 = DvmsPartition(node11Ref, node6Ref, List(node6Ref, node8Ref, node9Ref, node11Ref), Growing())
 
          // partition 1
-         node1 ! ToDvmsActor(SetCurrentPartition(partition_1))
-         node2 ! ToDvmsActor(SetCurrentPartition(partition_1))
-         node3 ! ToDvmsActor(SetCurrentPartition(partition_1))
-         node4 ! ToDvmsActor(SetCurrentPartition(partition_1))
-         node10 ! ToDvmsActor(SetCurrentPartition(partition_1))
+         node1 ! SetCurrentPartition(partition_1)
+         node2 ! SetCurrentPartition(partition_1)
+         node3 ! SetCurrentPartition(partition_1)
+         node4 ! SetCurrentPartition(partition_1)
+         node10 ! SetCurrentPartition(partition_1)
 
-         node1 ! ToDvmsActor(SetFirstOut(node5Ref))
-         node2 ! ToDvmsActor(SetFirstOut(node5Ref))
-         node3 ! ToDvmsActor(SetFirstOut(node5Ref))
-         node4 ! ToDvmsActor(SetFirstOut(node5Ref))
+         node1 ! SetFirstOut(node5Ref)
+         node2 ! SetFirstOut(node5Ref)
+         node3 ! SetFirstOut(node5Ref)
+         node4 ! SetFirstOut(node5Ref)
 
-         node10 ! ToDvmsActor(SetFirstOut(node11Ref))
+         node10 ! SetFirstOut(node11Ref)
 
 
          // partition 2
-         node5 ! ToDvmsActor(SetCurrentPartition(partition_2))
-         node7 ! ToDvmsActor(SetCurrentPartition(partition_2))
-         node12 ! ToDvmsActor(SetCurrentPartition(partition_2))
+         node5 ! SetCurrentPartition(partition_2)
+         node7 ! SetCurrentPartition(partition_2)
+         node12 ! SetCurrentPartition(partition_2)
 
-         node5 ! ToDvmsActor(SetFirstOut(node6Ref))
-         node7 ! ToDvmsActor(SetFirstOut(node8Ref))
-         node12 ! ToDvmsActor(SetFirstOut(node1Ref))
+         node5 ! SetFirstOut(node6Ref)
+         node7 ! SetFirstOut(node8Ref)
+         node12 ! SetFirstOut(node1Ref)
 
          // partition 3
-         node6 ! ToDvmsActor(SetCurrentPartition(partition_3))
-         node8 ! ToDvmsActor(SetCurrentPartition(partition_3))
-         node9 ! ToDvmsActor(SetCurrentPartition(partition_3))
-         node11 ! ToDvmsActor(SetCurrentPartition(partition_3))
+         node6 ! SetCurrentPartition(partition_3)
+         node8 ! SetCurrentPartition(partition_3)
+         node9 ! SetCurrentPartition(partition_3)
+         node11 ! SetCurrentPartition(partition_3)
 
-         node6 ! ToDvmsActor(SetFirstOut(node7Ref))
-         node8 ! ToDvmsActor(SetFirstOut(node9Ref))
-         node9 ! ToDvmsActor(SetFirstOut(node10Ref))
-         node11 ! ToDvmsActor(SetFirstOut(node12Ref))
+         node6 ! SetFirstOut(node7Ref)
+         node8 ! SetFirstOut(node9Ref)
+         node9 ! SetFirstOut(node10Ref)
+         node11 ! SetFirstOut(node12Ref)
 
          // killing node10
          println("Killing node10 (leader of the partition_1)")
@@ -517,23 +517,23 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
          Thread.sleep(200)
 
          // transmission of ISP to the respectives firstOuts
-         //         node10 ! ToDvmsActor(BeginTransmission())
+         //         node10 ! BeginTransmission())
 
 
          Thread.sleep(10000)
 
-         val node1IsOk = Await.result(node1 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node2IsOk = Await.result(node2 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node3IsOk = Await.result(node3 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node4IsOk = Await.result(node4 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         //         val node5IsOk = Await.result(node5 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node6IsOk = Await.result(node6 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node7IsOk = Await.result(node7 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         //         val node8IsOk = Await.result(node8 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node9IsOk = Await.result(node9 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         //         val node10IsOk = Await.result(node10 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node11IsOk = Await.result(node11 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node12IsOk = Await.result(node12 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+         val node1IsOk = Await.result(node1 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node2IsOk = Await.result(node2 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node3IsOk = Await.result(node3 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node4IsOk = Await.result(node4 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         //         val node5IsOk = Await.result(node5 ? ReportIn()), 1 second).asInstanceOf[Boolean]
+         val node6IsOk = Await.result(node6 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node7IsOk = Await.result(node7 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         //         val node8IsOk = Await.result(node8 ? ReportIn()), 1 second).asInstanceOf[Boolean]
+         val node9IsOk = Await.result(node9 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         //         val node10IsOk = Await.result(node10 ? ReportIn()), 1 second).asInstanceOf[Boolean]
+         val node11IsOk = Await.result(node11 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node12IsOk = Await.result(node12 ? ReportIn(), 1 second).asInstanceOf[Boolean]
 
          println(s"1: $node1IsOk")
          println(s"2: $node2IsOk")
@@ -619,39 +619,39 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
          val partition_3 = DvmsPartition(node11Ref, node6Ref, List(node6Ref, node8Ref, node9Ref, node11Ref), Growing())
 
          // partition 1
-         node1 ! ToDvmsActor(SetCurrentPartition(partition_1))
-         node2 ! ToDvmsActor(SetCurrentPartition(partition_1))
-         node3 ! ToDvmsActor(SetCurrentPartition(partition_1))
-         node4 ! ToDvmsActor(SetCurrentPartition(partition_1))
-         node10 ! ToDvmsActor(SetCurrentPartition(partition_1))
+         node1 ! SetCurrentPartition(partition_1)
+         node2 ! SetCurrentPartition(partition_1)
+         node3 ! SetCurrentPartition(partition_1)
+         node4 ! SetCurrentPartition(partition_1)
+         node10 ! SetCurrentPartition(partition_1)
 
-         node1 ! ToDvmsActor(SetFirstOut(node5Ref))
-         node2 ! ToDvmsActor(SetFirstOut(node5Ref))
-         node3 ! ToDvmsActor(SetFirstOut(node5Ref))
-         node4 ! ToDvmsActor(SetFirstOut(node5Ref))
+         node1 ! SetFirstOut(node5Ref)
+         node2 ! SetFirstOut(node5Ref)
+         node3 ! SetFirstOut(node5Ref)
+         node4 ! SetFirstOut(node5Ref)
 
-         node10 ! ToDvmsActor(SetFirstOut(node11Ref))
+         node10 ! SetFirstOut(node11Ref)
 
 
          // partition 2
-         node5 ! ToDvmsActor(SetCurrentPartition(partition_2))
-         node7 ! ToDvmsActor(SetCurrentPartition(partition_2))
-         node12 ! ToDvmsActor(SetCurrentPartition(partition_2))
+         node5 ! SetCurrentPartition(partition_2)
+         node7 ! SetCurrentPartition(partition_2)
+         node12 ! SetCurrentPartition(partition_2)
 
-         node5 ! ToDvmsActor(SetFirstOut(node6Ref))
-         node7 ! ToDvmsActor(SetFirstOut(node8Ref))
-         node12 ! ToDvmsActor(SetFirstOut(node1Ref))
+         node5 ! SetFirstOut(node6Ref)
+         node7 ! SetFirstOut(node8Ref)
+         node12 ! SetFirstOut(node1Ref)
 
          // partition 3
-         node6 ! ToDvmsActor(SetCurrentPartition(partition_3))
-         node8 ! ToDvmsActor(SetCurrentPartition(partition_3))
-         node9 ! ToDvmsActor(SetCurrentPartition(partition_3))
-         node11 ! ToDvmsActor(SetCurrentPartition(partition_3))
+         node6 ! SetCurrentPartition(partition_3)
+         node8 ! SetCurrentPartition(partition_3)
+         node9 ! SetCurrentPartition(partition_3)
+         node11 ! SetCurrentPartition(partition_3)
 
-         node6 ! ToDvmsActor(SetFirstOut(node7Ref))
-         node8 ! ToDvmsActor(SetFirstOut(node9Ref))
-         node9 ! ToDvmsActor(SetFirstOut(node10Ref))
-         node11 ! ToDvmsActor(SetFirstOut(node12Ref))
+         node6 ! SetFirstOut(node7Ref)
+         node8 ! SetFirstOut(node9Ref)
+         node9 ! SetFirstOut(node10Ref)
+         node11 ! SetFirstOut(node12Ref)
 
          // killing node10
          println("Killing node10 (leader of the partition_1) and node1 (initiator of the partition_1")
@@ -671,23 +671,23 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
          Thread.sleep(200)
 
          // transmission of ISP to the respectives firstOuts
-         //         node10 ! ToDvmsActor(BeginTransmission())
+         //         node10 ! BeginTransmission())
 
 
          Thread.sleep(10000)
 
-         //         val node1IsOk = Await.result(node1 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node2IsOk = Await.result(node2 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node3IsOk = Await.result(node3 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node4IsOk = Await.result(node4 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         //         val node5IsOk = Await.result(node5 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         //         val node6IsOk = Await.result(node6 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node7IsOk = Await.result(node7 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         //         val node8IsOk = Await.result(node8 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node9IsOk = Await.result(node9 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         //         val node10IsOk = Await.result(node10 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         val node11IsOk = Await.result(node11 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
-         //         val node12IsOk = Await.result(node12 ? ToDvmsActor(ReportIn()), 1 second).asInstanceOf[Boolean]
+         //         val node1IsOk = Await.result(node1 ? ReportIn()), 1 second).asInstanceOf[Boolean]
+         val node2IsOk = Await.result(node2 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node3IsOk = Await.result(node3 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node4IsOk = Await.result(node4 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         //         val node5IsOk = Await.result(node5 ? ReportIn()), 1 second).asInstanceOf[Boolean]
+         //         val node6IsOk = Await.result(node6 ? ReportIn()), 1 second).asInstanceOf[Boolean]
+         val node7IsOk = Await.result(node7 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         //         val node8IsOk = Await.result(node8 ? ReportIn()), 1 second).asInstanceOf[Boolean]
+         val node9IsOk = Await.result(node9 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         //         val node10IsOk = Await.result(node10 ? ReportIn()), 1 second).asInstanceOf[Boolean]
+         val node11IsOk = Await.result(node11 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         //         val node12IsOk = Await.result(node12 ? ReportIn()), 1 second).asInstanceOf[Boolean]
 
          //         println(s"1: $node1IsOk")
          println(s"2: $node2IsOk")

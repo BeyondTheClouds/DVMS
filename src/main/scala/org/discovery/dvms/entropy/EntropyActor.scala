@@ -8,9 +8,8 @@ import entropy.configuration.{SimpleConfiguration, SimpleVirtualMachine, SimpleN
 import entropy.plan.durationEvaluator.MockDurationEvaluator
 import concurrent.{Future, Await}
 import org.discovery.dvms.dvms.DvmsModel._
-import org.discovery.dvms.dvms.DvmsProtocol._
-import org.discovery.dvms.monitor.GetVmsWithConsumption
 import scala.collection.JavaConversions._
+import org.discovery.dvms.monitor.MonitorProtocol._
 
 /**
  * Created with IntelliJ IDEA.
@@ -32,7 +31,7 @@ class EntropyActor(applicationRef: NodeRef) extends AbstractEntropyActor(applica
 
       val physicalNodesWithVmsConsumption = Await.result(Future.sequence(nodes.map({
          n =>
-            n.ref ? ToMonitorActor(GetVmsWithConsumption())
+            n.ref ? GetVmsWithConsumption()
       })).mapTo[List[PhysicalNode]], 1 second)
 
 
