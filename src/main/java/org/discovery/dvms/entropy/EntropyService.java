@@ -1,5 +1,24 @@
 package org.discovery.dvms.entropy;
 
+/* ============================================================
+ * Discovery Project - DVMS
+ * http://beyondtheclouds.github.io/
+ * ============================================================
+ * Copyright 2013 Discovery Project.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * ============================================================ */
+
 import akka.actor.ActorRef;
 import dvms.scheduling.ComputingState;
 import entropy.configuration.Configuration;
@@ -24,13 +43,6 @@ import org.discovery.dvms.monitor.LibvirtMonitorDriver;
 
 import java.util.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jonathan
- * Date: 5/21/13
- * Time: 5:26 PM
- * To change this template use File | Settings | File Templates.
- */
 public class EntropyService {
 
     public ActorRef loggingActorRef = null;
@@ -59,10 +71,10 @@ public class EntropyService {
     public static boolean computeAndApplyReconfigurationPlan(Configuration configuration, List<PhysicalNode> machines) {
 
         // Alert LoggingActor that EntropyService begin a computation
-        if(DvmsConfiguration.IS_G5K_MODE()) {
+        if (DvmsConfiguration.IS_G5K_MODE()) {
             instance.loggingActorRef.tell(
-                new LoggingProtocol.ComputingSomeReconfigurationPlan(ExperimentConfiguration.getCurrentTime()),
-                null
+                    new LoggingProtocol.ComputingSomeReconfigurationPlan(ExperimentConfiguration.getCurrentTime()),
+                    null
             );
         }
 
@@ -100,8 +112,6 @@ public class EntropyService {
         int reconfigurationGraphDepth = 0;
 
 
-
-
         if (reconfigurationPlan != null) {
             if (reconfigurationPlan.getActions().isEmpty())
                 res = ComputingState.NO_RECONFIGURATION_NEEDED;
@@ -114,10 +124,10 @@ public class EntropyService {
 
             try {
                 // Alert LoggingActor that EntropyService apply a reconfiguration plan
-                if(DvmsConfiguration.IS_G5K_MODE()) {
+                if (DvmsConfiguration.IS_G5K_MODE()) {
                     instance.loggingActorRef.tell(
-                        new LoggingProtocol.ApplyingSomeReconfigurationPlan(ExperimentConfiguration.getCurrentTime()),
-                        null
+                            new LoggingProtocol.ApplyingSomeReconfigurationPlan(ExperimentConfiguration.getCurrentTime()),
+                            null
                     );
                 }
 
@@ -129,12 +139,12 @@ public class EntropyService {
             } finally {
 
                 // Alert LoggingActor that migrationCount has changed
-                if(DvmsConfiguration.IS_G5K_MODE()) {
+                if (DvmsConfiguration.IS_G5K_MODE()) {
                     ExperimentConfiguration.incrementMigrationCount(nbMigrations);
                     instance.loggingActorRef.tell(
                             new LoggingProtocol.UpdateMigrationCount(
-                                ExperimentConfiguration.getCurrentTime(),
-                                ExperimentConfiguration.getMigrationCount()
+                                    ExperimentConfiguration.getCurrentTime(),
+                                    ExperimentConfiguration.getMigrationCount()
                             ),
                             null
                     );
@@ -223,16 +233,16 @@ public class EntropyService {
             Migration migration = (Migration) a;
 
 
-            for(PhysicalNode machine: machines) {
+            for (PhysicalNode machine : machines) {
 
                 // looking for the destination node
-                if(machine.ref().toString().equals(migration.getDestination().toString())) {
+                if (machine.ref().toString().equals(migration.getDestination().toString())) {
                     // we found the destination node, now we have to found the good virtualMachine
 
                     Iterable<VirtualMachine> iterable = (Iterable<VirtualMachine>) machine.machines().toIterable();
 
-                    for(VirtualMachine vm : iterable) {
-                        if(vm.getName().equals(migration.getVirtualMachine().getName())) {
+                    for (VirtualMachine vm : iterable) {
+                        if (vm.getName().equals(migration.getVirtualMachine().getName())) {
                             LibvirtMonitorDriver.driver().migrate(vm, new Node(machine.url()));
                         }
                     }

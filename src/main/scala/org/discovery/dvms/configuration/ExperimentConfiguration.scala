@@ -1,7 +1,7 @@
 package org.discovery.dvms.configuration
 
 /* ============================================================
- * Discovery Project - AkkaArc
+ * Discovery Project - DVMS
  * http://beyondtheclouds.github.io/
  * ============================================================
  * Copyright 2013 Discovery Project.
