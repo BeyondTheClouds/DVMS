@@ -22,10 +22,12 @@ import akka.pattern.pipe
  * See the License for the specific language governing permissions and
  * limitations under the License.
  * ============================================================ */
-     
+
 
 object DvmsSupervisorForTestsProtocol {
+
    case class GetRingSize()
+
 }
 
 class DvmsSupervisorForTests(location: INetworkLocation, factory: DvmsAbstractFactory) extends DvmsSupervisor(location, factory) {

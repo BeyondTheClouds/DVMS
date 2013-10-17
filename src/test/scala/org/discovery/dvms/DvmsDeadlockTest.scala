@@ -195,7 +195,6 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
    "Deadlock resolver" must {
 
 
-
       "resolve a linear deadlock" in {
 
          def quickNodeRef(l: Int, ref: ActorRef): NodeRef = NodeRef(FakeNetworkLocation(l), ref)

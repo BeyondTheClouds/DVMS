@@ -15,7 +15,6 @@ import org.discovery.AkkaArc.util.FakeNetworkLocation
 import com.typesafe.config.ConfigFactory
 
 
-
 class DvmsConfigurationTest(_system: ActorSystem) extends TestKit(_system) with ImplicitSender
 with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
 
@@ -42,7 +41,6 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
    }
 
    "Configuration must" must {
-
 
 
       "parse correctly config/dvms.cfg" in {

@@ -143,19 +143,16 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
 
       "compute a reconfiguration plan with success" in {
 
-//         val (failureCount, successCount) = Await.result(node1 ? ToEntropyActor(ReportIn()), 1 second).asInstanceOf[(Int, Int)]
-//
-//         failureCount must be(10)
-//         successCount must be(2)
+         //         val (failureCount, successCount) = Await.result(node1 ? ToEntropyActor(ReportIn()), 1 second).asInstanceOf[(Int, Int)]
+         //
+         //         failureCount must be(10)
+         //         successCount must be(2)
 
 
-
-
-
-         val node1IsOk: Boolean =  Await.result(node1 ? ReportIn(), 1 second).asInstanceOf[Boolean]
-         val node2IsOk: Boolean =  Await.result(node2 ? ReportIn(), 1 second).asInstanceOf[Boolean]
-         val node3IsOk: Boolean =  Await.result(node3 ? ReportIn(), 1 second).asInstanceOf[Boolean]
-         val node4IsOk: Boolean =  Await.result(node4 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node1IsOk: Boolean = Await.result(node1 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node2IsOk: Boolean = Await.result(node2 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node3IsOk: Boolean = Await.result(node3 ? ReportIn(), 1 second).asInstanceOf[Boolean]
+         val node4IsOk: Boolean = Await.result(node4 ? ReportIn(), 1 second).asInstanceOf[Boolean]
 
 
          node1IsOk must be(true)

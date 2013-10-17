@@ -4,10 +4,8 @@ package org.discovery.dvms
 import akka.actor._
 import akka.testkit.TestKit
 import akka.testkit.ImplicitSender
-import dvms._
 import dvms.DvmsModel._
 import dvms.DvmsModel.DvmsPartititionState._
-import dvms.DvmsProtocol._
 import org.scalatest.{BeforeAndAfterEach, WordSpec, BeforeAndAfterAll}
 import org.scalatest.matchers.MustMatchers
 import scala.concurrent.duration._
@@ -161,7 +159,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
          node1 ! Kill
          node2 ! Kill
          node3 ! Kill
-//         node4 ! Kill
+         //         node4 ! Kill
          node5 ! Kill
          node6 ! Kill
          node7 ! Kill
@@ -279,7 +277,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
          (node4IsOk && node2IsOk && node3IsOk && node5IsOk && node6IsOk &&
            node7IsOk && node8IsOk && node9IsOk && node10IsOk && node11IsOk && node12IsOk) must be(true)
 
-//         node1 ! Kill
+         //         node1 ! Kill
          node2 ! Kill
          node3 ! Kill
          node4 ! Kill
@@ -409,7 +407,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
          node7 ! Kill
          node8 ! Kill
          node9 ! Kill
-//         node10 ! Kill
+         //         node10 ! Kill
          node11 ! Kill
          node12 ! Kill
       }
@@ -555,12 +553,12 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
          node2 ! Kill
          node3 ! Kill
          node4 ! Kill
-//         node5 ! Kill
+         //         node5 ! Kill
          node6 ! Kill
          node7 ! Kill
-//         node8 ! Kill
+         //         node8 ! Kill
          node9 ! Kill
-//         node10 ! Kill
+         //         node10 ! Kill
          node11 ! Kill
          node12 ! Kill
       }
@@ -705,18 +703,18 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
          (node2IsOk && node3IsOk &&
            node7IsOk && node9IsOk && node4IsOk && node11IsOk) must be(true)
 
-//         node1 ! Kill
+         //         node1 ! Kill
          node2 ! Kill
          node3 ! Kill
          node4 ! Kill
-//         node5 ! Kill
-//         node6 ! Kill
+         //         node5 ! Kill
+         //         node6 ! Kill
          node7 ! Kill
-//         node8 ! Kill
+         //         node8 ! Kill
          node9 ! Kill
-//         node10 ! Kill
+         //         node10 ! Kill
          node11 ! Kill
-//         node12 ! Kill
+         //         node12 ! Kill
       }
    }
 }
