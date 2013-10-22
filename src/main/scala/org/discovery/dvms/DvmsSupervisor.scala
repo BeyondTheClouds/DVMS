@@ -15,6 +15,7 @@ import scala.concurrent.duration._
 import util.parsing.combinator.RegexParsers
 import java.util.concurrent.TimeoutException
 import configuration.{ExperimentConfiguration, DvmsConfiguration}
+import org.discovery.AkkaArc.DvmsSupervisorForTestsProtocol.GetRingSize
 
 /* ============================================================
  * Discovery Project - DVMS
@@ -76,6 +77,14 @@ class DvmsSupervisor(location: INetworkLocation, factory: DvmsAbstractFactory) e
       case msg: DvmsMessage      => dvmsActor.forward(msg)
       case msg: EntropyMessage   => entropyActor.forward(msg)
       case msg: LoggingMessage   => loggingActor.forward(msg)
+
+      case msg: GetRingSize      =>
+         val senderSave = sender
+         for {
+            size <- overlayService.ringSize()
+         } yield {
+            senderSave ! size
+         }
 
       case msg => super.receive(msg)
    }

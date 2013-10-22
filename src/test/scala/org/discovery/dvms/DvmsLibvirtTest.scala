@@ -103,6 +103,17 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
          //         1 must be(1)
       }
 
+      "testing scala language (may not be run as test)" in {
+
+         class Toto {
+            val toto:Int = 43
+            def get = 19
+         }
+         def foo(x: {val toto:Int}) = 123 + x.toto
+
+//         println(foo(new {def get = 10}))
+         println(foo(new Toto))
+      }
    }
 
 }
