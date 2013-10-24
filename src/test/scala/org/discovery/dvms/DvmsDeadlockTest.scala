@@ -26,6 +26,8 @@ import scala.Some
 import org.discovery.AkkaArc.util.FakeNetworkLocation
 import java.util.Date
 import com.typesafe.config.ConfigFactory
+import org.discovery.AkkaArc.overlay.chord.ChordService
+import service.ServiceActor
 
 
 object DvmsDeadlockTest {
@@ -163,6 +165,10 @@ object TestDvmsFactory extends DvmsAbstractFactory {
 
    def createLoggingActor(nodeRef: NodeRef): Option[LoggingActor] = {
       Some(new TestLogginActor(nodeRef.location))
+   }
+
+   def createServiceActor(nodeRef: NodeRef, overlayService: ChordService): Option[ServiceActor] = {
+      Some(new ServiceActor(nodeRef, overlayService))
    }
 }
 

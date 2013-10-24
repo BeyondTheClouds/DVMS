@@ -24,6 +24,8 @@ import org.discovery.dvms.entropy.{FakeEntropyActor, AbstractEntropyActor}
 import org.discovery.AkkaArc.util.NodeRef
 import org.discovery.dvms.dvms.DvmsActor
 import org.discovery.dvms.log.LoggingActor
+import org.discovery.dvms.service.ServiceActor
+import org.discovery.AkkaArc.overlay.chord.ChordService
 
 
 object FakeDvmsFactory extends DvmsAbstractFactory {
@@ -42,5 +44,9 @@ object FakeDvmsFactory extends DvmsAbstractFactory {
 
    def createLoggingActor(nodeRef: NodeRef): Option[LoggingActor] = {
       Some(new LoggingActor(nodeRef.location))
+   }
+
+   def createServiceActor(nodeRef: NodeRef, overlayService: ChordService): Option[ServiceActor] = {
+      Some(new ServiceActor(nodeRef, overlayService))
    }
 }

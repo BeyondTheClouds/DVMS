@@ -1,4 +1,4 @@
-package org.discovery.dvms.factory
+package org.discovery.dvms.service
 
 /* ============================================================
  * Discovery Project - DVMS
@@ -18,24 +18,13 @@ package org.discovery.dvms.factory
  * See the License for the specific language governing permissions and
  * limitations under the License.
  * ============================================================ */
+     
 
-import org.discovery.dvms.monitor.AbstractMonitorActor
-import org.discovery.AkkaArc.util.NodeRef
-import org.discovery.dvms.entropy.AbstractEntropyActor
-import org.discovery.dvms.dvms.DvmsActor
-import org.discovery.dvms.log.LoggingActor
-import org.discovery.dvms.service.ServiceActor
-import org.discovery.AkkaArc.overlay.chord.ChordService
+trait ServiceMessage
 
-trait DvmsAbstractFactory {
+object ServiceProtocol {
+   case class GetOverlaySize() extends ServiceMessage
+   case class MigrateVm(vmName: String, destinationIp: String, destinationPort: Int) extends ServiceMessage
 
-   def createMonitorActor(nodeRef: NodeRef): Option[AbstractMonitorActor]
-
-   def createDvmsActor(nodeRef: NodeRef): Option[DvmsActor]
-
-   def createEntropyActor(nodeRef: NodeRef): Option[AbstractEntropyActor]
-
-   def createLoggingActor(nodeRef: NodeRef): Option[LoggingActor]
-
-   def createServiceActor(nodeRef: NodeRef, overlayService: ChordService): Option[ServiceActor]
+   case class CannotExecuteAction(reason: Option[String]) extends ServiceMessage
 }

@@ -1,4 +1,4 @@
-package org.discovery.dvms.factory
+package org.discovery.dvms.service
 
 /* ============================================================
  * Discovery Project - DVMS
@@ -19,23 +19,34 @@ package org.discovery.dvms.factory
  * limitations under the License.
  * ============================================================ */
 
-import org.discovery.dvms.monitor.AbstractMonitorActor
+
 import org.discovery.AkkaArc.util.NodeRef
-import org.discovery.dvms.entropy.AbstractEntropyActor
-import org.discovery.dvms.dvms.DvmsActor
-import org.discovery.dvms.log.LoggingActor
-import org.discovery.dvms.service.ServiceActor
+import akka.actor.{ActorLogging, Actor}
+import akka.util.Timeout
+import concurrent.ExecutionContext
+import java.util.concurrent.Executors
+import scala.concurrent.duration._
+import org.discovery.dvms.service.ServiceProtocol._
 import org.discovery.AkkaArc.overlay.chord.ChordService
 
-trait DvmsAbstractFactory {
+class ServiceActor(applicationRef: NodeRef, overlayService: ChordService) extends Actor with ActorLogging {
 
-   def createMonitorActor(nodeRef: NodeRef): Option[AbstractMonitorActor]
+   implicit val timeout = Timeout(2 seconds)
+   implicit val ec = ExecutionContext.fromExecutorService(Executors.newCachedThreadPool())
 
-   def createDvmsActor(nodeRef: NodeRef): Option[DvmsActor]
+   override def receive = {
 
-   def createEntropyActor(nodeRef: NodeRef): Option[AbstractEntropyActor]
+      case GetOverlaySize()  =>
+         val senderSave = sender
+         for {
+            size <- overlayService.ringSize()
+         } yield {
+            senderSave ! size
+         }
 
-   def createLoggingActor(nodeRef: NodeRef): Option[LoggingActor]
+      case MigrateVm(vmName, ip, port)  =>
+         sender ! ServiceProtocol.CannotExecuteAction(Some("Not yet implemented!"))
 
-   def createServiceActor(nodeRef: NodeRef, overlayService: ChordService): Option[ServiceActor]
+      case msg => applicationRef.ref.forward(msg)
+   }
 }

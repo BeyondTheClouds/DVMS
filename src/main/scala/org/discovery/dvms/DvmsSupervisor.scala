@@ -12,6 +12,7 @@ import akka.actor.{OneForOneStrategy, Props}
 import akka.actor.SupervisorStrategy.{Escalate, Stop, Restart, Resume}
 import akka.pattern.AskTimeoutException
 import scala.concurrent.duration._
+import service.ServiceMessage
 import util.parsing.combinator.RegexParsers
 import java.util.concurrent.TimeoutException
 import configuration.{ExperimentConfiguration, DvmsConfiguration}
@@ -65,26 +66,21 @@ class DvmsSupervisor(location: INetworkLocation, factory: DvmsAbstractFactory) e
    val nodeRef: NodeRef = NodeRef(location, self)
 
    val monitorActor = context.actorOf(Props(factory.createMonitorActor(nodeRef).get), s"Monitor@${location.getId}")
-   val dvmsActor = context.actorOf(Props(factory.createDvmsActor(nodeRef).get), s"DVMS@${location.getId}")
+   val dvmsActor    = context.actorOf(Props(factory.createDvmsActor(nodeRef).get),    s"DVMS@${location.getId}")
    val entropyActor = context.actorOf(Props(factory.createEntropyActor(nodeRef).get), s"Entropy@${location.getId}")
    val loggingActor = context.actorOf(Props(factory.createLoggingActor(nodeRef).get), s"Logging@${location.getId}")
+   val serviceActor = context.actorOf(Props(factory.createServiceActor(nodeRef, overlayService).get), s"Service@${location.getId}")
 
    // Register the start time of the experiment
    ExperimentConfiguration.startExperiment()
 
    override def receive = {
+
       case msg: MonitorMessage   => monitorActor.forward(msg)
       case msg: DvmsMessage      => dvmsActor.forward(msg)
       case msg: EntropyMessage   => entropyActor.forward(msg)
       case msg: LoggingMessage   => loggingActor.forward(msg)
-
-      case msg: GetRingSize      =>
-         val senderSave = sender
-         for {
-            size <- overlayService.ringSize()
-         } yield {
-            senderSave ! size
-         }
+      case msg: ServiceMessage   => serviceActor.forward(msg)
 
       case msg => super.receive(msg)
    }

@@ -15,6 +15,8 @@ import java.util.concurrent.Executors
 import com.typesafe.config.ConfigFactory
 import scala.concurrent.duration._
 import org.discovery.driver.LibvirtDriver
+import org.discovery.AkkaArc.overlay.chord.ChordService
+import service.ServiceActor
 
 /* ============================================================
  * Discovery Project - DVMS
@@ -71,49 +73,4 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
          driver.isConnected must be(true)
       }
    }
-
-   "Dvms using LibvirtDriver" should {
-
-      object LibvirtDvmsFactory extends DvmsAbstractFactory {
-         def createMonitorActor(nodeRef: NodeRef): Option[AbstractMonitorActor] = {
-            Some(new LibvirtMonitorActor(nodeRef))
-         }
-
-         def createDvmsActor(nodeRef: NodeRef): Option[DvmsActor] = {
-            Some(new TestDvmsActor(nodeRef))
-         }
-
-         def createEntropyActor(nodeRef: NodeRef): Option[AbstractEntropyActor] = {
-            Some(new TestEntropyActor(nodeRef))
-         }
-
-         def createLoggingActor(nodeRef: NodeRef): Option[LoggingActor] = {
-            Some(new TestLogginActor(nodeRef.location))
-         }
-      }
-
-      "succesfully use the libvirt driver" in {
-
-         //         val node1 = system.actorOf(Props(new DvmsSupervisor(FakeNetworkLocation(1), LibvirtDvmsFactory)).withDispatcher("prio-dispatcher"))
-         //
-         //         while (true) {
-         //            Thread.sleep(1000);
-         //         }
-         //
-         //         1 must be(1)
-      }
-
-      "testing scala language (may not be run as test)" in {
-
-         class Toto {
-            val toto:Int = 43
-            def get = 19
-         }
-         def foo(x: {val toto:Int}) = 123 + x.toto
-
-//         println(foo(new {def get = 10}))
-         println(foo(new Toto))
-      }
-   }
-
 }
