@@ -26,5 +26,7 @@ object ServiceProtocol {
    case class GetOverlaySize() extends ServiceMessage
    case class MigrateVm(vmName: String, destinationIp: String, destinationPort: Int) extends ServiceMessage
 
+   case class Benchmark(duration: Int, intensity: Int) extends ServiceMessage
+
    case class CannotExecuteAction(reason: Option[String]) extends ServiceMessage
 }
