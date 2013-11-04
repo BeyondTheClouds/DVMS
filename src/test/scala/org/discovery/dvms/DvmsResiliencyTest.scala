@@ -17,6 +17,7 @@ import org.discovery.AkkaArc.util.Configuration
 import org.discovery.AkkaArc.util.FakeNetworkLocation
 import com.typesafe.config.ConfigFactory
 import org.discovery.AkkaArc.ConnectToThisPeerActor
+import scala.Console
 
 
 object DvmsResiliencyTest {
@@ -117,7 +118,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
 
 
          // killing node4
-         println("Killing node4")
+         println(Console.RED+"Killing node4"+Console.WHITE)
          node4.tell(PoisonPill.getInstance, null)
 
          Thread.sleep(200)
@@ -237,7 +238,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
 
 
          // killing node1
-         println("Killing node1 (initiator)")
+         println(Console.RED+"Killing node1 (initiator)"+Console.WHITE)
          node1.tell(PoisonPill.getInstance, null)
 
          Thread.sleep(200)
@@ -358,7 +359,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
 
 
          // killing node10
-         println("Killing node10 (leader)")
+         println(Console.RED+"Killing node10 (leader)"+Console.WHITE)
          node10.tell(PoisonPill.getInstance, null)
 
          Thread.sleep(200)
@@ -501,15 +502,15 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
          node11 ! SetFirstOut(node12Ref)
 
          // killing node10
-         println("Killing node10 (leader of the partition_1)")
+         println(Console.RED+"Killing node10 (leader of the partition_1)"+Console.WHITE)
          node10.tell(PoisonPill.getInstance, null)
 
          // killing node5
-         println("Killing node5 (initiatior of the partition_2)")
+         println(Console.RED+"Killing node5 (initiatior of the partition_2)"+Console.WHITE)
          node5.tell(PoisonPill.getInstance, null)
 
          // killing node8
-         println("Killing node8 (lambda node of the partition_3)")
+         println(Console.RED+"Killing node8 (lambda node of the partition_3)"+Console.WHITE)
          node8.tell(PoisonPill.getInstance, null)
 
          Thread.sleep(200)
@@ -652,17 +653,17 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
          node11 ! SetFirstOut(node12Ref)
 
          // killing node10
-         println("Killing node10 (leader of the partition_1) and node1 (initiator of the partition_1")
+         println(Console.RED+"Killing node10 (leader of the partition_1) and node1 (initiator of the partition_1)"+Console.WHITE)
          node10.tell(PoisonPill.getInstance, null)
          node1.tell(PoisonPill.getInstance, null)
 
          // killing node5
-         println("Killing node5 (initiatior of the partition_2) and node12 (leader of the partition_1")
+         println(Console.RED+"Killing node5 (initiatior of the partition_2) and node12 (leader of the partition_1)"+Console.WHITE)
          node5.tell(PoisonPill.getInstance, null)
          node12.tell(PoisonPill.getInstance, null)
 
          // killing node8
-         println("Killing node6 (initiator of the partition_3) and node8 (lambda node of the partition_3)")
+         println(Console.RED+"Killing node6 (initiator of the partition_3) and node8 (lambda node of the partition_3))"+Console.WHITE)
          node6.tell(PoisonPill.getInstance, null)
          node8.tell(PoisonPill.getInstance, null)
 
