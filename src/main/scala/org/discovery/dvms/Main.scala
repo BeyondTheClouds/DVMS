@@ -1,7 +1,7 @@
 package org.discovery.dvms
 
 /* ============================================================
- * Discovery Project - AkkaArc
+ * Discovery Project - DVMS
  * http://beyondtheclouds.github.io/
  * ============================================================
  * Copyright 2013 Discovery Project.
@@ -20,9 +20,8 @@ package org.discovery.dvms
  * ============================================================ */
 
 import akka.actor.{ActorSystem, Props}
-import com.typesafe.config.ConfigFactory
-import org.discovery.AkkaArc.{ConnectTo, util, notification}
-import notification.{Events, TriggerEvent}
+import configuration.{DPSimpleNode, G5kNodes}
+import org.discovery.AkkaArc.{ConnectTo, util}
 import util._
 import scala.concurrent.duration._
 import java.util.concurrent.Executors
@@ -30,11 +29,25 @@ import scala.concurrent.ExecutionContext
 import akka.util.Timeout
 import collection.mutable
 import util.NetworkLocation
-import org.discovery.AkkaArc.PeerActorProtocol.ToNotificationActor
 
 object Main extends App {
 
    override def main(args: Array[String]) {
+
+      println("DVMS - version 0.1 (alpha)")
+
+      G5kNodes.getCurrentNodeInstance() match {
+         case null =>
+            println(s"no node configuration matched!")
+         case nodeInstance: DPSimpleNode =>
+            println(s"running on:")
+            println(s"  {")
+            println(s"    cpu : ${G5kNodes.getCurrentNodeInstance.getCPUCapacity},")
+            println(s"    mem : ${G5kNodes.getCurrentNodeInstance.getMemoryCapacity}")
+            println(s"  }")
+      }
+
+
       implicit val timeout = Timeout(1 seconds)
       implicit val ec = ExecutionContext.fromExecutorService(Executors.newCachedThreadPool())
 

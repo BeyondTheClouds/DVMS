@@ -23,10 +23,13 @@ import org.discovery.AkkaArc.util.NodeRef
 import org.discovery.driver.{LibvirtDriver, LibvirtG5kDriver}
 import org.discovery.model.{IDriver, IVirtualMachine}
 import scala.collection.JavaConversions._
-import org.discovery.dvms.dvms.DvmsModel._
-import org.discovery.dvms.configuration.{ExperimentConfiguration, DvmsConfiguration, VirtualMachineConfiguration, HardwareConfiguration}
-import scala.concurrent.duration._
+import org.discovery.dvms.configuration._
+import org.discovery.AkkaArc.notification.TriggerEvent
 import org.discovery.dvms.log.LoggingProtocol.CurrentLoadIs
+import org.discovery.dvms.dvms.DvmsModel.PhysicalNode
+import org.discovery.AkkaArc.PeerActorProtocol.ToNotificationActor
+import org.discovery.dvms.dvms.DvmsModel.ComputerSpecification
+import org.discovery.dvms.dvms.DvmsModel.VirtualMachine
 
 object LibvirtMonitorDriver {
    val driver: IDriver = DvmsConfiguration.IS_G5K_MODE match {
@@ -52,7 +55,7 @@ class LibvirtMonitorActor(applicationRef: NodeRef) extends AbstractMonitorActor(
    def getVmsWithConsumption(): PhysicalNode = {
 
 
-      PhysicalNode(applicationRef, LibvirtMonitorDriver.driver.getRunningVms.toList.map(vm =>
+      PhysicalNode(applicationRef, LibvirtMonitorDriver.driver.getRunningVms.par.map(vm =>
          VirtualMachine(
             vm.getName,
             LibvirtMonitorDriver.driver.getUserCpu(vm) + LibvirtMonitorDriver.driver.getStealCpu(vm),
@@ -61,7 +64,7 @@ class LibvirtMonitorActor(applicationRef: NodeRef) extends AbstractMonitorActor(
                VirtualMachineConfiguration.getRamCapacity,
                VirtualMachineConfiguration.getCpuCoreCapacity
             )
-         )),
+         )).toList,
          LibvirtMonitorDriver.driver.getMigrationUrl()
          ,
          ComputerSpecification(
@@ -74,16 +77,54 @@ class LibvirtMonitorActor(applicationRef: NodeRef) extends AbstractMonitorActor(
 
    def uploadCpuConsumption(): Double = {
 
-      val cpuConsumption: Double = LibvirtMonitorDriver.driver.getRunningVms.toList.par.foldLeft[Double](0)((a: Double, b: IVirtualMachine) => a + (b match {
+      val cpuConsumption: Double = LibvirtMonitorDriver.driver.getRunningVms.par.foldLeft[Double](0)((a: Double, b: IVirtualMachine) => a + (b match {
          case machine: IVirtualMachine => LibvirtMonitorDriver.driver.getStealCpu(machine) + LibvirtMonitorDriver.driver.getUserCpu(machine)
          case _ => 0.0
       }))
 
       log.info(s"load: $cpuConsumption")
 
-      // Alert LogginActor that the current node is booked in a partition
+      // Send the CPU consumption to logginActor
       applicationRef.ref ! CurrentLoadIs(ExperimentConfiguration.getCurrentTime(), cpuConsumption)
 
       cpuConsumption
+   }
+
+   def uploadCpuConsumption(tickNumber: Int): Double = {
+
+      log.info(s"[tick: $tickNumber] START UPDATE")
+      val result = uploadCpuConsumption()
+      log.info(s"[tick: $tickNumber] STOP UPDATE")
+
+      result
+   }
+
+   var tickCount: Int = 0;
+
+   override def receive = {
+
+      case Tick() => {
+
+         tickCount += 1
+
+         val tickNumber = tickCount
+
+         log.info(s"[tick: $tickNumber] START TICK")
+
+         cpuConsumption = uploadCpuConsumption(tickNumber)
+
+         log.info(s"the new consumption is : $cpuConsumption")
+
+         if (cpuConsumption > G5kNodes.getCurrentNodeInstance().getCPUCapacity) {
+            log.info(s"the cpu consumption is under violation")
+
+            // triggering CpuViolation event
+            applicationRef.ref ! ToNotificationActor(TriggerEvent(new MonitorEvent.CpuViolation()))
+         }
+
+         log.info(s"[tick: $tickNumber] END TICK")
+      }
+
+      case msg => super.receive(msg)
    }
 }

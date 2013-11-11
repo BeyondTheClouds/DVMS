@@ -1,8 +1,4 @@
-package org.discovery.dvms
-
-import factory.{DvmsAbstractFactory, FakeDvmsFactory}
-import org.discovery.AkkaArc.util.INetworkLocation
-import akka.pattern.pipe
+package org.discovery.dvms.configuration;
 
 /* ============================================================
  * Discovery Project - DVMS
@@ -24,23 +20,24 @@ import akka.pattern.pipe
  * ============================================================ */
 
 
-object DvmsSupervisorForTestsProtocol {
+import entropy.configuration.SimpleNode;
 
-   case class GetRingSize()
+public class DPSimpleNode extends SimpleNode {
 
-}
+    private double calibratedCPU;
+    private double calibratedMem;
 
-class DvmsSupervisorForTests(location: INetworkLocation, factory: DvmsAbstractFactory) extends DvmsSupervisor(location, factory) {
+    DPSimpleNode(String name, int nbCores, int cpuCapacity, int memSize, double calibratedCPU, double calibratedMem){
+        super(name, nbCores, cpuCapacity, memSize);
+        this.calibratedCPU=calibratedCPU;
+        this.calibratedMem=calibratedMem;
+    }
+    public double getCalibratedCPU() {
+        return calibratedCPU;
+    }
 
+    public double getCalibratedMem() {
+        return calibratedMem;
+    }
 
-   def this(location: INetworkLocation) = this(location, FakeDvmsFactory)
-   import org.discovery.AkkaArc.overlay.chord.ChordActor._
-
-   override def receive = {
-      case DvmsSupervisorForTestsProtocol.GetRingSize() =>
-         overlayService.ringSize() pipeTo sender
-
-      case msg =>
-         super.receive(msg)
-   }
 }

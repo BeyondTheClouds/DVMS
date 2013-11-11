@@ -48,31 +48,41 @@ object LoggingProtocol {
 
 class LoggingActor(location: INetworkLocation) extends Actor {
 
-   val writer = new PrintWriter(new File("dvms.log"))
+   val file = new File("dvms.log")
+   val writer = new PrintWriter(file)
 
    override def receive = {
 
       case ComputingSomeReconfigurationPlan(time: Double) =>
-         writer.write(s"id, ${location.getId}, SERVICE, $time, compute")
+         writer.write(s"id, ${location.getId}, SERVICE, $time, compute\n")
+         writer.flush()
 
       case ApplyingSomeReconfigurationPlan(time: Double) =>
-         writer.write(s"id, ${location.getId}, SERVICE, $time, reconfigure")
+         writer.write(s"id, ${location.getId}, SERVICE, $time, reconfigure\n")
+         writer.flush()
 
       case ApplicationSomeReconfigurationPlanIsDone(time: Double) =>
 
       case IsBooked(time: Double) =>
-         writer.write(s"id, ${location.getId}, SERVICE, $time, booked")
+         writer.write(s"id, ${location.getId}, SERVICE, $time, booked\n")
+         writer.flush()
+
       case IsFree(time: Double) =>
-         writer.write(s"id, ${location.getId}, SERVICE, $time, free")
+         writer.write(s"id, ${location.getId}, SERVICE, $time, free\n")
+         writer.flush()
 
       case CurrentLoadIs(time: Double, load: Double) =>
-         writer.write(s"id, ${location.getId}, LOAD, $time, $load")
+         writer.write(s"id, ${location.getId}, LOAD, $time, $load\n")
+         writer.flush()
+
 
       case ViolationDetected(time: Double) =>
-         writer.write(s"id, ${location.getId}, PM, ${time}, violation-det")
+         writer.write(s"id, ${location.getId}, PM, ${time}, violation-det\n")
+         writer.flush()
 
       case UpdateMigrationCount(time: Double, count: Int) =>
-         writer.write(s"id, ${location.getId}, NB_MIG, $time, $count")
+         writer.write(s"id, ${location.getId}, NB_MIG, $time, $count\n")
+         writer.flush()
 
       case _ =>
    }

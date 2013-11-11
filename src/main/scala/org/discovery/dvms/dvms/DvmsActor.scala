@@ -478,6 +478,7 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
          hasComputed = true
       }
 
+      // TODO: fix this (dirty)
       while (!hasComputed) {
          Thread.sleep(100)
       }
