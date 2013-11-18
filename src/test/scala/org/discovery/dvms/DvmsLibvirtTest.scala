@@ -70,8 +70,6 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
          driver.connect()
 
          //         driver.connect("qemu+ssh://root@127.0.0.1:8210/session?socket=/var/run/libvirt/libvirt-sock")
-
-         driver.isConnected must be(true)
       }
    }
 }

@@ -34,27 +34,37 @@ object DvmsModel {
 
 
    object DvmsPartititionState {
-      case class Created() extends DvmsPartititionState("Created")
+      case class Created() extends DvmsPartititionState {
+         def isEqualTo(a: DvmsPartititionState): Boolean = a match {
+            case Created() => true
+            case _ => false
+         }
+      }
 
-      case class Blocked() extends DvmsPartititionState("Blocked")
+      case class Blocked() extends DvmsPartititionState {
+         def isEqualTo(a: DvmsPartititionState): Boolean = a match {
+            case Blocked() => true
+            case _ => false
+         }
+      }
 
-      case class Growing() extends DvmsPartititionState("Growing")
+      case class Growing() extends DvmsPartititionState {
+         def isEqualTo(a: DvmsPartititionState): Boolean = a match {
+            case Growing() => true
+            case _ => false
+         }
+      }
 
-      case class Destroyed() extends DvmsPartititionState("Destroyed")
+      case class Destroyed() extends DvmsPartititionState {
+         def isEqualTo(a: DvmsPartititionState): Boolean = a match {
+            case Destroyed() => true
+            case _ => false
+         }
+      }
    }
 
-
-   class DvmsPartititionState(val name: String) {
-
-      def getName(): String = name
-
-      def isEqualTo(a: DvmsPartititionState): Boolean = {
-         this.name == a.getName
-      }
-
-      def isDifferentFrom(a: DvmsPartititionState): Boolean = {
-         this.name != a.getName
-      }
+   trait DvmsPartititionState {
+      def isEqualTo(a: DvmsPartititionState): Boolean
    }
 
 

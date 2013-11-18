@@ -21,6 +21,7 @@ package org.discovery.dvms
 
 import akka.actor.{ActorSystem, Props}
 import configuration.{DPSimpleNode, G5kNodes}
+import monitor.MonitorEvent.CpuViolation
 import org.discovery.AkkaArc.{ConnectTo, util}
 import util._
 import scala.concurrent.duration._
@@ -29,8 +30,10 @@ import scala.concurrent.ExecutionContext
 import akka.util.Timeout
 import collection.mutable
 import util.NetworkLocation
+import org.discovery.AkkaArc.PeerActorProtocol.ToNotificationActor
+import org.discovery.AkkaArc.notification.TriggerEvent
 
-object Main extends App {
+object FaultyMain extends App {
 
    override def main(args: Array[String]) {
 
@@ -98,6 +101,11 @@ object Main extends App {
             ref <- remotePeer.resolveOne()
          } yield {
             peer ! ConnectTo(ref, remoteLocation)
+
+            Thread.sleep(5000)
+            println("Simulating a false CPU overload")
+
+            peer ! ToNotificationActor(TriggerEvent(new CpuViolation()))
          }
       }
    }

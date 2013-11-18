@@ -16,7 +16,7 @@ import service.ServiceMessage
 import util.parsing.combinator.RegexParsers
 import java.util.concurrent.TimeoutException
 import configuration.{ExperimentConfiguration, DvmsConfiguration}
-import org.discovery.AkkaArc.DvmsSupervisorForTestsProtocol.GetRingSize
+import org.discovery.AkkaArc.PeerActorMessage
 
 /* ============================================================
  * Discovery Project - DVMS
@@ -69,7 +69,7 @@ class DvmsSupervisor(location: INetworkLocation, factory: DvmsAbstractFactory) e
    val dvmsActor    = context.actorOf(Props(factory.createDvmsActor(nodeRef).get),    s"DVMS@${location.getId}")
    val entropyActor = context.actorOf(Props(factory.createEntropyActor(nodeRef).get), s"Entropy@${location.getId}")
    val loggingActor = context.actorOf(Props(factory.createLoggingActor(nodeRef).get), s"Logging@${location.getId}")
-   val serviceActor = context.actorOf(Props(factory.createServiceActor(nodeRef, overlayService).get), s"Service@${location.getId}")
+//   val serviceActor = context.actorOf(Props(factory.createServiceActor(nodeRef, overlayService).get), s"Service@${location.getId}")
 
    // Register the start time of the experiment
    ExperimentConfiguration.startExperiment()
@@ -80,9 +80,16 @@ class DvmsSupervisor(location: INetworkLocation, factory: DvmsAbstractFactory) e
       case msg: DvmsMessage      => dvmsActor.forward(msg)
       case msg: EntropyMessage   => entropyActor.forward(msg)
       case msg: LoggingMessage   => loggingActor.forward(msg)
-      case msg: ServiceMessage   => serviceActor.forward(msg)
+//      case msg: ServiceMessage   => serviceActor.forward(msg)
 
-      case msg => super.receive(msg)
+      case msg =>
+
+         msg match {
+            case m:PeerActorMessage =>
+            case _ =>
+               log.info(s"DvmsSupervisor has received an unknown message: $msg")
+         }
+         super.receive(msg)
    }
 
    override def onConnection() {
@@ -107,9 +114,8 @@ class DvmsSupervisor(location: INetworkLocation, factory: DvmsAbstractFactory) e
       } yield {
          log.info(s"$location: one of my neighbors ($oldNeighbor) has changed, here is the new one ($newNeighbor) and here are my neighbors [${neighbours.mkString(",")}]")
 
-         dvmsActor ! YouMayNeedToUpdateYourFirstOut(oldNeighbor, newNeighbor)
-
          if (neighbours.size > 1 && (newNeighbor.location isEqualTo neighbours(1).location)) {
+            dvmsActor ! YouMayNeedToUpdateYourFirstOut(oldNeighbor, newNeighbor)
             dvmsActor ! ThisIsYourNeighbor(neighbours(1))
          }
       }

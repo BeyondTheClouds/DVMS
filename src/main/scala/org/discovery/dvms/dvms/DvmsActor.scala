@@ -70,7 +70,7 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
          Growing(), UUID.randomUUID()))
 
       currentPartition.get.nodes.foreach(node => {
-         log.info(s"(a) $applicationRef: sending ${IAmTheNewLeader(currentPartition.get, firstOut.get)} to $node")
+         log.info(s"(a) $applicationRef: sending a new version of the partition ${IAmTheNewLeader(currentPartition.get, firstOut.get)} to $node")
          node.ref ! IAmTheNewLeader(currentPartition.get, firstOut.get)
       })
 
@@ -403,11 +403,15 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
                   // ask entropy if the new partition is enough to resolve the overload
                   if (computeEntropy()) {
 
+                     log.info("(A) Partition is enough to reconfigure ")
+
                      // it was enough: the partition is no more useful
                      currentPartition.get.nodes.foreach(node => {
                         node.ref ! DissolvePartition()
                      })
                   } else {
+
+                     log.info("(A) Partition is not enough to reconfigure ")
                      // it was not enough: the partition is forwarded to the firstOut
                      firstOut.get.ref ! TransmissionOfAnISP(currentPartition.get)
                   }
@@ -419,6 +423,10 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
       }
 
       case CpuViolationDetected() => {
+
+
+
+
 
          // Alert LogginActor that a violation has been detected
          applicationRef.ref ! ViolationDetected(ExperimentConfiguration.getCurrentTime())
@@ -452,6 +460,7 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
       }
 
       case YouMayNeedToUpdateYourFirstOut(oldNeighbor: Option[NodeRef], newNeighbor: NodeRef) => {
+
          (firstOut, oldNeighbor) match {
             case (Some(fo), Some(n)) if (fo.location isEqualTo n.location) => firstOut = Some(newNeighbor)
             case _ =>
@@ -464,9 +473,13 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
    def computeEntropy(): Boolean = {
 
+      log.info("computeEntropy (1)")
+
       val entropyComputeAsFuture: Future[Boolean] = (applicationRef.ref ?
         EntropyComputeReconfigurePlan(currentPartition.get.nodes)
       ).mapTo[Boolean]
+
+      log.info("computeEntropy (2)")
 
       var result: Boolean = false
       var hasComputed = false
@@ -474,8 +487,10 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
       for {
          futureResult <- entropyComputeAsFuture
       } yield {
+         log.info("computeEntropy (3)")
          result = futureResult
          hasComputed = true
+         log.info("computeEntropy (4)")
       }
 
       // TODO: fix this (dirty)
@@ -483,6 +498,7 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
          Thread.sleep(100)
       }
 
+      log.info("computeEntropy (5)")
       result
    }
 

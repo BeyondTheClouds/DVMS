@@ -21,7 +21,7 @@ package org.discovery.dvms.monitor
 
 import org.discovery.AkkaArc.util.NodeRef
 import org.discovery.driver.{LibvirtDriver, LibvirtG5kDriver}
-import org.discovery.model.{IDriver, IVirtualMachine}
+import org.discovery.model.{IDriver}
 import scala.collection.JavaConversions._
 import org.discovery.dvms.configuration._
 import org.discovery.AkkaArc.notification.TriggerEvent
@@ -30,18 +30,13 @@ import org.discovery.dvms.dvms.DvmsModel.PhysicalNode
 import org.discovery.AkkaArc.PeerActorProtocol.ToNotificationActor
 import org.discovery.dvms.dvms.DvmsModel.ComputerSpecification
 import org.discovery.dvms.dvms.DvmsModel.VirtualMachine
+import org.discovery.model.network.CpuConsumptions
 
 object LibvirtMonitorDriver {
    val driver: IDriver = DvmsConfiguration.IS_G5K_MODE match {
 
       case true =>
-         val nodeName: String = "localhost";
-         val hypervisorUrl: String = String.format(
-            "qemu+ssh://root@%s/session?socket=/var/run/libvirt/libvirt-sock",
-            nodeName
-         )
-         new LibvirtG5kDriver(nodeName, hypervisorUrl, "/usr/local/bin/virsh")
-
+         new LibvirtG5kDriver("configuration/driver.cfg")
       case false =>
          new LibvirtDriver("configuration/driver.cfg")
    }
@@ -52,13 +47,15 @@ object LibvirtMonitorDriver {
 
 class LibvirtMonitorActor(applicationRef: NodeRef) extends AbstractMonitorActor(applicationRef) {
 
+
    def getVmsWithConsumption(): PhysicalNode = {
 
+      val cpuCnsumptions = LibvirtMonitorDriver.driver.getCpuConsumptions
 
       PhysicalNode(applicationRef, LibvirtMonitorDriver.driver.getRunningVms.par.map(vm =>
          VirtualMachine(
             vm.getName,
-            LibvirtMonitorDriver.driver.getUserCpu(vm) + LibvirtMonitorDriver.driver.getStealCpu(vm),
+            cpuCnsumptions.get(vm.getName).get(CpuConsumptions.US) + cpuCnsumptions.get(vm.getName).get(CpuConsumptions.ST),
             ComputerSpecification(
                VirtualMachineConfiguration.getNumberOfCpus,
                VirtualMachineConfiguration.getRamCapacity,
@@ -77,12 +74,13 @@ class LibvirtMonitorActor(applicationRef: NodeRef) extends AbstractMonitorActor(
 
    def uploadCpuConsumption(): Double = {
 
-      val cpuConsumption: Double = LibvirtMonitorDriver.driver.getRunningVms.par.foldLeft[Double](0)((a: Double, b: IVirtualMachine) => a + (b match {
-         case machine: IVirtualMachine => LibvirtMonitorDriver.driver.getStealCpu(machine) + LibvirtMonitorDriver.driver.getUserCpu(machine)
-         case _ => 0.0
-      }))
+      val cpuCnsumptions = LibvirtMonitorDriver.driver.getCpuConsumptions
 
-      log.info(s"load: $cpuConsumption")
+      val listOfConsumptions: List[Double] = cpuCnsumptions.keySet().map ( key =>
+         cpuCnsumptions.get(key).get(CpuConsumptions.US) + cpuCnsumptions.get(key).get(CpuConsumptions.ST)
+      ).toList
+
+      val cpuConsumption: Double = listOfConsumptions.foldLeft(0.0)((a,b) => a + b)
 
       // Send the CPU consumption to logginActor
       applicationRef.ref ! CurrentLoadIs(ExperimentConfiguration.getCurrentTime(), cpuConsumption)
@@ -90,14 +88,7 @@ class LibvirtMonitorActor(applicationRef: NodeRef) extends AbstractMonitorActor(
       cpuConsumption
    }
 
-   def uploadCpuConsumption(tickNumber: Int): Double = {
-
-      log.info(s"[tick: $tickNumber] START UPDATE")
-      val result = uploadCpuConsumption()
-      log.info(s"[tick: $tickNumber] STOP UPDATE")
-
-      result
-   }
+   def uploadCpuConsumption(tickNumber: Int): Double = uploadCpuConsumption()
 
    var tickCount: Int = 0;
 
@@ -109,8 +100,6 @@ class LibvirtMonitorActor(applicationRef: NodeRef) extends AbstractMonitorActor(
 
          val tickNumber = tickCount
 
-         log.info(s"[tick: $tickNumber] START TICK")
-
          cpuConsumption = uploadCpuConsumption(tickNumber)
 
          log.info(s"the new consumption is : $cpuConsumption")
@@ -121,8 +110,6 @@ class LibvirtMonitorActor(applicationRef: NodeRef) extends AbstractMonitorActor(
             // triggering CpuViolation event
             applicationRef.ref ! ToNotificationActor(TriggerEvent(new MonitorEvent.CpuViolation()))
          }
-
-         log.info(s"[tick: $tickNumber] END TICK")
       }
 
       case msg => super.receive(msg)
