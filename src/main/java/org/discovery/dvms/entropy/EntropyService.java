@@ -64,6 +64,10 @@ public class EntropyService {
         return instance;
     }
 
+    public static void setLoggingActorRef(ActorRef loggingActorRef) {
+        getInstance().loggingActorRef = loggingActorRef;
+    }
+
     public ChocoCustomRP getPlanner() {
         return planner;
     }
@@ -72,7 +76,7 @@ public class EntropyService {
 
         // Alert LoggingActor that EntropyService begin a computation
         if (DvmsConfiguration.IS_G5K_MODE()) {
-            instance.loggingActorRef.tell(
+            getInstance().loggingActorRef.tell(
                     new LoggingProtocol.ComputingSomeReconfigurationPlan(ExperimentConfiguration.getCurrentTime()),
                     null
             );
@@ -125,7 +129,7 @@ public class EntropyService {
             try {
                 // Alert LoggingActor that EntropyService apply a reconfiguration plan
                 if (DvmsConfiguration.IS_G5K_MODE()) {
-                    instance.loggingActorRef.tell(
+                    getInstance().loggingActorRef.tell(
                             new LoggingProtocol.ApplyingSomeReconfigurationPlan(ExperimentConfiguration.getCurrentTime()),
                             null
                     );
@@ -141,7 +145,7 @@ public class EntropyService {
                 // Alert LoggingActor that migrationCount has changed
                 if (DvmsConfiguration.IS_G5K_MODE()) {
                     ExperimentConfiguration.incrementMigrationCount(nbMigrations);
-                    instance.loggingActorRef.tell(
+                    getInstance().loggingActorRef.tell(
                             new LoggingProtocol.UpdateMigrationCount(
                                     ExperimentConfiguration.getCurrentTime(),
                                     ExperimentConfiguration.getMigrationCount()

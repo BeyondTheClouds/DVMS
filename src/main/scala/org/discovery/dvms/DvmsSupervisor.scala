@@ -2,7 +2,7 @@ package org.discovery.dvms
 
 import dvms.DvmsMessage
 import dvms.DvmsProtocol._
-import entropy.EntropyMessage
+import entropy.{EntropyService, EntropyMessage}
 import factory.{LibvirtDvmsFactory, DvmsAbstractFactory, FakeDvmsFactory}
 import log.LoggingMessage
 import monitor.MonitorMessage
@@ -70,6 +70,8 @@ class DvmsSupervisor(location: INetworkLocation, factory: DvmsAbstractFactory) e
    val entropyActor = context.actorOf(Props(factory.createEntropyActor(nodeRef).get), s"Entropy@${location.getId}")
    val loggingActor = context.actorOf(Props(factory.createLoggingActor(nodeRef).get), s"Logging@${location.getId}")
 //   val serviceActor = context.actorOf(Props(factory.createServiceActor(nodeRef, overlayService).get), s"Service@${location.getId}")
+
+   EntropyService.setLoggingActorRef(loggingActor)
 
    // Register the start time of the experiment
    ExperimentConfiguration.startExperiment()

@@ -37,6 +37,8 @@ class EntropyActor(applicationRef: NodeRef) extends AbstractEntropyActor(applica
 
    def computeAndApplyReconfigurationPlan(nodes: List[NodeRef]): Boolean = {
 
+      log.info("inside computeAndApplyReconfigurationPlan (1)")
+
       val initialConfiguration: Configuration = new SimpleConfiguration();
 
       // building the entropy configuration
@@ -46,7 +48,7 @@ class EntropyActor(applicationRef: NodeRef) extends AbstractEntropyActor(applica
             n.ref ? GetVmsWithConsumption()
       })).mapTo[List[PhysicalNode]], 1 second)
 
-
+      log.info("inside computeAndApplyReconfigurationPlan (2)")
 
       physicalNodesWithVmsConsumption.foreach(physicalNodeWithVmsConsumption => {
 
@@ -67,6 +69,12 @@ class EntropyActor(applicationRef: NodeRef) extends AbstractEntropyActor(applica
          })
       })
 
-      EntropyService.computeAndApplyReconfigurationPlan(initialConfiguration, physicalNodesWithVmsConsumption)
+      log.info("inside computeAndApplyReconfigurationPlan (3)")
+
+      val result = EntropyService.computeAndApplyReconfigurationPlan(initialConfiguration, physicalNodesWithVmsConsumption)
+
+      log.info("inside computeAndApplyReconfigurationPlan (4)")
+
+      result
    }
 }

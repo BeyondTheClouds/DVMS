@@ -31,6 +31,8 @@ import org.discovery.AkkaArc.PeerActorProtocol.ToNotificationActor
 import org.discovery.dvms.dvms.DvmsModel.ComputerSpecification
 import org.discovery.dvms.dvms.DvmsModel.VirtualMachine
 import org.discovery.model.network.CpuConsumptions
+import akka.actor.{Props, Actor}
+import scala.concurrent.duration._
 
 object LibvirtMonitorDriver {
    val driver: IDriver = DvmsConfiguration.IS_G5K_MODE match {
@@ -48,14 +50,21 @@ object LibvirtMonitorDriver {
 class LibvirtMonitorActor(applicationRef: NodeRef) extends AbstractMonitorActor(applicationRef) {
 
 
+   var lastCpuConsumptions = LibvirtMonitorDriver.driver.getCpuConsumptions()
+
+
    def getVmsWithConsumption(): PhysicalNode = {
 
-      val cpuCnsumptions = LibvirtMonitorDriver.driver.getCpuConsumptions
+      log.info("getConsumptions (1)")
 
-      PhysicalNode(applicationRef, LibvirtMonitorDriver.driver.getRunningVms.par.map(vm =>
+//      val cpuConsumptions = LibvirtMonitorDriver.driver.getCpuConsumptions
+
+      log.info("getConsumptions (2)")
+
+      val result = PhysicalNode(applicationRef, LibvirtMonitorDriver.driver.getRunningVms.par.map(vm =>
          VirtualMachine(
             vm.getName,
-            cpuCnsumptions.get(vm.getName).get(CpuConsumptions.US) + cpuCnsumptions.get(vm.getName).get(CpuConsumptions.ST),
+            lastCpuConsumptions.get(vm.getName).get(CpuConsumptions.US) + lastCpuConsumptions.get(vm.getName).get(CpuConsumptions.ST),
             ComputerSpecification(
                VirtualMachineConfiguration.getNumberOfCpus,
                VirtualMachineConfiguration.getRamCapacity,
@@ -70,14 +79,18 @@ class LibvirtMonitorActor(applicationRef: NodeRef) extends AbstractMonitorActor(
             HardwareConfiguration.getCpuCoreCapacity
          )
       )
+
+      log.info("getConsumptions (3)")
+
+      result
    }
 
    def uploadCpuConsumption(): Double = {
 
-      val cpuCnsumptions = LibvirtMonitorDriver.driver.getCpuConsumptions
+//      val cpuCnsumptions = LibvirtMonitorDriver.driver.getCpuConsumptions
 
-      val listOfConsumptions: List[Double] = cpuCnsumptions.keySet().map ( key =>
-         cpuCnsumptions.get(key).get(CpuConsumptions.US) + cpuCnsumptions.get(key).get(CpuConsumptions.ST)
+      val listOfConsumptions: List[Double] = lastCpuConsumptions.keySet.map ( key =>
+         lastCpuConsumptions.get(key).get(CpuConsumptions.US) + lastCpuConsumptions.get(key).get(CpuConsumptions.ST)
       ).toList
 
       val cpuConsumption: Double = listOfConsumptions.foldLeft(0.0)((a,b) => a + b)
@@ -114,4 +127,19 @@ class LibvirtMonitorActor(applicationRef: NodeRef) extends AbstractMonitorActor(
 
       case msg => super.receive(msg)
    }
+
+   class LibvirtCpuConsumptionsUpdater extends Actor {
+      override def receive = {
+         case Tick()  =>
+            lastCpuConsumptions = LibvirtMonitorDriver.driver.getCpuConsumptions
+      }
+
+      context.system.scheduler.schedule(0 milliseconds,
+         1 second,
+         self,
+         Tick())
+   }
+
+   context.actorOf(Props(new LibvirtCpuConsumptionsUpdater()), s"LibvirtCpuConsumptionsUpdater@${applicationRef.location.getId}")
+
 }
