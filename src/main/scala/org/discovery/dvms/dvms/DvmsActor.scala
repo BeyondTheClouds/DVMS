@@ -42,7 +42,7 @@ import org.discovery.dvms.entropy.EntropyProtocol.EntropyComputeReconfigurePlan
 
 object DvmsActor {
    //   val PeriodOfPartitionNodeChecking:FiniteDuration = 100 milliseconds
-   val partitionUpdateTimeout: FiniteDuration = 1500 milliseconds
+   val partitionUpdateTimeout: FiniteDuration = 3500 milliseconds
 }
 
 class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
@@ -403,7 +403,7 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
                   // ask entropy if the new partition is enough to resolve the overload
                   if (computeEntropy()) {
 
-                     log.info("(A) Partition is enough to reconfigure ")
+                     log.info("(A) Partition was enough to reconfigure ")
 
                      // it was enough: the partition is no more useful
                      currentPartition.get.nodes.foreach(node => {
@@ -411,7 +411,7 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
                      })
                   } else {
 
-                     log.info("(A) Partition is not enough to reconfigure ")
+                     log.info(s"(A) Partition was not enough to reconfigure, forwarding to ${firstOut.get}")
                      // it was not enough: the partition is forwarded to the firstOut
                      firstOut.get.ref ! TransmissionOfAnISP(currentPartition.get)
                   }

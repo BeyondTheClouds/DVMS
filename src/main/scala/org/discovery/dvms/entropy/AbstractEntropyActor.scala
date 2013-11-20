@@ -40,6 +40,9 @@ abstract class AbstractEntropyActor(applicationRef: NodeRef) extends Actor with 
          sender ! computeAndApplyReconfigurationPlan(nodes)
       }
 
+      case MigrateVirtualMachine(vmName, nodeName) =>
+         log.info(s"[libvirt is not enabled], cannot migrate $vmName to $nodeName")
+
       case msg => {
          applicationRef.ref ! msg
       }

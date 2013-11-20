@@ -56,7 +56,7 @@ public class G5kNodes {
             put("chirloute", new DPSimpleNode(null, 8, 800, 8192,-1,-1));
 
             // Luxembourg
-            put("granduc", new DPSimpleNode(null, 8, 600, 16384, 232871.692585, 7679674.739783));
+            put("granduc", new DPSimpleNode(null, 8, 800, 16384, 232871.692585, 7679674.739783));
 
 
             //Lyon
@@ -84,11 +84,18 @@ public class G5kNodes {
             //Toulouse
             put("pastel", new DPSimpleNode(null, 4, 400, 8192,-1,-1));
             put("violette", new DPSimpleNode(null, 2, 200, 2048,-1,-1));
+
+
+            put("default", new DPSimpleNode(null, 4, 400, 4096,-1,-1));
         }};
 
     public static String getClusterName(String nodeName){
-        int end = nodeName.indexOf("-");
-        return nodeName.substring(0, end);
+        if(nodeName.equals("default")) {
+            return "default";
+        } else {
+            int end = nodeName.indexOf("-");
+            return nodeName.substring(0, end);
+        }
     }
 
     private static DPSimpleNode getDVMSNodeTemplate(String nodeName){
@@ -152,9 +159,11 @@ public class G5kNodes {
                 String currentHostName = InetAddress.getLocalHost().getHostName();
                 currentNodeInstance = getDVMSNodeTemplate(currentHostName);
             } catch (UnknownHostException e) {
-                e.printStackTrace();
+//                e.printStackTrace();
+                currentNodeInstance = getDVMSNodeTemplate("default");
             } catch (StringIndexOutOfBoundsException e) {
-                e.printStackTrace();
+//                e.printStackTrace();
+                currentNodeInstance = getDVMSNodeTemplate("default");
             }
         }
 

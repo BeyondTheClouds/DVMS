@@ -19,7 +19,7 @@ package org.discovery.dvms.entropy
  * limitations under the License.
  * ============================================================ */
 
-import org.discovery.AkkaArc.util.NodeRef
+import org.discovery.AkkaArc.util.{NetworkLocation, NodeRef}
 import scala.concurrent.duration._
 import akka.pattern.ask
 import entropy.plan.choco.ChocoCustomRP
@@ -29,6 +29,10 @@ import concurrent.{Future, Await}
 import org.discovery.dvms.dvms.DvmsModel._
 import scala.collection.JavaConversions._
 import org.discovery.dvms.monitor.MonitorProtocol._
+import org.discovery.dvms.entropy.EntropyProtocol.MigrateVirtualMachine
+import org.discovery.dvms.monitor.LibvirtMonitorDriver
+import org.discovery.model._
+import org.discovery.driver.Node
 
 class EntropyActor(applicationRef: NodeRef) extends AbstractEntropyActor(applicationRef) {
 
@@ -36,8 +40,6 @@ class EntropyActor(applicationRef: NodeRef) extends AbstractEntropyActor(applica
    planner.setTimeLimit(2);
 
    def computeAndApplyReconfigurationPlan(nodes: List[NodeRef]): Boolean = {
-
-      log.info("inside computeAndApplyReconfigurationPlan (1)")
 
       val initialConfiguration: Configuration = new SimpleConfiguration();
 
@@ -48,11 +50,9 @@ class EntropyActor(applicationRef: NodeRef) extends AbstractEntropyActor(applica
             n.ref ? GetVmsWithConsumption()
       })).mapTo[List[PhysicalNode]], 1 second)
 
-      log.info("inside computeAndApplyReconfigurationPlan (2)")
-
       physicalNodesWithVmsConsumption.foreach(physicalNodeWithVmsConsumption => {
 
-         val entropyNode = new SimpleNode(physicalNodeWithVmsConsumption.ref.toString,
+         val entropyNode = new SimpleNode(s"${physicalNodeWithVmsConsumption.ref.location.getId}",
             physicalNodeWithVmsConsumption.specs.numberOfCPU,
             physicalNodeWithVmsConsumption.specs.coreCapacity,
             physicalNodeWithVmsConsumption.specs.ramCapacity);
@@ -63,18 +63,58 @@ class EntropyActor(applicationRef: NodeRef) extends AbstractEntropyActor(applica
                vm.specs.numberOfCPU,
                0,
                vm.specs.ramCapacity,
-               vm.specs.coreCapacity,
+               vm.cpuConsumption.toInt,
                vm.specs.ramCapacity);
             initialConfiguration.setRunOn(entropyVm, entropyNode);
          })
       })
 
-      log.info("inside computeAndApplyReconfigurationPlan (3)")
-
       val result = EntropyService.computeAndApplyReconfigurationPlan(initialConfiguration, physicalNodesWithVmsConsumption)
 
-      log.info("inside computeAndApplyReconfigurationPlan (4)")
+      result.keySet().foreach( key => {
+         if(key != "result"){
 
-      result
+            val nodeName: String = key
+
+            result.get(key).foreach( vmName => {
+
+               nodes.foreach( nodeRef => {
+                  if(s"${nodeRef.location.getId}" == nodeName) {
+                     println(s"migrating $vmName to $nodeName")
+
+                     nodeRef.ref ! MigrateVirtualMachine(vmName, nodeRef.location)
+                  }
+               })
+
+
+            })
+         }
+      })
+
+      result.get("result")(0).toBoolean;
+   }
+
+   override def receive = {
+
+      case MigrateVirtualMachine(vmName, destination) => {
+         log.info(s"migratring $vmName to ${destination.getId}")
+
+         destination match {
+            case destinationAsNetworkLocation: NetworkLocation =>
+               val vm:IVirtualMachine = LibvirtMonitorDriver.driver.findByName(vmName)
+
+               // TODO: following parameters are hard coded! that is bad :(
+               val destinationNode: INode = new Node(destinationAsNetworkLocation.ip, "root", 22)
+               LibvirtMonitorDriver.driver.migrate(vm, destinationNode)
+
+
+               log.info(s"[Administration] Please check  if $vmName is now located on ${destination.getId}!")
+
+            case _ =>
+
+         }
+      }
+
+      case msg => super.receive(msg)
    }
 }

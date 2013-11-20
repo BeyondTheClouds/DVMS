@@ -33,13 +33,10 @@ import entropy.plan.choco.ChocoCustomRP;
 import entropy.plan.durationEvaluator.MockDurationEvaluator;
 import entropy.vjob.DefaultVJob;
 import entropy.vjob.VJob;
-import org.discovery.driver.Node;
-import org.discovery.driver.VirtualMachine;
 import org.discovery.dvms.configuration.DvmsConfiguration;
 import org.discovery.dvms.configuration.ExperimentConfiguration;
 import org.discovery.dvms.dvms.DvmsModel.PhysicalNode;
 import org.discovery.dvms.log.LoggingProtocol;
-import org.discovery.dvms.monitor.LibvirtMonitorDriver;
 
 import java.util.*;
 
@@ -72,7 +69,9 @@ public class EntropyService {
         return planner;
     }
 
-    public static boolean computeAndApplyReconfigurationPlan(Configuration configuration, List<PhysicalNode> machines) {
+    public static Map<String, List<String>> computeAndApplyReconfigurationPlan(Configuration configuration, List<PhysicalNode> machines) {
+
+        Map<String, List<String>> actions = new HashMap<String, List<String>>();
 
         // Alert LoggingActor that EntropyService begin a computation
         if (DvmsConfiguration.IS_G5K_MODE()) {
@@ -80,6 +79,31 @@ public class EntropyService {
                     new LoggingProtocol.ComputingSomeReconfigurationPlan(ExperimentConfiguration.getCurrentTime()),
                     null
             );
+        }
+
+
+        for (entropy.configuration.Node node : configuration.getAllNodes()) {
+
+            System.out.println(String.format("{ name: \"%s\", cpuCount: %d, cpuCapacity: %d, memory: %d, vms: [",
+                    node.getName(),
+                    node.getNbOfCPUs(),
+                    node.getCPUCapacity(),
+                    node.getMemoryCapacity()
+            ));
+
+            for (entropy.configuration.VirtualMachine virtualMachine : configuration.getRunnings(node)) {
+                System.out.println(String.format("  { name: \"%s\", cpuCount: %d, cpuCapacity: {consumption: %d, demand: %d, max: %d}, memory: {consumption: %d, demand: %d} }",
+                        virtualMachine.getName(),
+                        virtualMachine.getNbOfCPUs(),
+                        virtualMachine.getCPUConsumption(),
+                        virtualMachine.getCPUDemand(),
+                        virtualMachine.getCPUMax(),
+                        virtualMachine.getMemoryConsumption(),
+                        virtualMachine.getMemoryDemand()
+                ));
+            }
+
+            System.out.println("]}");
         }
 
 
@@ -105,6 +129,8 @@ public class EntropyService {
             );
         } catch (PlanException e) {
             e.printStackTrace();
+            e.printStackTrace(System.out);
+            System.out.println("Entropy: No solution :(");
             System.err.println("Entropy: No solution :(");
             res = ComputingState.VMRP_FAILED;
         }
@@ -135,7 +161,7 @@ public class EntropyService {
                     );
                 }
 
-                applyReconfigurationPlanLogically(reconfigurationPlan, configuration, machines);
+                actions = applyReconfigurationPlanLogically(reconfigurationPlan, configuration, machines);
 
             } catch (Exception e) {
 
@@ -157,7 +183,13 @@ public class EntropyService {
 
         }
 
-        return res != ComputingState.VMRP_FAILED;
+        // <tricky>
+        List<String> resultOfComputation = new ArrayList<String>();
+        resultOfComputation.add("" + (res != ComputingState.VMRP_FAILED));
+        actions.put("result", resultOfComputation);
+        // </tricky>
+
+        return actions;
     }
 
     //Get the number of migrations
@@ -197,7 +229,10 @@ public class EntropyService {
     }
 
     //Apply the reconfiguration plan logically (i.e. create/delete Java objects)
-    private static void applyReconfigurationPlanLogically(TimedReconfigurationPlan reconfigurationPlan, Configuration conf, List<PhysicalNode> machines) throws InterruptedException {
+    private static Map<String, List<String>> applyReconfigurationPlanLogically(TimedReconfigurationPlan reconfigurationPlan, Configuration conf, List<PhysicalNode> machines) throws InterruptedException {
+
+        Map<String, List<String>> actions = new HashMap<String, List<String>>();
+
         Map<Action, List<Dependencies>> revDependencies = new HashMap<Action, List<Dependencies>>();
         TimedExecutionGraph g = reconfigurationPlan.extractExecutionGraph();
 
@@ -215,7 +250,7 @@ public class EntropyService {
         // ie, actions with a start moment equals to 0.
         for (Action a : reconfigurationPlan) {
             if (a.getStartMoment() == 0) {
-                instantiateAndStart(a, conf, machines);
+                actions = getReconfigurationActions(a, conf, machines);
             }
 
             if (revDependencies.containsKey(a)) {
@@ -224,39 +259,42 @@ public class EntropyService {
                     dep.removeDependency(a);
                     //Launch new feasible actions.
                     if (dep.isFeasible()) {
-                        instantiateAndStart(dep.getAction(), conf, machines);
+                        actions = getReconfigurationActions(dep.getAction(), conf, machines);
                     }
                 }
             }
         }
+
+        return actions;
     }
 
-    private static void instantiateAndStart(Action a, Configuration conf, List<PhysicalNode> machines) throws InterruptedException {
+    private static HashMap<String, List<String>> getReconfigurationActions(Action a, Configuration conf, List<PhysicalNode> machines) throws InterruptedException {
+
+        System.out.println("Applying reconfiguration plan");
+
+        HashMap<String, List<String>> actions = new HashMap<String, List<String>>();
 
         if (a instanceof Migration) {
             Migration migration = (Migration) a;
 
+            System.out.println("  * Migration action");
 
-            for (PhysicalNode machine : machines) {
+            String nodeName = migration.getDestination().getName();
+            String vmName = migration.getVirtualMachine().getName();
 
-                // looking for the destination node
-                if (machine.ref().toString().equals(migration.getDestination().toString())) {
-                    // we found the destination node, now we have to found the good virtualMachine
-
-                    Iterable<VirtualMachine> iterable = (Iterable<VirtualMachine>) machine.machines().toIterable();
-
-                    for (VirtualMachine vm : iterable) {
-                        if (vm.getName().equals(migration.getVirtualMachine().getName())) {
-                            LibvirtMonitorDriver.driver().migrate(vm, new Node(machine.url()));
-                        }
-                    }
-                }
+            if (!actions.containsKey(nodeName)) {
+                actions.put(nodeName, new ArrayList<String>());
             }
 
+            List<String> vmsToBeMigrated = actions.get(nodeName);
+            vmsToBeMigrated.add(vmName);
+            actions.put(nodeName, vmsToBeMigrated);
 
         } else {
             System.err.println("UNRECOGNIZED ACTION WHEN APPLYING THE RECONFIGURATION PLAN");
         }
+
+        return actions;
     }
 
     public static void main(String args[]) {

@@ -21,9 +21,11 @@ package org.discovery.dvms.configuration
 
  object HardwareConfiguration {
 
-   def getNumberOfCpus: Int = 4
+   def getNumberOfCpus: Int = G5kNodes.getCurrentNodeInstance.getNbOfCPUs
 
    def getCpuCoreCapacity: Int = 100
 
-   def getRamCapacity: Int = 4096
+   def getCpuCapacity: Int = G5kNodes.getCurrentNodeInstance.getNbOfCPUs * getCpuCoreCapacity
+
+   def getRamCapacity: Int = G5kNodes.getCurrentNodeInstance.getMemoryCapacity
 }

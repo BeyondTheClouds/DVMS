@@ -30,6 +30,7 @@ import org.discovery.dvms.dvms.DvmsModel._
 import org.discovery.AkkaArc.PeerActorProtocol.ToNotificationActor
 import org.discovery.AkkaArc.notification._
 import org.discovery.dvms.monitor.MonitorProtocol._
+import org.discovery.dvms.entropy.EntropyProtocol.MigrateVirtualMachine
 
 
 object MonitorEventsTypes {

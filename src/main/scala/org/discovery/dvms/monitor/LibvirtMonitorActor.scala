@@ -55,12 +55,6 @@ class LibvirtMonitorActor(applicationRef: NodeRef) extends AbstractMonitorActor(
 
    def getVmsWithConsumption(): PhysicalNode = {
 
-      log.info("getConsumptions (1)")
-
-//      val cpuConsumptions = LibvirtMonitorDriver.driver.getCpuConsumptions
-
-      log.info("getConsumptions (2)")
-
       val result = PhysicalNode(applicationRef, LibvirtMonitorDriver.driver.getRunningVms.par.map(vm =>
          VirtualMachine(
             vm.getName,
@@ -76,11 +70,9 @@ class LibvirtMonitorActor(applicationRef: NodeRef) extends AbstractMonitorActor(
          ComputerSpecification(
             HardwareConfiguration.getNumberOfCpus,
             HardwareConfiguration.getRamCapacity,
-            HardwareConfiguration.getCpuCoreCapacity
+            HardwareConfiguration.getCpuCapacity
          )
       )
-
-      log.info("getConsumptions (3)")
 
       result
    }

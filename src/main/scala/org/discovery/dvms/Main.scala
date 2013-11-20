@@ -20,7 +20,7 @@ package org.discovery.dvms
  * ============================================================ */
 
 import akka.actor.{ActorSystem, Props}
-import configuration.{DPSimpleNode, G5kNodes}
+import configuration.{HardwareConfiguration, DPSimpleNode, G5kNodes}
 import org.discovery.AkkaArc.{ConnectTo, util}
 import util._
 import scala.concurrent.duration._
@@ -40,11 +40,8 @@ object Main extends App {
          case null =>
             println(s"no node configuration matched!")
          case nodeInstance: DPSimpleNode =>
-            println(s"running on:")
-            println(s"  {")
-            println(s"    cpu : ${G5kNodes.getCurrentNodeInstance.getCPUCapacity},")
-            println(s"    mem : ${G5kNodes.getCurrentNodeInstance.getMemoryCapacity}")
-            println(s"  }")
+            println(s"node configuration: { cpu: ${G5kNodes.getCurrentNodeInstance.getCPUCapacity},  mem: ${G5kNodes.getCurrentNodeInstance.getMemoryCapacity} }")
+            println(s"node configuration: { cpu: ${HardwareConfiguration.getCpuCapacity},  mem: ${HardwareConfiguration.getRamCapacity} }")
       }
 
 
