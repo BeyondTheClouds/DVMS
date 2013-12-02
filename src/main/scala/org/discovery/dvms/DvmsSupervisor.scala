@@ -37,20 +37,6 @@ import org.discovery.AkkaArc.PeerActorMessage
  * limitations under the License.
  * ============================================================ */
 
-object ActorIdParser extends RegexParsers {
-   def chain: Parser[String] = """[^#]*""".r ~ "#" ~> id <~ ".*".r ^^ {
-      case i => i.toString()
-   }
-
-   def id: Parser[String] = integer ^^ {
-      case i => i.toString
-   }
-
-   def integer = """[-]?(0|[1-9]\d*)""".r ^^ {
-      _.toInt
-   }
-}
-
 class DvmsSupervisor(location: INetworkLocation, factory: DvmsAbstractFactory) extends PeerActor(location) {
 
    import org.discovery.AkkaArc.overlay.chord.ChordActor._
@@ -135,20 +121,23 @@ class DvmsSupervisor(location: INetworkLocation, factory: DvmsAbstractFactory) e
 
    override val supervisorStrategy =
       OneForOneStrategy(maxNrOfRetries = 2, withinTimeRange = 1 second) {
-         case e: AskTimeoutException => {
-
-
-            dvmsActor ! AskTimeoutDetected(e)
-
-            Resume
-         }
-
-         case e: TimeoutException => {
-            Resume
-         }
-
-         case _: NullPointerException => Restart
-         case _: IllegalArgumentException => Stop
-         case _: Exception => Escalate
+//         case e: AskTimeoutException => {
+//
+//
+//            dvmsActor ! AskTimeoutDetected(e)
+//
+//            Resume
+//         }
+//
+//         case e: TimeoutException => {
+//            Resume
+//         }
+//
+//         case _: NullPointerException => Restart
+//         case _: IllegalArgumentException => Stop
+//         case _: Exception => Escalate
+         case e: Exception =>
+            e.printStackTrace()
+            Restart
       }
 }

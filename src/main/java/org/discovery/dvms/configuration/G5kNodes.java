@@ -56,7 +56,8 @@ public class G5kNodes {
             put("chirloute", new DPSimpleNode(null, 8, 800, 8192,-1,-1));
 
             // Luxembourg
-            put("granduc", new DPSimpleNode(null, 8, 800, 16384, 232871.692585, 7679674.739783));
+//            put("granduc", new DPSimpleNode(null, 8, 800, 16384, 232871.692585, 7679674.739783));
+            put("granduc", new DPSimpleNode(null, 6, 600, 16384, 232871.692585, 7679674.739783));
 
 
             //Lyon

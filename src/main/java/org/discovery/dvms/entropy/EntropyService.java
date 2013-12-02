@@ -69,9 +69,9 @@ public class EntropyService {
         return planner;
     }
 
-    public static Map<String, List<String>> computeAndApplyReconfigurationPlan(Configuration configuration, List<PhysicalNode> machines) {
+    public static EntropyComputationResult computeAndApplyReconfigurationPlan(Configuration configuration, List<PhysicalNode> machines) {
 
-        Map<String, List<String>> actions = new HashMap<String, List<String>>();
+        Map<String, List<EntropyMigrationModel>> actions = new HashMap<String, List<EntropyMigrationModel>>();
 
         // Alert LoggingActor that EntropyService begin a computation
         if (DvmsConfiguration.IS_G5K_MODE()) {
@@ -183,13 +183,7 @@ public class EntropyService {
 
         }
 
-        // <tricky>
-        List<String> resultOfComputation = new ArrayList<String>();
-        resultOfComputation.add("" + (res != ComputingState.VMRP_FAILED));
-        actions.put("result", resultOfComputation);
-        // </tricky>
-
-        return actions;
+        return new EntropyComputationResult((res != ComputingState.VMRP_FAILED), actions);
     }
 
     //Get the number of migrations
@@ -229,9 +223,9 @@ public class EntropyService {
     }
 
     //Apply the reconfiguration plan logically (i.e. create/delete Java objects)
-    private static Map<String, List<String>> applyReconfigurationPlanLogically(TimedReconfigurationPlan reconfigurationPlan, Configuration conf, List<PhysicalNode> machines) throws InterruptedException {
+    private static Map<String, List<EntropyMigrationModel>> applyReconfigurationPlanLogically(TimedReconfigurationPlan reconfigurationPlan, Configuration conf, List<PhysicalNode> machines) throws InterruptedException {
 
-        Map<String, List<String>> actions = new HashMap<String, List<String>>();
+        Map<String, List<EntropyMigrationModel>> actions = new HashMap<String, List<EntropyMigrationModel>>();
 
         Map<Action, List<Dependencies>> revDependencies = new HashMap<Action, List<Dependencies>>();
         TimedExecutionGraph g = reconfigurationPlan.extractExecutionGraph();
@@ -268,27 +262,32 @@ public class EntropyService {
         return actions;
     }
 
-    private static HashMap<String, List<String>> getReconfigurationActions(Action a, Configuration conf, List<PhysicalNode> machines) throws InterruptedException {
+    private static HashMap<String, List<EntropyMigrationModel>> getReconfigurationActions(Action a, Configuration conf, List<PhysicalNode> machines) throws InterruptedException {
 
         System.out.println("Applying reconfiguration plan");
 
-        HashMap<String, List<String>> actions = new HashMap<String, List<String>>();
+        HashMap<String, List<EntropyMigrationModel>> actions = new HashMap<String, List<EntropyMigrationModel>>();
 
         if (a instanceof Migration) {
             Migration migration = (Migration) a;
 
-            System.out.println("  * Migration action");
-
-            String nodeName = migration.getDestination().getName();
+            String from = migration.getHost().getName();
+            String to = migration.getDestination().getName();
             String vmName = migration.getVirtualMachine().getName();
 
-            if (!actions.containsKey(nodeName)) {
-                actions.put(nodeName, new ArrayList<String>());
+            System.out.println(String.format("  * migration of %s from %s to %s",
+                    vmName,
+                    from,
+                    to
+            ));
+
+            if (!actions.containsKey(from)) {
+                actions.put(from, new ArrayList<EntropyMigrationModel>());
             }
 
-            List<String> vmsToBeMigrated = actions.get(nodeName);
-            vmsToBeMigrated.add(vmName);
-            actions.put(nodeName, vmsToBeMigrated);
+            List<EntropyMigrationModel> vmsToBeMigrated = actions.get(from);
+            vmsToBeMigrated.add(new EntropyMigrationModel(vmName, from, to));
+            actions.put(from, vmsToBeMigrated);
 
         } else {
             System.err.println("UNRECOGNIZED ACTION WHEN APPLYING THE RECONFIGURATION PLAN");

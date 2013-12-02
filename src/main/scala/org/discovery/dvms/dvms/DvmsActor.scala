@@ -10,7 +10,6 @@ import org.discovery.AkkaArc.util.NodeRef
 import org.discovery.AkkaArc.notification.{WantsToRegister}
 import org.discovery.dvms.monitor.{MonitorEventsTypes}
 import java.util.{Date, UUID}
-import org.discovery.dvms.ActorIdParser
 
 import org.discovery.dvms.dvms.DvmsProtocol._
 import org.discovery.dvms.dvms.DvmsModel._
@@ -59,6 +58,8 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
    // Variables used for resiliency
    var lastPartitionUpdateDate: Option[Date] = None
+
+   var lockedForFusion: Boolean = false
 
    def mergeWithThisPartition(partition: DvmsPartition) {
 
@@ -149,8 +150,6 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
    }
 
-   var lockedForFusion: Boolean = false
-
    override def receive = {
 
       case IsThisVersionOfThePartitionStillValid(partition) => {
@@ -160,28 +159,6 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
          }
       }
 
-      case AskTimeoutDetected(e: AskTimeoutException) => {
-
-         val id: String = ActorIdParser.parse(ActorIdParser.chain, e.toString).get
-
-         log.info(s"$applicationRef: AskTimeoutDetected received!!")
-
-         currentPartition match {
-            case Some(p) => p.nodes.foreach(n => {
-
-               val nId: String = ActorIdParser.parse(ActorIdParser.chain, n.ref.toString).get
-
-               if (nId == id) {
-
-                  log.info(s"$applicationRef: $n has failed!!")
-                  remoteNodeFailureDetected(n)
-               }
-            })
-            case None =>
-         }
-      }
-
-
       case FailureDetected(node) => {
          remoteNodeFailureDetected(node)
       }
@@ -190,6 +167,9 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
       case CheckTimeout() => {
 
          //         log.info(s"$applicationRef: check if we have reach the timeout of partition")
+
+         log.info("checkTimeout")
+         printDetails()
 
          (currentPartition, lastPartitionUpdateDate) match {
             case (Some(p), Some(d)) => {
@@ -266,6 +246,7 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
       case msg@TransmissionOfAnISP(partition) => {
 
          log.info(s"received an ISP: $msg @$currentPartition")
+         printDetails()
 
          currentPartition match {
             case Some(p) => p match {
@@ -367,6 +348,8 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
                      ).asInstanceOf[Boolean]
                   } catch {
                      case e: Throwable => {
+                        log.info(s"Partition $partition is no more valid (Exception")
+                        e.printStackTrace()
                         partitionIsStillValid = false
                      }
                   }
@@ -424,16 +407,14 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
       case CpuViolationDetected() => {
 
-
-
-
-
          // Alert LogginActor that a violation has been detected
          applicationRef.ref ! ViolationDetected(ExperimentConfiguration.getCurrentTime())
 
          currentPartition match {
             case None => {
                log.info("Dvms has detected a new cpu violation")
+               printDetails()
+
                firstOut = Some(nextDvmsNode)
 
                currentPartition = Some(DvmsPartition(
@@ -444,10 +425,12 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
                   UUID.randomUUID()
                ))
 
+               lastPartitionUpdateDate = Some(new Date())
+
                // Alert LogginActor that the current node is booked in a partition
                applicationRef.ref ! IsBooked(ExperimentConfiguration.getCurrentTime())
 
-               log.info(s"$applicationRef transmitting ISP ${currentPartition.get} to $firstOut")
+               log.info(s"$applicationRef transmitting a new ISP ${currentPartition.get} to neighbour: $nextDvmsNode")
                nextDvmsNode.ref ! TransmissionOfAnISP(currentPartition.get)
             }
             case _ =>
@@ -473,13 +456,13 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
    def computeEntropy(): Boolean = {
 
-      log.info("computeEntropy (1)")
+//      log.info("computeEntropy (1)")
 
       val entropyComputeAsFuture: Future[Boolean] = (applicationRef.ref ?
         EntropyComputeReconfigurePlan(currentPartition.get.nodes)
       ).mapTo[Boolean]
 
-      log.info("computeEntropy (2)")
+//      log.info("computeEntropy (2)")
 
       var result: Boolean = false
       var hasComputed = false
@@ -487,10 +470,10 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
       for {
          futureResult <- entropyComputeAsFuture
       } yield {
-         log.info("computeEntropy (3)")
+//         log.info("computeEntropy (3)")
          result = futureResult
          hasComputed = true
-         log.info("computeEntropy (4)")
+//         log.info("computeEntropy (4)")
       }
 
       // TODO: fix this (dirty)
@@ -498,8 +481,17 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
          Thread.sleep(100)
       }
 
-      log.info("computeEntropy (5)")
+//      log.info("computeEntropy (5)")
       result
+   }
+
+
+   def printDetails() {
+//      log.info(s"currentPartition: $currentPartition")
+//      log.info(s"firstOut: $firstOut")
+//      log.info(s"DvmsNextNode: $nextDvmsNode")
+//      log.info(s"lastPartitionUpdate: $lastPartitionUpdateDate")
+//      log.info(s"lockedForFusion: $lockedForFusion")
    }
 
    // registering an event: when a CpuViolation is triggered, CpuViolationDetected() is sent to dvmsActor

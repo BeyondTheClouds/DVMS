@@ -1,4 +1,4 @@
-package org.discovery.dvms.monitor
+package org.discovery.dvms.entropy;
 
 /* ============================================================
  * Discovery Project - DVMS
@@ -19,21 +19,29 @@ package org.discovery.dvms.monitor
  * limitations under the License.
  * ============================================================ */
 
-import scala.collection.JavaConversions._
 
+public class EntropyMigrationModel {
 
-trait MonitorMessage
+    private String vmName;
+    private String from;
+    private String to;
 
-object MonitorProtocol {
+    public EntropyMigrationModel(String vmName, String from, String to) {
 
-   case class Tick() extends MonitorMessage
+        this.vmName = vmName;
+        this.from = from;
+        this.to = to;
+    }
 
-   case class UpdateConfiguration(newConsumption: Double) extends MonitorMessage
+    public String getVmName() {
+        return vmName;
+    }
 
-   case class GetVmsWithConsumption() extends MonitorMessage
+    public String getFrom() {
+        return from;
+    }
 
-   case class GetCpuConsumption() extends MonitorMessage
-
-   case class UpdateCpuConsumptions(consumptions: java.util.Map[java.lang.String, java.util.List[java.lang.Double]]) extends MonitorMessage
-
+    public String getTo() {
+        return to;
+    }
 }

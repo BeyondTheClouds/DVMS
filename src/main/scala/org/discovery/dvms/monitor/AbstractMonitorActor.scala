@@ -50,8 +50,6 @@ abstract class AbstractMonitorActor(applicationRef: NodeRef) extends Actor with 
    implicit val timeout = Timeout(2 seconds)
    implicit val ec = ExecutionContext.fromExecutorService(Executors.newCachedThreadPool())
 
-   case class Tick()
-
    var cpuConsumption: Double = 0
 
 

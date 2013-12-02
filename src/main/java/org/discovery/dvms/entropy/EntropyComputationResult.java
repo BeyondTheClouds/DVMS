@@ -1,4 +1,4 @@
-package org.discovery.dvms.monitor
+package org.discovery.dvms.entropy;
 
 /* ============================================================
  * Discovery Project - DVMS
@@ -19,21 +19,26 @@ package org.discovery.dvms.monitor
  * limitations under the License.
  * ============================================================ */
 
-import scala.collection.JavaConversions._
 
+import java.util.List;
+import java.util.Map;
 
-trait MonitorMessage
+public class EntropyComputationResult {
 
-object MonitorProtocol {
+    private Map<String, List<EntropyMigrationModel>> actions;
+    private boolean computationFailed;
 
-   case class Tick() extends MonitorMessage
+    public EntropyComputationResult(boolean computationFailed, Map<String, List<EntropyMigrationModel>> actions) {
 
-   case class UpdateConfiguration(newConsumption: Double) extends MonitorMessage
+        this.computationFailed = computationFailed;
+        this.actions = actions;
+    }
 
-   case class GetVmsWithConsumption() extends MonitorMessage
+    public Map<String, List<EntropyMigrationModel>> getActions() {
+        return actions;
+    }
 
-   case class GetCpuConsumption() extends MonitorMessage
-
-   case class UpdateCpuConsumptions(consumptions: java.util.Map[java.lang.String, java.util.List[java.lang.Double]]) extends MonitorMessage
-
+    public boolean hasComputationFailed() {
+        return computationFailed;
+    }
 }

@@ -183,27 +183,41 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
          )
 
 
-         result.keySet().foreach( key => {
-            if(key != "result"){
-
-               val nodeName: String = key
-
-               result.get(key).foreach( vmName => {
-
-                  println(s"migrating $vmName to $nodeName")
-
-                  nodes.foreach( node => {
-                     if(s"${node.location.getId}" == nodeName) {
-                        node.ref ! MigrateVirtualMachine(vmName, node.location)
-                     }
-                  })
+         result.getActions.keySet().foreach( key => {
+            result.getActions.get(key).foreach( migrationModel => {
 
 
+               println(s"preparing migration of ${migrationModel.getVmName}")
+
+
+               var fromNodeRef: Option[NodeRef] = None
+               var toNodeRef: Option[NodeRef] = None
+
+               nodes.foreach( nodeRef => {
+                  println(s"check ${nodeRef.location.getId} == ( ${migrationModel.getFrom} | ${migrationModel.getTo} ) ?")
+
+                  if(s"${nodeRef.location.getId}" == migrationModel.getFrom) {
+                     fromNodeRef = Some(nodeRef)
+                  }
+
+                  if(s"${nodeRef.location.getId}" == migrationModel.getTo) {
+                     toNodeRef = Some(nodeRef)
+                  }
                })
-            }
+
+
+               (fromNodeRef, toNodeRef) match {
+                  case (Some(from), Some(to)) =>
+                     from.ref ! MigrateVirtualMachine(migrationModel.getVmName, to.location)
+                  case _ =>
+                     println(s"cannot migrate {from:$fromNodeRef, to: $toNodeRef, vmName: ${migrationModel.getVmName}}")
+               }
+
+
+            })
          })
 
-         result.get("result")(0).toBoolean;
+         result.hasComputationFailed
       }
 
       "compute a reconfiguration plan unsuccessfully" in {
@@ -247,6 +261,5 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
             physicalNodesWithVmsConsumption
          )
       }
-
    }
 }

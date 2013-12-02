@@ -20,12 +20,10 @@ package org.discovery.dvms.entropy
  * ============================================================ */
 
 import org.discovery.AkkaArc.util.{NetworkLocation, NodeRef}
-import scala.concurrent.duration._
-import akka.pattern.ask
 import entropy.plan.choco.ChocoCustomRP
 import entropy.configuration.{SimpleConfiguration, SimpleVirtualMachine, SimpleNode, Configuration}
 import entropy.plan.durationEvaluator.MockDurationEvaluator
-import concurrent.{Future, Await}
+import concurrent.Future
 import org.discovery.dvms.dvms.DvmsModel._
 import scala.collection.JavaConversions._
 import org.discovery.dvms.monitor.MonitorProtocol._
@@ -33,6 +31,10 @@ import org.discovery.dvms.entropy.EntropyProtocol.MigrateVirtualMachine
 import org.discovery.dvms.monitor.LibvirtMonitorDriver
 import org.discovery.model._
 import org.discovery.driver.Node
+import scala.concurrent.Await
+import akka.pattern.ask
+import akka.util.Timeout
+import scala.concurrent.duration._
 
 class EntropyActor(applicationRef: NodeRef) extends AbstractEntropyActor(applicationRef) {
 
@@ -71,44 +73,85 @@ class EntropyActor(applicationRef: NodeRef) extends AbstractEntropyActor(applica
 
       val result = EntropyService.computeAndApplyReconfigurationPlan(initialConfiguration, physicalNodesWithVmsConsumption)
 
-      result.keySet().foreach( key => {
-         if(key != "result"){
-
-            val nodeName: String = key
-
-            result.get(key).foreach( vmName => {
-
-               nodes.foreach( nodeRef => {
-                  if(s"${nodeRef.location.getId}" == nodeName) {
-                     println(s"migrating $vmName to $nodeName")
-
-                     nodeRef.ref ! MigrateVirtualMachine(vmName, nodeRef.location)
-                  }
-               })
+      result.getActions.keySet().foreach(key => {
+         result.getActions.get(key).foreach(migrationModel => {
 
 
+            log.info(s"preparing migration of ${migrationModel.getVmName}")
+
+
+            var fromNodeRef: Option[NodeRef] = None
+            var toNodeRef: Option[NodeRef] = None
+
+            nodes.foreach(nodeRef => {
+               log.info(s"check ${nodeRef.location.getId} == ( ${migrationModel.getFrom} | ${migrationModel.getTo} ) ?")
+
+               if (s"${nodeRef.location.getId}" == migrationModel.getFrom) {
+                  fromNodeRef = Some(nodeRef)
+               }
+
+               if (s"${nodeRef.location.getId}" == migrationModel.getTo) {
+                  toNodeRef = Some(nodeRef)
+               }
             })
-         }
+
+            (fromNodeRef, toNodeRef) match {
+               case (Some(from), Some(to)) =>
+                  log.info(s"send migrate message {from:$fromNodeRef, to: $toNodeRef, vmName: ${migrationModel.getVmName}}")
+
+                  var migrationSucceed = false
+
+                  implicit val timeout = Timeout(300 seconds)
+                  val future = (from.ref ? MigrateVirtualMachine(migrationModel.getVmName, to.location)).mapTo[Boolean]
+
+                  try {
+                     migrationSucceed  = Await.result(future, timeout.duration)
+                  } catch {
+                     case e: Throwable =>
+                        e.printStackTrace()
+                        migrationSucceed = false
+                  }
+
+                  log.info(s"migrate {from:$fromNodeRef, to: $toNodeRef, vmName: ${migrationModel.getVmName}} : result => $migrationSucceed")
+               case _ =>
+                  log.info(s"migrate {from:$fromNodeRef, to: $toNodeRef, vmName: ${migrationModel.getVmName}} : failed")
+            }
+
+
+         })
       })
 
-      result.get("result")(0).toBoolean;
+      result.hasComputationFailed
    }
 
    override def receive = {
 
       case MigrateVirtualMachine(vmName, destination) => {
-         log.info(s"migratring $vmName to ${destination.getId}")
+         log.info(s"performing migration of $vmName to ${destination.getId}")
 
          destination match {
             case destinationAsNetworkLocation: NetworkLocation =>
-               val vm:IVirtualMachine = LibvirtMonitorDriver.driver.findByName(vmName)
+               val vm: IVirtualMachine = LibvirtMonitorDriver.driver.findByName(vmName)
 
                // TODO: following parameters are hard coded! that is bad :(
                val destinationNode: INode = new Node(destinationAsNetworkLocation.ip, "root", 22)
-               LibvirtMonitorDriver.driver.migrate(vm, destinationNode)
 
+               var okToContinue: Boolean = true
 
-               log.info(s"[Administration] Please check  if $vmName is now located on ${destination.getId}!")
+               if (vm == null) {
+                  log.info(s"cannot find vm ${vmName} on current host.")
+                  okToContinue = false
+               }
+
+               if (okToContinue) {
+                  log.info(s"starting migration of $vmName on ${destination.getId}!")
+                  LibvirtMonitorDriver.driver.migrate(vm, destinationNode)
+                  sender ! true
+                  log.info(s"[Administration] Please check  if $vmName is now located on ${destination.getId}!")
+               } else {
+                  log.info(s"aborting migration of $vmName on ${destination.getId}!")
+                  sender ! false
+               }
 
             case _ =>
 

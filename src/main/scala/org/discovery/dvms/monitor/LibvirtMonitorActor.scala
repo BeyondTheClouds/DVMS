@@ -21,7 +21,7 @@ package org.discovery.dvms.monitor
 
 import org.discovery.AkkaArc.util.NodeRef
 import org.discovery.driver.{LibvirtDriver, LibvirtG5kDriver}
-import org.discovery.model.{IDriver}
+import org.discovery.model.IDriver
 import scala.collection.JavaConversions._
 import org.discovery.dvms.configuration._
 import org.discovery.AkkaArc.notification.TriggerEvent
@@ -31,14 +31,14 @@ import org.discovery.AkkaArc.PeerActorProtocol.ToNotificationActor
 import org.discovery.dvms.dvms.DvmsModel.ComputerSpecification
 import org.discovery.dvms.dvms.DvmsModel.VirtualMachine
 import org.discovery.model.network.CpuConsumptions
-import akka.actor.{Props, Actor}
-import scala.concurrent.duration._
+import MonitorProtocol._
 
 object LibvirtMonitorDriver {
    val driver: IDriver = DvmsConfiguration.IS_G5K_MODE match {
 
       case true =>
          new LibvirtG5kDriver("configuration/driver.cfg")
+         new LibvirtDriver("configuration/driver.cfg")
       case false =>
          new LibvirtDriver("configuration/driver.cfg")
    }
@@ -49,13 +49,12 @@ object LibvirtMonitorDriver {
 
 class LibvirtMonitorActor(applicationRef: NodeRef) extends AbstractMonitorActor(applicationRef) {
 
-
    var lastCpuConsumptions = LibvirtMonitorDriver.driver.getCpuConsumptions()
-
+   var listOfVms = LibvirtMonitorDriver.driver.getVms
 
    def getVmsWithConsumption(): PhysicalNode = {
 
-      val result = PhysicalNode(applicationRef, LibvirtMonitorDriver.driver.getRunningVms.par.map(vm =>
+      val result = PhysicalNode(applicationRef, listOfVms.par.map(vm =>
          VirtualMachine(
             vm.getName,
             lastCpuConsumptions.get(vm.getName).get(CpuConsumptions.US) + lastCpuConsumptions.get(vm.getName).get(CpuConsumptions.ST),
@@ -79,13 +78,11 @@ class LibvirtMonitorActor(applicationRef: NodeRef) extends AbstractMonitorActor(
 
    def uploadCpuConsumption(): Double = {
 
-//      val cpuCnsumptions = LibvirtMonitorDriver.driver.getCpuConsumptions
-
-      val listOfConsumptions: List[Double] = lastCpuConsumptions.keySet.map ( key =>
+      val listOfConsumptions: List[Double] = lastCpuConsumptions.keySet.map(key =>
          lastCpuConsumptions.get(key).get(CpuConsumptions.US) + lastCpuConsumptions.get(key).get(CpuConsumptions.ST)
       ).toList
 
-      val cpuConsumption: Double = listOfConsumptions.foldLeft(0.0)((a,b) => a + b)
+      val cpuConsumption: Double = listOfConsumptions.foldLeft(0.0)((a, b) => a + b)
 
       // Send the CPU consumption to logginActor
       applicationRef.ref ! CurrentLoadIs(ExperimentConfiguration.getCurrentTime(), cpuConsumption)
@@ -98,6 +95,9 @@ class LibvirtMonitorActor(applicationRef: NodeRef) extends AbstractMonitorActor(
    var tickCount: Int = 0;
 
    override def receive = {
+
+      case UpdateCpuConsumptions(consumptions) =>
+         lastCpuConsumptions = consumptions
 
       case Tick() => {
 
@@ -120,18 +120,43 @@ class LibvirtMonitorActor(applicationRef: NodeRef) extends AbstractMonitorActor(
       case msg => super.receive(msg)
    }
 
-   class LibvirtCpuConsumptionsUpdater extends Actor {
-      override def receive = {
-         case Tick()  =>
-            lastCpuConsumptions = LibvirtMonitorDriver.driver.getCpuConsumptions
+   // Yes, there a thread :(
+   // (following the KISS principle: "Keep It Simple Stupid!")
+   val updatingThread = new Thread(new Runnable {
+      def run() {
+         while (true) {
+            try {
+
+               val driver: IDriver = DvmsConfiguration.IS_G5K_MODE match {
+
+                  case true =>
+                     new LibvirtG5kDriver("configuration/driver.cfg")
+                     new LibvirtDriver("configuration/driver.cfg")
+                  case false =>
+                     new LibvirtDriver("configuration/driver.cfg")
+               }
+
+               driver.connect()
+
+               val newConsumptions = driver.getCpuConsumptions
+               val newListOfVms = driver.getVms
+
+               if(newListOfVms.forall(vm =>
+                  newConsumptions.contains(vm.getName)
+               )) {
+                  lastCpuConsumptions = driver.getCpuConsumptions
+                  listOfVms = newListOfVms
+               }
+
+               Thread.sleep(500)
+
+            } catch {
+               case e: Throwable =>
+                  e.printStackTrace()
+            }
+         }
       }
-
-      context.system.scheduler.schedule(0 milliseconds,
-         1 second,
-         self,
-         Tick())
-   }
-
-   context.actorOf(Props(new LibvirtCpuConsumptionsUpdater()), s"LibvirtCpuConsumptionsUpdater@${applicationRef.location.getId}")
+   })
+   updatingThread.start()
 
 }
