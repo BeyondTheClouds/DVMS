@@ -35,13 +35,23 @@ import scala.concurrent.Await
 import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.duration._
+import org.discovery.dvms.entropy.EntropyModel._
+import collection.immutable.HashMap
+import org.discovery.dvms.monitor.MonitorProtocol.GetVmsWithConsumption
+import org.discovery.dvms.dvms.DvmsModel.PhysicalNode
+import org.discovery.dvms.entropy.EntropyModel.MakeMigration
+import org.discovery.dvms.entropy.EntropyModel.EntropySolution
+import org.discovery.dvms.entropy.EntropyProtocol.MigrateVirtualMachine
+import org.discovery.dvms.entropy.EntropyModel.EntropyNoSolution
 
 class EntropyActor(applicationRef: NodeRef) extends AbstractEntropyActor(applicationRef) {
 
    val planner: ChocoCustomRP = new ChocoCustomRP(new MockDurationEvaluator(2, 5, 1, 1, 7, 14, 7, 2, 4));
    planner.setTimeLimit(2);
 
-   def computeAndApplyReconfigurationPlan(nodes: List[NodeRef]): Boolean = {
+//   def computeAndApplyReconfigurationPlan(nodes: List[NodeRef]): Boolean = {
+
+   def computReconfigurationPlan(nodes: List[NodeRef]): EntropyResult = {
 
       val initialConfiguration: Configuration = new SimpleConfiguration();
 
@@ -73,56 +83,30 @@ class EntropyActor(applicationRef: NodeRef) extends AbstractEntropyActor(applica
 
       val result = EntropyService.computeAndApplyReconfigurationPlan(initialConfiguration, physicalNodesWithVmsConsumption)
 
-      result.getActions.keySet().foreach(key => {
-         result.getActions.get(key).foreach(migrationModel => {
+      result.hasComputationFailed match {
+         case true =>
+            EntropyNoSolution()
 
+         case false =>
 
-            log.info(s"preparing migration of ${migrationModel.getVmName}")
+            var actionMap:HashMap[String, EntropyAction] = new HashMap[String, EntropyAction]()
 
+            result.getActions.keySet().foreach(key => {
 
-            var fromNodeRef: Option[NodeRef] = None
-            var toNodeRef: Option[NodeRef] = None
-
-            nodes.foreach(nodeRef => {
-               log.info(s"check ${nodeRef.location.getId} == ( ${migrationModel.getFrom} | ${migrationModel.getTo} ) ?")
-
-               if (s"${nodeRef.location.getId}" == migrationModel.getFrom) {
-                  fromNodeRef = Some(nodeRef)
-               }
-
-               if (s"${nodeRef.location.getId}" == migrationModel.getTo) {
-                  toNodeRef = Some(nodeRef)
-               }
+               actionMap += (
+                  key ->
+                  (result.getActions.get(key) map (migrationModel => {
+                     MakeMigration(migrationModel.getFrom, migrationModel.getTo, migrationModel.getVmName)
+                  }))
+               )
             })
 
-            (fromNodeRef, toNodeRef) match {
-               case (Some(from), Some(to)) =>
-                  log.info(s"send migrate message {from:$fromNodeRef, to: $toNodeRef, vmName: ${migrationModel.getVmName}}")
+            EntropySolution(actionMap)
+      }
 
-                  var migrationSucceed = false
-
-                  implicit val timeout = Timeout(300 seconds)
-                  val future = (from.ref ? MigrateVirtualMachine(migrationModel.getVmName, to.location)).mapTo[Boolean]
-
-                  try {
-                     migrationSucceed  = Await.result(future, timeout.duration)
-                  } catch {
-                     case e: Throwable =>
-                        e.printStackTrace()
-                        migrationSucceed = false
-                  }
-
-                  log.info(s"migrate {from:$fromNodeRef, to: $toNodeRef, vmName: ${migrationModel.getVmName}} : result => $migrationSucceed")
-               case _ =>
-                  log.info(s"migrate {from:$fromNodeRef, to: $toNodeRef, vmName: ${migrationModel.getVmName}} : failed")
-            }
-
-
-         })
-      })
-
-      result.hasComputationFailed
+      result
    }
+
 
    override def receive = {
 

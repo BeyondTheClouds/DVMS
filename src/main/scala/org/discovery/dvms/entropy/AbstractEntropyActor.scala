@@ -26,6 +26,7 @@ import concurrent.ExecutionContext
 import java.util.concurrent.Executors
 import scala.concurrent.duration._
 import org.discovery.dvms.entropy.EntropyProtocol._
+import org.discovery.dvms.entropy.EntropyModel.EntropyResult
 
 abstract class AbstractEntropyActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
@@ -33,11 +34,11 @@ abstract class AbstractEntropyActor(applicationRef: NodeRef) extends Actor with 
    implicit val ec = ExecutionContext.fromExecutorService(Executors.newCachedThreadPool())
 
 
-   def computeAndApplyReconfigurationPlan(nodes: List[NodeRef]): Boolean
+   def computReconfigurationPlan(nodes: List[NodeRef]): EntropyResult
 
    override def receive = {
       case EntropyComputeReconfigurePlan(nodes) => {
-         sender ! computeAndApplyReconfigurationPlan(nodes)
+         sender ! computReconfigurationPlan(nodes)
       }
 
       case MigrateVirtualMachine(vmName, nodeName) =>

@@ -55,6 +55,13 @@ object DvmsModel {
          }
       }
 
+      case class Finished() extends DvmsPartititionState {
+         def isEqualTo(a: DvmsPartititionState): Boolean = a match {
+            case Finished() => true
+            case _ => false
+         }
+      }
+
       case class Destroyed() extends DvmsPartititionState {
          def isEqualTo(a: DvmsPartititionState): Boolean = a match {
             case Destroyed() => true

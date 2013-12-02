@@ -26,10 +26,11 @@ import akka.pattern.{AskTimeoutException, ask}
 import org.discovery.dvms.dvms.DvmsProtocol._
 import org.discovery.dvms.dvms.DvmsModel._
 import org.discovery.dvms.monitor.MonitorProtocol._
+import org.discovery.dvms.entropy.EntropyModel.{EntropySolution, EntropyNoSolution}
 
 class FakeEntropyActor(applicationRef: NodeRef) extends AbstractEntropyActor(applicationRef) {
 
-   def computeAndApplyReconfigurationPlan(nodes: List[NodeRef]): Boolean = {
+   def computReconfigurationPlan(nodes: List[NodeRef]): EntropyComputationResult = {
 
       log.info("computing reconfiguration plan")
 
@@ -72,6 +73,11 @@ class FakeEntropyActor(applicationRef: NodeRef) extends AbstractEntropyActor(app
          case e: Exception =>
       }
 
-      return isCorrect
+      isCorrect match {
+         case true =>
+            EntropySolution(List())
+         case false =>
+            EntropyNoSolution()
+      }
    }
 }
