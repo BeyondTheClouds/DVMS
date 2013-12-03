@@ -26,58 +26,59 @@ import akka.pattern.{AskTimeoutException, ask}
 import org.discovery.dvms.dvms.DvmsProtocol._
 import org.discovery.dvms.dvms.DvmsModel._
 import org.discovery.dvms.monitor.MonitorProtocol._
-import org.discovery.dvms.entropy.EntropyModel.{EntropySolution, EntropyNoSolution}
+import org.discovery.DiscoveryModel.model.ReconfigurationModel._
+import scala.collection.JavaConversions._
 
 class FakeEntropyActor(applicationRef: NodeRef) extends AbstractEntropyActor(applicationRef) {
 
-   def computReconfigurationPlan(nodes: List[NodeRef]): EntropyComputationResult = {
+  def computeReconfigurationPlan(nodes: List[NodeRef]): ReconfigurationResult = {
 
-      log.info("computing reconfiguration plan")
+    log.info("computing reconfiguration plan")
 
 
-      var isCorrect: Boolean = false
+    var isCorrect: Boolean = false
 
-      try {
+    try {
 
-         val physicalNodesWithVmsConsumption = Await.result(Future.sequence(nodes.map({
-            n =>
-               n.ref ? GetVmsWithConsumption()
-         })).mapTo[List[PhysicalNode]], 1 second)
+      val physicalNodesWithVmsConsumption = Await.result(Future.sequence(nodes.map({
+        n =>
+          n.ref ? GetVmsWithConsumption()
+      })).mapTo[List[PhysicalNode]], 1 second)
 
-         var overallCpuConsumption = 0.0;
-         physicalNodesWithVmsConsumption.foreach(physicalNodeWithVmsConsumption => {
-            physicalNodeWithVmsConsumption.machines.foreach(vm => {
-               overallCpuConsumption += vm.cpuConsumption
-            })
-         })
+      var overallCpuConsumption = 0.0;
+      physicalNodesWithVmsConsumption.foreach(physicalNodeWithVmsConsumption => {
+        physicalNodeWithVmsConsumption.machines.foreach(vm => {
+          overallCpuConsumption += vm.cpuConsumption
+        })
+      })
 
-         log.info(s"computed cpu consumption: ${overallCpuConsumption / nodes.size}")
+      log.info(s"computed cpu consumption: ${overallCpuConsumption / nodes.size}")
 
-         if (overallCpuConsumption / nodes.size <= 100) {
+      if (overallCpuConsumption / nodes.size <= 100) {
 
-            nodes.foreach(n => {
-               n.ref ! UpdateConfiguration(overallCpuConsumption / nodes.size)
-            })
+        nodes.foreach(n => {
+          n.ref ! UpdateConfiguration(overallCpuConsumption / nodes.size)
+        })
 
-            isCorrect = true
+        isCorrect = true
 
-         } else {
+      } else {
 
-            isCorrect = false
-         }
-      } catch {
-         case e: AskTimeoutException => {
-            isCorrect = false
-            applicationRef.ref ! AskTimeoutDetected(e)
-         }
-         case e: Exception =>
+        isCorrect = false
       }
-
-      isCorrect match {
-         case true =>
-            EntropySolution(List())
-         case false =>
-            EntropyNoSolution()
+    } catch {
+      case e: AskTimeoutException => {
+        isCorrect = false
+        applicationRef.ref ! AskTimeoutDetected(e)
       }
-   }
+      case e: Exception =>
+    }
+
+    isCorrect match {
+      case true =>
+        ReconfigurationSolution(Map[String, java.util.List[ReconfigurationAction]]())
+      case false =>
+        ReconfigurationlNoSolution()
+    }
+  }
 }

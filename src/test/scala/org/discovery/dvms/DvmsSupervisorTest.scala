@@ -19,6 +19,7 @@ import com.typesafe.config.ConfigFactory
 import org.discovery.AkkaArc.ConnectToThisPeerActor
 import org.discovery.AkkaArc.util.FakeNetworkLocation
 import org.discovery.dvms.ReportIn
+import org.discovery.DiscoveryModel.model.ReconfigurationModel.{ReconfigurationlNoSolution, ReconfigurationSolution, ReconfigurationResult}
 
 
 object DvmsSupervisorTest {
@@ -71,28 +72,28 @@ object TestEntropyActor {
 
 class TestEntropyActor(nodeRef: NodeRef) extends FakeEntropyActor(nodeRef) {
 
-   override def computeAndApplyReconfigurationPlan(nodes: List[NodeRef]): Boolean = {
+  override def computeReconfigurationPlan(nodes: List[NodeRef]): ReconfigurationResult = {
 
-      val result = super.computeAndApplyReconfigurationPlan(nodes)
+    val result = super.computeReconfigurationPlan(nodes)
 
-      result match {
-         case true => {
-            TestEntropyActor.successCount += 1
-         }
-         case false => {
-            TestEntropyActor.failureCount += 1
-         }
+    result match {
+      case solution: ReconfigurationSolution => {
+        TestEntropyActor.successCount += 1
       }
-
-      result
-   }
-
-   override def receive = {
-      case ReportIn() => sender !(TestEntropyActor.failureCount, TestEntropyActor.successCount)
-      case msg => {
-         super.receive(msg)
+      case ReconfigurationlNoSolution() => {
+        TestEntropyActor.failureCount += 1
       }
-   }
+    }
+
+    result
+  }
+
+  override def receive = {
+    case ReportIn() => sender !(TestEntropyActor.failureCount, TestEntropyActor.successCount)
+    case msg => {
+      super.receive(msg)
+    }
+  }
 }
 
 class DvmsSupervisorTest(_system: ActorSystem) extends TestKit(_system) with ImplicitSender

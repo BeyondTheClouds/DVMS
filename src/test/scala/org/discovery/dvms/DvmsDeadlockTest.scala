@@ -28,6 +28,7 @@ import java.util.Date
 import com.typesafe.config.ConfigFactory
 import org.discovery.AkkaArc.overlay.chord.ChordService
 import service.ServiceActor
+import org.discovery.DiscoveryModel.model.ReconfigurationModel._
 
 
 object DvmsDeadlockTest {
@@ -118,15 +119,15 @@ object TestEntropyActor {
 
 class TestEntropyActor(nodeRef: NodeRef) extends FakeEntropyActor(nodeRef) {
 
-   override def computeAndApplyReconfigurationPlan(nodes: List[NodeRef]): Boolean = {
+   override def computeReconfigurationPlan(nodes: List[NodeRef]): ReconfigurationResult = {
 
-      val result = super.computeAndApplyReconfigurationPlan(nodes)
+      val result = super.computeReconfigurationPlan(nodes)
 
       result match {
-         case true => {
+         case solution: ReconfigurationSolution => {
             TestEntropyActor.successCount += 1
          }
-         case false => {
+         case ReconfigurationlNoSolution() => {
             TestEntropyActor.failureCount += 1
          }
       }
@@ -323,7 +324,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
          node4 ! ConnectToThisPeerActor(node1)
 
 
-         Thread.sleep(500)
+         Thread.sleep(1500)
 
 
          val node1Ref = quickNodeRef(1, node1)
@@ -393,7 +394,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
          node6 ! ConnectToThisPeerActor(node1)
 
 
-         Thread.sleep(500)
+         Thread.sleep(1500)
 
 
          val node1Ref = quickNodeRef(1, node1)
@@ -480,7 +481,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
          node9 ! ConnectToThisPeerActor(node1)
 
 
-         Thread.sleep(500)
+         Thread.sleep(1500)
 
 
          val node1Ref = quickNodeRef(1, node1)
@@ -596,7 +597,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
          node12 ! ConnectToThisPeerActor(node1)
 
 
-         Thread.sleep(500)
+         Thread.sleep(1500)
 
 
          val node1Ref = quickNodeRef(1, node1)

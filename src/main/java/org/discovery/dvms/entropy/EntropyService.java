@@ -37,6 +37,7 @@ import org.discovery.dvms.configuration.DvmsConfiguration;
 import org.discovery.dvms.configuration.ExperimentConfiguration;
 import org.discovery.dvms.dvms.DvmsModel.PhysicalNode;
 import org.discovery.dvms.log.LoggingProtocol;
+import org.discovery.DiscoveryModel.model.ReconfigurationModel.*;
 
 import java.util.*;
 
@@ -69,9 +70,9 @@ public class EntropyService {
         return planner;
     }
 
-    public static EntropyComputationResult computeAndApplyReconfigurationPlan(Configuration configuration, List<PhysicalNode> machines) {
+    public static ReconfigurationResult computeAndApplyReconfigurationPlan(Configuration configuration, List<PhysicalNode> machines) {
 
-        Map<String, List<EntropyMigrationModel>> actions = new HashMap<String, List<EntropyMigrationModel>>();
+        Map<String, List<ReconfigurationAction>> actions = new HashMap<String, List<ReconfigurationAction>>();
 
         // Alert LoggingActor that EntropyService begin a computation
         if (DvmsConfiguration.IS_G5K_MODE()) {
@@ -183,7 +184,11 @@ public class EntropyService {
 
         }
 
-        return new EntropyComputationResult((res != ComputingState.VMRP_FAILED), actions);
+        if(res != ComputingState.VMPP_FAILED) {
+            return new ReconfigurationSolution(actions);
+        } else {
+            return new ReconfigurationlNoSolution();
+        }
     }
 
     //Get the number of migrations
@@ -223,9 +228,9 @@ public class EntropyService {
     }
 
     //Apply the reconfiguration plan logically (i.e. create/delete Java objects)
-    private static Map<String, List<EntropyMigrationModel>> applyReconfigurationPlanLogically(TimedReconfigurationPlan reconfigurationPlan, Configuration conf, List<PhysicalNode> machines) throws InterruptedException {
+    private static Map<String, List<ReconfigurationAction>> applyReconfigurationPlanLogically(TimedReconfigurationPlan reconfigurationPlan, Configuration conf, List<PhysicalNode> machines) throws InterruptedException {
 
-        Map<String, List<EntropyMigrationModel>> actions = new HashMap<String, List<EntropyMigrationModel>>();
+        Map<String, List<ReconfigurationAction>> actions = new HashMap<String, List<ReconfigurationAction>>();
 
         Map<Action, List<Dependencies>> revDependencies = new HashMap<Action, List<Dependencies>>();
         TimedExecutionGraph g = reconfigurationPlan.extractExecutionGraph();
@@ -262,11 +267,11 @@ public class EntropyService {
         return actions;
     }
 
-    private static HashMap<String, List<EntropyMigrationModel>> getReconfigurationActions(Action a, Configuration conf, List<PhysicalNode> machines) throws InterruptedException {
+    private static HashMap<String, List<ReconfigurationAction>> getReconfigurationActions(Action a, Configuration conf, List<PhysicalNode> machines) throws InterruptedException {
 
         System.out.println("Applying reconfiguration plan");
 
-        HashMap<String, List<EntropyMigrationModel>> actions = new HashMap<String, List<EntropyMigrationModel>>();
+        HashMap<String, List<ReconfigurationAction>> actions = new HashMap<String, List<ReconfigurationAction>>();
 
         if (a instanceof Migration) {
             Migration migration = (Migration) a;
@@ -282,11 +287,11 @@ public class EntropyService {
             ));
 
             if (!actions.containsKey(from)) {
-                actions.put(from, new ArrayList<EntropyMigrationModel>());
+                actions.put(from, new ArrayList<ReconfigurationAction>());
             }
 
-            List<EntropyMigrationModel> vmsToBeMigrated = actions.get(from);
-            vmsToBeMigrated.add(new EntropyMigrationModel(vmName, from, to));
+            List<ReconfigurationAction> vmsToBeMigrated = actions.get(from);
+            vmsToBeMigrated.add(new MakeMigration(vmName, from, to));
             actions.put(from, vmsToBeMigrated);
 
         } else {

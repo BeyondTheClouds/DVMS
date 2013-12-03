@@ -24,25 +24,18 @@ import entropy.plan.choco.ChocoCustomRP
 import entropy.configuration.{SimpleConfiguration, SimpleVirtualMachine, SimpleNode, Configuration}
 import entropy.plan.durationEvaluator.MockDurationEvaluator
 import concurrent.Future
-import org.discovery.dvms.dvms.DvmsModel._
 import scala.collection.JavaConversions._
-import org.discovery.dvms.monitor.MonitorProtocol._
-import org.discovery.dvms.entropy.EntropyProtocol.MigrateVirtualMachine
 import org.discovery.dvms.monitor.LibvirtMonitorDriver
 import org.discovery.model._
 import org.discovery.driver.Node
 import scala.concurrent.Await
 import akka.pattern.ask
-import akka.util.Timeout
 import scala.concurrent.duration._
-import org.discovery.dvms.entropy.EntropyModel._
 import collection.immutable.HashMap
 import org.discovery.dvms.monitor.MonitorProtocol.GetVmsWithConsumption
 import org.discovery.dvms.dvms.DvmsModel.PhysicalNode
-import org.discovery.dvms.entropy.EntropyModel.MakeMigration
-import org.discovery.dvms.entropy.EntropyModel.EntropySolution
 import org.discovery.dvms.entropy.EntropyProtocol.MigrateVirtualMachine
-import org.discovery.dvms.entropy.EntropyModel.EntropyNoSolution
+import org.discovery.DiscoveryModel.model.ReconfigurationModel.ReconfigurationResult
 
 class EntropyActor(applicationRef: NodeRef) extends AbstractEntropyActor(applicationRef) {
 
@@ -51,7 +44,7 @@ class EntropyActor(applicationRef: NodeRef) extends AbstractEntropyActor(applica
 
 //   def computeAndApplyReconfigurationPlan(nodes: List[NodeRef]): Boolean = {
 
-   def computReconfigurationPlan(nodes: List[NodeRef]): EntropyResult = {
+   def computeReconfigurationPlan(nodes: List[NodeRef]): ReconfigurationResult = {
 
       val initialConfiguration: Configuration = new SimpleConfiguration();
 
@@ -81,30 +74,7 @@ class EntropyActor(applicationRef: NodeRef) extends AbstractEntropyActor(applica
          })
       })
 
-      val result = EntropyService.computeAndApplyReconfigurationPlan(initialConfiguration, physicalNodesWithVmsConsumption)
-
-      result.hasComputationFailed match {
-         case true =>
-            EntropyNoSolution()
-
-         case false =>
-
-            var actionMap:HashMap[String, EntropyAction] = new HashMap[String, EntropyAction]()
-
-            result.getActions.keySet().foreach(key => {
-
-               actionMap += (
-                  key ->
-                  (result.getActions.get(key) map (migrationModel => {
-                     MakeMigration(migrationModel.getFrom, migrationModel.getTo, migrationModel.getVmName)
-                  }))
-               )
-            })
-
-            EntropySolution(actionMap)
-      }
-
-      result
+      EntropyService.computeAndApplyReconfigurationPlan(initialConfiguration, physicalNodesWithVmsConsumption)
    }
 
 
