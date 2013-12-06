@@ -40,7 +40,6 @@ import org.discovery.dvms.entropy.EntropyProtocol.{MigrateVirtualMachine, Entrop
 import org.discovery.DiscoveryModel.model.ReconfigurationModel._
 
 object DvmsActor {
-  //   val PeriodOfPartitionNodeChecking:FiniteDuration = 100 milliseconds
   val partitionUpdateTimeout: FiniteDuration = 3500 milliseconds
 }
 
@@ -85,7 +84,7 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
         log.info(s"(a) I decide to dissolve $currentPartition")
         currentPartition.get.nodes.foreach(node => {
-          node.ref ! DissolvePartition()
+          node.ref ! DissolvePartition("violation resolved")
         })
       }
       case ReconfigurationlNoSolution() => {
@@ -124,7 +123,7 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
               // the partition will be dissolved
               p.nodes.filterNot(n => n.location isEqualTo node.location).foreach(n => {
-                n.ref ! DissolvePartition()
+                n.ref ! DissolvePartition("initiator crashed")
               })
             }
 
@@ -175,7 +174,7 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
       //         log.info(s"$applicationRef: check if we have reach the timeout of partition")
 
-      log.info("checkTimeout")
+//      log.info("checkTimeout")
       printDetails()
 
       (currentPartition, lastPartitionUpdateDate) match {
@@ -189,7 +188,7 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
             log.info(s"$applicationRef: timeout of partition has been reached: I dissolve everything")
 
             p.nodes.foreach(n => {
-              n.ref ! DissolvePartition()
+              n.ref ! DissolvePartition("timeout")
             })
           }
 
@@ -208,13 +207,13 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
       }
     }
 
-    case DissolvePartition() => {
+    case DissolvePartition(reason) => {
 
       currentPartition match {
-        case Some(p) => {
-          log.info(s"$applicationRef: I dissolve the partition $p")
-        }
-        case None => log.info(s"$applicationRef: I dissolve the partition None")
+        case Some(p) =>
+          log.info(s"$applicationRef: I dissolve the partition $p, because <$reason>")
+        case None =>
+          log.info(s"$applicationRef: I dissolve the partition None, because <$reason>")
       }
 
 
@@ -283,7 +282,7 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
               s" with a Blocked state: it dissolve it :(")
             // the currentPartition should be dissolved
             p.nodes.foreach(node => {
-              node.ref ! DissolvePartition()
+              node.ref ! DissolvePartition("back to initiator with a blocked state")
             })
 
           }
@@ -332,6 +331,12 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
                 }
 
               }
+
+              case Finishing() =>  {
+                log.info(s"$applicationRef: forwarding $msg to $firstOut")
+                firstOut.get.ref.forward(msg)
+              }
+
               case Growing() => {
                 log.info(s"$applicationRef: forwarding $msg to $firstOut")
                 firstOut.get.ref.forward(msg)
@@ -398,12 +403,35 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
               case solution: ReconfigurationSolution => {
                 log.info("(A) Partition was enough to reconfigure ")
 
+
+                val newPartition: DvmsPartition = new DvmsPartition(
+                  applicationRef,
+                  partition.initiator,
+                  applicationRef :: partition.nodes,
+                  Finishing(),
+                  UUID.randomUUID()
+                )
+
+                currentPartition = Some(newPartition)
+                firstOut = Some(nextDvmsNode)
+
+
+                // Alert LogginActor that the current node is booked in a partition
+                applicationRef.ref ! IsBooked(ExperimentConfiguration.getCurrentTime())
+
+                partition.nodes.foreach(node => {
+                  log.info(s"$applicationRef: sending the $newPartition to $node")
+                  node.ref ! IAmTheNewLeader(newPartition, firstOut.get)
+                })
+
+                lastPartitionUpdateDate = Some(new Date())
+
                 // Applying the reconfiguration plan
                 applySolution(solution)
 
                 // it was enough: the partition is no more useful
                 currentPartition.get.nodes.foreach(node => {
-                  node.ref ! DissolvePartition()
+                  node.ref ! DissolvePartition("violation resolved")
                 })
               }
               case ReconfigurationlNoSolution() => {
@@ -413,22 +441,6 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
                 firstOut.get.ref ! TransmissionOfAnISP(currentPartition.get)
               }
             }
-//            if (computeEntropy()) {
-//
-//              log.info("(A) Partition was enough to reconfigure ")
-//
-//              // Applying the reconfiguration paln
-//
-//              // it was enough: the partition is no more useful
-//              currentPartition.get.nodes.foreach(node => {
-//                node.ref ! DissolvePartition()
-//              })
-//            } else {
-//
-//              log.info(s"(A) Partition was not enough to reconfigure, forwarding to ${firstOut.get}")
-//              // it was not enough: the partition is forwarded to the firstOut
-//              firstOut.get.ref ! TransmissionOfAnISP(currentPartition.get)
-//            }
           } else {
             log.warning(s"$applicationRef: $partition is no more valid (source: ${partition.initiator})")
           }
@@ -561,6 +573,8 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
           })
         })
+
+
       case None =>
         log.info("cannot apply reconfigurationSolution: current partition is undefined")
     }

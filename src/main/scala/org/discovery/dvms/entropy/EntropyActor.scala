@@ -42,7 +42,7 @@ class EntropyActor(applicationRef: NodeRef) extends AbstractEntropyActor(applica
    val planner: ChocoCustomRP = new ChocoCustomRP(new MockDurationEvaluator(2, 5, 1, 1, 7, 14, 7, 2, 4));
    planner.setTimeLimit(2);
 
-//   def computeAndApplyReconfigurationPlan(nodes: List[NodeRef]): Boolean = {
+//   def computeReconfigurationPlan(nodes: List[NodeRef]): Boolean = {
 
    def computeReconfigurationPlan(nodes: List[NodeRef]): ReconfigurationResult = {
 
@@ -74,7 +74,7 @@ class EntropyActor(applicationRef: NodeRef) extends AbstractEntropyActor(applica
          })
       })
 
-      EntropyService.computeAndApplyReconfigurationPlan(initialConfiguration, physicalNodesWithVmsConsumption)
+      EntropyService.computeReconfigurationPlan(initialConfiguration, physicalNodesWithVmsConsumption)
    }
 
 

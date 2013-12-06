@@ -109,7 +109,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
         })
       })
 
-      EntropyService.computeAndApplyReconfigurationPlan(
+      EntropyService.computeReconfigurationPlan(
         initialConfiguration,
         physicalNodesWithVmsConsumption
       )
@@ -178,7 +178,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
         })
       })
 
-      val result = EntropyService.computeAndApplyReconfigurationPlan(
+      val result = EntropyService.computeReconfigurationPlan(
         initialConfiguration,
         physicalNodesWithVmsConsumption
       )
@@ -273,10 +273,15 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
         })
       })
 
-      EntropyService.computeAndApplyReconfigurationPlan(
+      EntropyService.computeReconfigurationPlan(
         initialConfiguration,
         physicalNodesWithVmsConsumption
-      )
+      ) match {
+        case solution: ReconfigurationSolution =>
+          assert(false)
+        case ReconfigurationlNoSolution() =>
+          assert(true)
+      }
     }
   }
 }

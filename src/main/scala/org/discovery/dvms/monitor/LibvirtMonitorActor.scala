@@ -32,131 +32,151 @@ import org.discovery.dvms.dvms.DvmsModel.ComputerSpecification
 import org.discovery.dvms.dvms.DvmsModel.VirtualMachine
 import org.discovery.model.network.CpuConsumptions
 import MonitorProtocol._
+import java.util.UUID
 
 object LibvirtMonitorDriver {
-   val driver: IDriver = DvmsConfiguration.IS_G5K_MODE match {
+  val driver: IDriver = DvmsConfiguration.IS_G5K_MODE match {
 
-      case true =>
-         new LibvirtG5kDriver("configuration/driver.cfg")
-         new LibvirtDriver("configuration/driver.cfg")
-      case false =>
-         new LibvirtDriver("configuration/driver.cfg")
-   }
+    case true =>
+      new LibvirtG5kDriver("configuration/driver.cfg")
+      new LibvirtDriver("configuration/driver.cfg")
+    case false =>
+      new LibvirtDriver("configuration/driver.cfg")
+  }
 
-   driver.connect()
+  driver.connect()
 
 }
 
 class LibvirtMonitorActor(applicationRef: NodeRef) extends AbstractMonitorActor(applicationRef) {
 
-   var lastCpuConsumptions = LibvirtMonitorDriver.driver.getCpuConsumptions()
-   var listOfVms = LibvirtMonitorDriver.driver.getVms
+  var lastCpuConsumptions = LibvirtMonitorDriver.driver.getCpuConsumptions()
+  var listOfVms = LibvirtMonitorDriver.driver.getVms
+  var lastCheckingUUID: Option[UUID] = None
+  var lastViolationReportedUUID: Option[UUID] = None
 
-   def getVmsWithConsumption(): PhysicalNode = {
+  def getVmsWithConsumption(): PhysicalNode = {
 
-      val result = PhysicalNode(applicationRef, listOfVms.par.map(vm =>
-         VirtualMachine(
-            vm.getName,
-            lastCpuConsumptions.get(vm.getName).get(CpuConsumptions.US) + lastCpuConsumptions.get(vm.getName).get(CpuConsumptions.ST),
-            ComputerSpecification(
-               VirtualMachineConfiguration.getNumberOfCpus,
-               VirtualMachineConfiguration.getRamCapacity,
-               VirtualMachineConfiguration.getCpuCoreCapacity
-            )
-         )).toList,
-         LibvirtMonitorDriver.driver.getMigrationUrl()
-         ,
-         ComputerSpecification(
-            HardwareConfiguration.getNumberOfCpus,
-            HardwareConfiguration.getRamCapacity,
-            HardwareConfiguration.getCpuCapacity
-         )
+    val result = PhysicalNode(applicationRef, listOfVms.par.map(vm => {
+
+      val vmName = vm.getName
+      val listOfConsumptions = lastCpuConsumptions.get(vmName)
+      val userCpuConsumption = listOfConsumptions.get(CpuConsumptions.US)
+      val stealCpuConsumption = listOfConsumptions.get(CpuConsumptions.ST)
+
+
+      VirtualMachine(
+        vmName,
+        userCpuConsumption + stealCpuConsumption,
+        ComputerSpecification(
+          VirtualMachineConfiguration.getNumberOfCpus,
+          VirtualMachineConfiguration.getRamCapacity,
+          VirtualMachineConfiguration.getCpuCoreCapacity
+        )
       )
+    }).toList,
+      LibvirtMonitorDriver.driver.getMigrationUrl()
+      ,
+      ComputerSpecification(
+        HardwareConfiguration.getNumberOfCpus,
+        HardwareConfiguration.getRamCapacity,
+        HardwareConfiguration.getCpuCapacity
+      )
+    )
 
-      result
-   }
+    result
+  }
 
-   def uploadCpuConsumption(): Double = {
+  def uploadCpuConsumption(): Double = {
 
-      val listOfConsumptions: List[Double] = lastCpuConsumptions.keySet.map(key =>
-         lastCpuConsumptions.get(key).get(CpuConsumptions.US) + lastCpuConsumptions.get(key).get(CpuConsumptions.ST)
-      ).toList
+    val listOfConsumptions: List[Double] = lastCpuConsumptions.keySet.map(key =>
+      lastCpuConsumptions.get(key).get(CpuConsumptions.US) + lastCpuConsumptions.get(key).get(CpuConsumptions.ST)
+    ).toList
 
-      val cpuConsumption: Double = listOfConsumptions.foldLeft(0.0)((a, b) => a + b)
+    val cpuConsumption: Double = listOfConsumptions.foldLeft(0.0)((a, b) => a + b)
 
-      // Send the CPU consumption to logginActor
-      applicationRef.ref ! CurrentLoadIs(ExperimentConfiguration.getCurrentTime(), cpuConsumption)
+    // Send the CPU consumption to logginActor
+    applicationRef.ref ! CurrentLoadIs(ExperimentConfiguration.getCurrentTime(), cpuConsumption)
 
-      cpuConsumption
-   }
+    cpuConsumption
+  }
 
-   def uploadCpuConsumption(tickNumber: Int): Double = uploadCpuConsumption()
+  def uploadCpuConsumption(tickNumber: Int): Double = uploadCpuConsumption()
 
-   var tickCount: Int = 0;
+  var tickCount: Int = 0;
 
-   override def receive = {
+  override def receive = {
 
-      case UpdateCpuConsumptions(consumptions) =>
-         lastCpuConsumptions = consumptions
+    case UpdateCpuConsumptions(consumptions) =>
+      lastCpuConsumptions = consumptions
 
-      case Tick() => {
+    case Tick() => {
 
-         tickCount += 1
+      tickCount += 1
 
-         val tickNumber = tickCount
+      val tickNumber = tickCount
 
-         cpuConsumption = uploadCpuConsumption(tickNumber)
+      cpuConsumption = uploadCpuConsumption(tickNumber)
 
-         log.info(s"the new consumption is : $cpuConsumption")
+      log.info(s"the new consumption is : $cpuConsumption")
 
-         if (cpuConsumption > G5kNodes.getCurrentNodeInstance().getCPUCapacity) {
+      if (cpuConsumption > G5kNodes.getCurrentNodeInstance().getCPUCapacity) {
+
+        (lastCheckingUUID, lastViolationReportedUUID) match {
+          case (Some(checkingUUID), Some(violationReportedUUID))
+            if (checkingUUID != violationReportedUUID) =>
             log.info(s"the cpu consumption is under violation")
 
             // triggering CpuViolation event
             applicationRef.ref ! ToNotificationActor(TriggerEvent(new MonitorEvent.CpuViolation()))
-         }
+          case _ =>
+        }
+
+        lastViolationReportedUUID = lastCheckingUUID
       }
+    }
 
-      case msg => super.receive(msg)
-   }
+    case msg => super.receive(msg)
+  }
 
-   // Yes, there a thread :(
-   // (following the KISS principle: "Keep It Simple Stupid!")
-   val updatingThread = new Thread(new Runnable {
-      def run() {
-         while (true) {
-            try {
+  // Yes, there a thread :(
+  // (following the KISS principle: "Keep It Simple Stupid!")
+  val updatingThread = new Thread(new Runnable {
+    def run() {
+      while (true) {
+        try {
 
-               val driver: IDriver = DvmsConfiguration.IS_G5K_MODE match {
+          val driver: IDriver = DvmsConfiguration.IS_G5K_MODE match {
 
-                  case true =>
-                     new LibvirtG5kDriver("configuration/driver.cfg")
-                     new LibvirtDriver("configuration/driver.cfg")
-                  case false =>
-                     new LibvirtDriver("configuration/driver.cfg")
-               }
+            case true =>
+              new LibvirtG5kDriver("configuration/driver.cfg")
+              new LibvirtDriver("configuration/driver.cfg")
+            case false =>
+              new LibvirtDriver("configuration/driver.cfg")
+          }
 
-               driver.connect()
+          driver.connect()
 
-               val newConsumptions = driver.getCpuConsumptions
-               val newListOfVms = driver.getVms
+          val newConsumptions = driver.getCpuConsumptions
+          val newListOfVms = driver.getVms
 
-               if(newListOfVms.forall(vm =>
-                  newConsumptions.contains(vm.getName)
-               )) {
-                  lastCpuConsumptions = driver.getCpuConsumptions
-                  listOfVms = newListOfVms
-               }
+          if (newListOfVms.forall(vm =>
+            newConsumptions.contains(vm.getName)
+          )) {
+            lastCpuConsumptions = driver.getCpuConsumptions
+            listOfVms = newListOfVms
+            lastCheckingUUID = Some(UUID.randomUUID())
+          }
 
-               Thread.sleep(500)
+          Thread.sleep(500)
 
-            } catch {
-               case e: Throwable =>
-                  e.printStackTrace()
-            }
-         }
+        } catch {
+          case e: Throwable =>
+            e.printStackTrace()
+        }
       }
-   })
-   updatingThread.start()
+    }
+  })
+  updatingThread.start()
 
 }

@@ -70,7 +70,7 @@ public class EntropyService {
         return planner;
     }
 
-    public static ReconfigurationResult computeAndApplyReconfigurationPlan(Configuration configuration, List<PhysicalNode> machines) {
+    public static ReconfigurationResult computeReconfigurationPlan(Configuration configuration, List<PhysicalNode> machines) {
 
         Map<String, List<ReconfigurationAction>> actions = new HashMap<String, List<ReconfigurationAction>>();
 
@@ -184,7 +184,7 @@ public class EntropyService {
 
         }
 
-        if(res != ComputingState.VMPP_FAILED) {
+        if(res != ComputingState.VMRP_FAILED) {
             return new ReconfigurationSolution(actions);
         } else {
             return new ReconfigurationlNoSolution();
@@ -291,7 +291,7 @@ public class EntropyService {
             }
 
             List<ReconfigurationAction> vmsToBeMigrated = actions.get(from);
-            vmsToBeMigrated.add(new MakeMigration(vmName, from, to));
+            vmsToBeMigrated.add(new MakeMigration(from, to, vmName));
             actions.put(from, vmsToBeMigrated);
 
         } else {
