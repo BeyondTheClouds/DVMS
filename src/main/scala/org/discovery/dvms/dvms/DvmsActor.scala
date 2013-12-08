@@ -69,6 +69,8 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
       currentPartition.get.nodes ::: partition.nodes,
       Growing(), UUID.randomUUID()))
 
+    lastPartitionUpdateDate = Some(new Date())
+
     currentPartition.get.nodes.foreach(node => {
       log.info(s"(a) $applicationRef: sending a new version of the partition ${IAmTheNewLeader(currentPartition.get, firstOut.get)} to $node")
       node.ref ! IAmTheNewLeader(currentPartition.get, firstOut.get)
@@ -100,13 +102,18 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
   def changeCurrentPartitionState(newState: DvmsPartititionState) {
     currentPartition match {
-      case Some(partition) => currentPartition = Some(DvmsPartition(
-        partition.leader,
-        partition.initiator,
-        partition.nodes,
-        newState,
-        partition.id
-      ))
+      case Some(partition) =>
+
+         currentPartition = Some(DvmsPartition(
+            partition.leader,
+            partition.initiator,
+            partition.nodes,
+            newState,
+            partition.id
+         ))
+
+         lastPartitionUpdateDate = Some(new Date())
+
       case None =>
     }
   }
@@ -141,6 +148,8 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
               currentPartition = Some(newPartition)
               firstOut = Some(nextDvmsNode)
+
+              lastPartitionUpdateDate = Some(new Date())
 
               log.info(s"$applicationRef: A node crashed ($node), I am becoming the new leader of $currentPartition")
 
@@ -231,9 +240,9 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
       log.info(s"$applicationRef: ${partition.leader} is the new leader of $partition")
 
       currentPartition = Some(partition)
-      lockedForFusion = false
-
       lastPartitionUpdateDate = Some(new Date())
+
+      lockedForFusion = false
 
       firstOut match {
         case None => firstOut = Some(firstOutOfTheLeader)
@@ -383,7 +392,7 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
             currentPartition = Some(newPartition)
             firstOut = Some(nextDvmsNode)
-
+            lastPartitionUpdateDate = Some(new Date())
 
             // Alert LogginActor that the current node is booked in a partition
             applicationRef.ref ! IsBooked(ExperimentConfiguration.getCurrentTime())
