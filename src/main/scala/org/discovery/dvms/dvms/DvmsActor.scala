@@ -510,9 +510,11 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
     log.info("computeEntropy (1)")
 
-    val entropyComputeAsFuture: Future[ReconfigurationResult] = (applicationRef.ref ?
-      EntropyComputeReconfigurePlan(currentPartition.get.nodes)
-      ).mapTo[ReconfigurationResult]
+    val entropyComputeAsFuture: Future[ReconfigurationResult] = (
+      (applicationRef.ref ? EntropyComputeReconfigurePlan(currentPartition.get.nodes)) recover {
+         case _: Throwable => ReconfigurationlNoSolution()
+      }
+   ).mapTo[ReconfigurationResult]
 
 
     val computationResult = Await.result(entropyComputeAsFuture, 2 seconds)
