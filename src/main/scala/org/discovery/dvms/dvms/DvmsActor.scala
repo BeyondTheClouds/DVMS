@@ -530,6 +530,29 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
     currentPartition match {
       case Some(partition) =>
+
+        var continueToUpdatePartition: Boolean = true
+
+        Future {
+          while(continueToUpdatePartition) {
+
+            val newPartition: DvmsPartition = new DvmsPartition(
+              applicationRef,
+              partition.initiator,
+              partition.nodes,
+              partition.state,
+              UUID.randomUUID()
+            )
+
+            partition.nodes.foreach(node => {
+              log.info(s"$applicationRef: updating the $newPartition to $node (to prevent timeout)")
+              node.ref ! IAmTheNewLeader(newPartition, firstOut.get)
+            })
+
+            Thread.sleep(500)
+          }
+        }
+
         solution.actions.keySet().foreach(key => {
           solution.actions.get(key).foreach(action => {
 
@@ -584,6 +607,8 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
           })
         })
+
+        continueToUpdatePartition = false
 
 
       case None =>
