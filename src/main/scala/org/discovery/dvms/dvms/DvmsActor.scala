@@ -239,16 +239,23 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
       log.info(s"$applicationRef: ${partition.leader} is the new leader of $partition")
 
-      currentPartition = Some(partition)
-      lastPartitionUpdateDate = Some(new Date())
+      val outdatedUpdate: Boolean = (currentPartition, partition.state) match {
+        case (None, Finishing()) => true
+        case _ => false
+      }
 
-      lockedForFusion = false
+      if(!outdatedUpdate) {
+        currentPartition = Some(partition)
+        lastPartitionUpdateDate = Some(new Date())
 
-      firstOut match {
-        case None => firstOut = Some(firstOutOfTheLeader)
-        case Some(node) => {
-          if (firstOut.get.location isEqualTo partition.leader.location) {
-            firstOut = Some(firstOutOfTheLeader)
+        lockedForFusion = false
+
+        firstOut match {
+          case None => firstOut = Some(firstOutOfTheLeader)
+          case Some(node) => {
+            if (firstOut.get.location isEqualTo partition.leader.location) {
+              firstOut = Some(firstOutOfTheLeader)
+            }
           }
         }
       }
@@ -354,7 +361,8 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
           }
           // other case... (if so)
           case _ => {
-
+            log.info(s"$applicationRef forwarding $msg to $firstOut (forward-bis)")
+            firstOut.get.ref.forward(msg)
           }
         }
 
@@ -364,6 +372,9 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
           if (partition.state isEqualTo Blocked()) {
             try {
+
+              // TODO: there was a mistake reported here!
+
               partitionIsStillValid = Await.result(partition.initiator.ref ?
                 IsThisVersionOfThePartitionStillValid(partition), 1 second
               ).asInstanceOf[Boolean]
@@ -486,6 +497,7 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
           nextDvmsNode.ref ! TransmissionOfAnISP(currentPartition.get)
         }
         case _ =>
+          println(s"violation detected: this is my Partition [$currentPartition]")
       }
     }
 
@@ -543,6 +555,8 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
               partition.state,
               UUID.randomUUID()
             )
+
+            currentPartition = Some(newPartition)
 
             partition.nodes.foreach(node => {
               log.info(s"$applicationRef: updating the $newPartition to $node (to prevent timeout)")
@@ -610,6 +624,11 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
         continueToUpdatePartition = false
 
+        partition.nodes.foreach(node => {
+          log.info(s"$applicationRef: reconfiguration plan has been applied, dissolving partition $partition")
+          node.ref ! DissolvePartition("Reconfiguration plan has been applied")
+        })
+
 
       case None =>
         log.info("cannot apply reconfigurationSolution: current partition is undefined")
@@ -618,11 +637,11 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
 
   def printDetails() {
-    //      log.info(s"currentPartition: $currentPartition")
-    //      log.info(s"firstOut: $firstOut")
-    //      log.info(s"DvmsNextNode: $nextDvmsNode")
-    //      log.info(s"lastPartitionUpdate: $lastPartitionUpdateDate")
-    //      log.info(s"lockedForFusion: $lockedForFusion")
+//          log.info(s"currentPartition: $currentPartition")
+//          log.info(s"firstOut: $firstOut")
+//          log.info(s"DvmsNextNode: $nextDvmsNode")
+//          log.info(s"lastPartitionUpdate: $lastPartitionUpdateDate")
+//          log.info(s"lockedForFusion: $lockedForFusion")
   }
 
   // registering an event: when a CpuViolation is triggered, CpuViolationDetected() is sent to dvmsActor

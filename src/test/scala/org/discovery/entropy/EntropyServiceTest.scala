@@ -237,6 +237,143 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
 
     }
 
+    "compute a reconfiguration plan with success, needing some reconfiguration (double actions)" in {
+
+      val initialConfiguration: Configuration = new SimpleConfiguration();
+
+      val nodes = List(NodeRef(25770743371786l, system.deadLetters), NodeRef(25770709817354l, system.deadLetters), NodeRef(25770693040138l, system.deadLetters))
+
+      val physicalNodesWithVmsConsumption: List[PhysicalNode] = List(
+        PhysicalNode(
+          nodes(0),
+          List(
+            VirtualMachine(s"vm-5",  81.0, ComputerSpecification(1, 512, 100)),
+            VirtualMachine(s"vm-15", 91.0, ComputerSpecification(1, 512, 100)),
+            VirtualMachine(s"vm-25", 10.0, ComputerSpecification(1, 512, 100)),
+            VirtualMachine(s"vm-35", 80.0, ComputerSpecification(1, 512, 100)),
+            VirtualMachine(s"vm-45", 49.0, ComputerSpecification(1, 512, 100)),
+            VirtualMachine(s"vm-55", 66.0, ComputerSpecification(1, 512, 100)),
+            VirtualMachine(s"vm-65", 50.0, ComputerSpecification(1, 512, 100)),
+            VirtualMachine(s"vm-75", 30.0, ComputerSpecification(1, 512, 100))
+          ),
+          s"25770743371786",
+          ComputerSpecification(6, 32768, 600)
+        ),
+        PhysicalNode(
+          nodes(1),
+          List(
+            VirtualMachine(s"vm-4",  19.0, ComputerSpecification(1, 512, 100)),
+            VirtualMachine(s"vm-14", 93.0, ComputerSpecification(1, 512, 100)),
+            VirtualMachine(s"vm-24", 99.0, ComputerSpecification(1, 512, 100)),
+            VirtualMachine(s"vm-44", 61.0, ComputerSpecification(1, 512, 100)),
+            VirtualMachine(s"vm-54", 39.0, ComputerSpecification(1, 512, 100)),
+            VirtualMachine(s"vm-64", 99.0, ComputerSpecification(1, 512, 100)),
+            VirtualMachine(s"vm-62", 91.0, ComputerSpecification(1, 512, 100)),
+            VirtualMachine(s"vm-53", 38.0, ComputerSpecification(1, 512, 100)),
+            VirtualMachine(s"vm-67", 80.0, ComputerSpecification(1, 512, 100))
+          ),
+          s"25770709817354",
+          ComputerSpecification(6, 32768, 600)
+        ),
+        PhysicalNode(
+          nodes(2),
+          List(
+            VirtualMachine(s"vm-3",  59.0, ComputerSpecification(1, 512, 100)),
+            VirtualMachine(s"vm-23", 69.0, ComputerSpecification(1, 512, 100)),
+            VirtualMachine(s"vm-33", 69.0, ComputerSpecification(1, 512, 100)),
+            VirtualMachine(s"vm-43", 69.0, ComputerSpecification(1, 512, 100)),
+            VirtualMachine(s"vm-63",100.0, ComputerSpecification(1, 512, 100)),
+            VirtualMachine(s"vm-73", 90.0, ComputerSpecification(1, 512, 100)),
+            VirtualMachine(s"vm-83", 90.0, ComputerSpecification(1, 512, 100)),
+            VirtualMachine(s"vm-11", 60.0, ComputerSpecification(1, 512, 100)),
+            VirtualMachine(s"vm-81", 91.0, ComputerSpecification(1, 512, 100))
+          ),
+          s"25770693040138",
+          ComputerSpecification(6, 32768, 600)
+        )
+      )
+
+
+      physicalNodesWithVmsConsumption.foreach(physicalNodeWithVmsConsumption => {
+
+        val entropyNode = new SimpleNode(physicalNodeWithVmsConsumption.ref.toString,
+          physicalNodeWithVmsConsumption.specs.numberOfCPU,
+          physicalNodeWithVmsConsumption.specs.coreCapacity,
+          physicalNodeWithVmsConsumption.specs.ramCapacity);
+        initialConfiguration.addOnline(entropyNode);
+
+        physicalNodeWithVmsConsumption.machines.foreach(vm => {
+          val entropyVm = new SimpleVirtualMachine(vm.name,
+            vm.specs.numberOfCPU,
+            0,
+            vm.specs.ramCapacity,
+            vm.cpuConsumption.toInt,
+            vm.specs.ramCapacity);
+          initialConfiguration.setRunOn(entropyVm, entropyNode);
+        })
+      })
+
+      val result = EntropyService.computeReconfigurationPlan(
+        initialConfiguration,
+        physicalNodesWithVmsConsumption
+      )
+
+
+      result match {
+        case solution: ReconfigurationSolution =>
+          solution.actions.keySet().foreach( key => {
+            solution.actions.get(key).foreach( migrationModel => {
+
+              migrationModel match {
+                case MakeMigration(from, to, vmName) =>
+                  println(s"preparing migration of $vmName")
+
+
+                  var fromNodeRef: Option[NodeRef] = None
+                  var toNodeRef: Option[NodeRef] = None
+
+                  nodes.foreach( nodeRef => {
+                    println(s"check ${nodeRef.location.getId} == ( $from | $to ) ?")
+
+                    if(s"${nodeRef.location.getId}" == from) {
+                      fromNodeRef = Some(nodeRef)
+                    }
+
+                    if(s"${nodeRef.location.getId}" == to) {
+                      toNodeRef = Some(nodeRef)
+                    }
+                  })
+
+
+                  (fromNodeRef, toNodeRef) match {
+                    case (Some(from), Some(to)) =>
+                      from.ref ! MigrateVirtualMachine(vmName, to.location)
+                    case _ =>
+                      println(s"cannot migrate {from:$fromNodeRef, to: $toNodeRef, vmName: $vmName}")
+                  }
+                case otherAction =>
+
+                  println(s"Unknown reconfiguration action $otherAction")
+              }
+
+
+
+
+
+            })
+          })
+
+          true
+
+        case ReconfigurationlNoSolution() =>
+          false
+      }
+
+
+    }
+
+
+
     "compute a reconfiguration plan unsuccessfully" in {
 
       val initialConfiguration: Configuration = new SimpleConfiguration();

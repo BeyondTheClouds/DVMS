@@ -136,21 +136,13 @@ public class EntropyService {
             res = ComputingState.VMRP_FAILED;
         }
 
-
-        int reconfigurationPlanCost = 0;
-        Configuration newConfiguration = null;
         int nbMigrations = 0;
-        int reconfigurationGraphDepth = 0;
-
 
         if (reconfigurationPlan != null) {
             if (reconfigurationPlan.getActions().isEmpty())
                 res = ComputingState.NO_RECONFIGURATION_NEEDED;
 
-            reconfigurationPlanCost = reconfigurationPlan.getDuration();
-            newConfiguration = reconfigurationPlan.getDestination();
             nbMigrations = computeNbMigrations(reconfigurationPlan, machines);
-            reconfigurationGraphDepth = computeReconfigurationGraphDepth(reconfigurationPlan, machines);
 
 
             try {
@@ -227,10 +219,30 @@ public class EntropyService {
         }
     }
 
+    private static boolean addReconfigurationActionsToPreviousActions(HashMap<String, List<ReconfigurationAction>> newActions, HashMap<String, List<ReconfigurationAction>> previousActions) {
+
+        for(Map.Entry<String, List<ReconfigurationAction>> action : newActions.entrySet()) {
+            if(!previousActions.containsKey(action.getKey())) {
+                previousActions.put(action.getKey(), action.getValue());
+            } else {
+                List<ReconfigurationAction> existingActions = previousActions.get(action.getKey());
+                existingActions.addAll(action.getValue());
+                previousActions.put(action.getKey(), existingActions);
+            }
+        }
+
+        return true;
+    }
+
     //Apply the reconfiguration plan logically (i.e. create/delete Java objects)
     private static Map<String, List<ReconfigurationAction>> applyReconfigurationPlanLogically(TimedReconfigurationPlan reconfigurationPlan, Configuration conf, List<PhysicalNode> machines) throws InterruptedException {
 
-        Map<String, List<ReconfigurationAction>> actions = new HashMap<String, List<ReconfigurationAction>>();
+
+
+
+        System.out.println("Computing reconfiguration plan");
+
+        HashMap<String, List<ReconfigurationAction>> actions = new HashMap<String, List<ReconfigurationAction>>();
 
         Map<Action, List<Dependencies>> revDependencies = new HashMap<Action, List<Dependencies>>();
         TimedExecutionGraph g = reconfigurationPlan.extractExecutionGraph();
@@ -248,8 +260,11 @@ public class EntropyService {
         //Start the feasible actions
         // ie, actions with a start moment equals to 0.
         for (Action a : reconfigurationPlan) {
+
             if (a.getStartMoment() == 0) {
-                actions = getReconfigurationActions(a, conf, machines);
+
+                HashMap<String, List<ReconfigurationAction>> someActions = getReconfigurationActions(a, conf, machines);
+                addReconfigurationActionsToPreviousActions(actions, someActions);
             }
 
             if (revDependencies.containsKey(a)) {
@@ -258,7 +273,9 @@ public class EntropyService {
                     dep.removeDependency(a);
                     //Launch new feasible actions.
                     if (dep.isFeasible()) {
-                        actions = getReconfigurationActions(dep.getAction(), conf, machines);
+
+                        HashMap<String, List<ReconfigurationAction>> someActions = getReconfigurationActions(a, conf, machines);
+                        addReconfigurationActionsToPreviousActions(actions, someActions);
                     }
                 }
             }
@@ -269,7 +286,6 @@ public class EntropyService {
 
     private static HashMap<String, List<ReconfigurationAction>> getReconfigurationActions(Action a, Configuration conf, List<PhysicalNode> machines) throws InterruptedException {
 
-        System.out.println("Applying reconfiguration plan");
 
         HashMap<String, List<ReconfigurationAction>> actions = new HashMap<String, List<ReconfigurationAction>>();
 

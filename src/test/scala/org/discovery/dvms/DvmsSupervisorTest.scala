@@ -16,7 +16,7 @@ import akka.pattern.ask
 import org.discovery.dvms.monitor.FakeMonitorActor
 import collection.immutable.HashMap
 import com.typesafe.config.ConfigFactory
-import org.discovery.AkkaArc.ConnectToThisPeerActor
+import org.discovery.AkkaArc.PeerActorProtocol.ConnectToThisPeerActor
 import org.discovery.AkkaArc.util.FakeNetworkLocation
 import org.discovery.dvms.ReportIn
 import org.discovery.DiscoveryModel.model.ReconfigurationModel.{ReconfigurationlNoSolution, ReconfigurationSolution, ReconfigurationResult}
