@@ -22,7 +22,8 @@ package org.discovery.dvms
 import akka.actor.{ActorSystem, Props}
 import configuration.{DPSimpleNode, G5kNodes}
 import monitor.MonitorEvent.CpuViolation
-import org.discovery.AkkaArc.{ConnectTo, util}
+import org.discovery.AkkaArc.util
+import org.discovery.AkkaArc.PeerActorProtocol._
 import util._
 import scala.concurrent.duration._
 import java.util.concurrent.Executors

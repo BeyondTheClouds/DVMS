@@ -72,7 +72,8 @@ public class G5kNodes {
             put("stremi", new DPSimpleNode(null, 24, 2400, 49152,-1,-1));
 
             //Rennes
-            put("paradent", new DPSimpleNode(null, 8, 800, 32768, 1214967.788475, 7473261.785402));
+//            put("paradent", new DPSimpleNode(null, 8, 800, 32768, 1214967.788475, 7473261.785402));
+            put("paradent", new DPSimpleNode(null, 6, 600, 32768, 1214967.788475, 7473261.785402));
             put("paramount", new DPSimpleNode(null, 4, 400, 8192,-1,-1));
             put("parapide", new DPSimpleNode(null, 8, 800, 24576,-1,-1));
             put("parapluie", new DPSimpleNode(null, 24, 2400, 49152,559949.493139, 6699922.315851));

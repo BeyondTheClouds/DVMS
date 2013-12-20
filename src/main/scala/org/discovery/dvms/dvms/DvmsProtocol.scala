@@ -34,7 +34,7 @@ object DvmsProtocol {
    case class CpuViolationDetected() extends DvmsMessage
 
    // Message used for the base of DVMS
-   case class DissolvePartition() extends DvmsMessage
+   case class DissolvePartition(reason: String) extends DvmsMessage
    case class TransmissionOfAnISP(currentPartition: DvmsPartition) extends DvmsMessage
    case class IAmTheNewLeader(partition: DvmsPartition, firstOut: NodeRef) extends DvmsMessage
 

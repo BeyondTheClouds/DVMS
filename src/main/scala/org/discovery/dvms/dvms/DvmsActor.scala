@@ -40,7 +40,6 @@ import org.discovery.dvms.entropy.EntropyProtocol.{MigrateVirtualMachine, Entrop
 import org.discovery.DiscoveryModel.model.ReconfigurationModel._
 
 object DvmsActor {
-  //   val PeriodOfPartitionNodeChecking:FiniteDuration = 100 milliseconds
   val partitionUpdateTimeout: FiniteDuration = 3500 milliseconds
 }
 
@@ -70,6 +69,8 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
       currentPartition.get.nodes ::: partition.nodes,
       Growing(), UUID.randomUUID()))
 
+    lastPartitionUpdateDate = Some(new Date())
+
     currentPartition.get.nodes.foreach(node => {
       log.info(s"(a) $applicationRef: sending a new version of the partition ${IAmTheNewLeader(currentPartition.get, firstOut.get)} to $node")
       node.ref ! IAmTheNewLeader(currentPartition.get, firstOut.get)
@@ -85,7 +86,7 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
         log.info(s"(a) I decide to dissolve $currentPartition")
         currentPartition.get.nodes.foreach(node => {
-          node.ref ! DissolvePartition()
+          node.ref ! DissolvePartition("violation resolved")
         })
       }
       case ReconfigurationlNoSolution() => {
@@ -101,13 +102,18 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
   def changeCurrentPartitionState(newState: DvmsPartititionState) {
     currentPartition match {
-      case Some(partition) => currentPartition = Some(DvmsPartition(
-        partition.leader,
-        partition.initiator,
-        partition.nodes,
-        newState,
-        partition.id
-      ))
+      case Some(partition) =>
+
+         currentPartition = Some(DvmsPartition(
+            partition.leader,
+            partition.initiator,
+            partition.nodes,
+            newState,
+            partition.id
+         ))
+
+         lastPartitionUpdateDate = Some(new Date())
+
       case None =>
     }
   }
@@ -124,7 +130,7 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
               // the partition will be dissolved
               p.nodes.filterNot(n => n.location isEqualTo node.location).foreach(n => {
-                n.ref ! DissolvePartition()
+                n.ref ! DissolvePartition("initiator crashed")
               })
             }
 
@@ -142,6 +148,8 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
               currentPartition = Some(newPartition)
               firstOut = Some(nextDvmsNode)
+
+              lastPartitionUpdateDate = Some(new Date())
 
               log.info(s"$applicationRef: A node crashed ($node), I am becoming the new leader of $currentPartition")
 
@@ -175,7 +183,7 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
       //         log.info(s"$applicationRef: check if we have reach the timeout of partition")
 
-      log.info("checkTimeout")
+//      log.info("checkTimeout")
       printDetails()
 
       (currentPartition, lastPartitionUpdateDate) match {
@@ -189,7 +197,7 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
             log.info(s"$applicationRef: timeout of partition has been reached: I dissolve everything")
 
             p.nodes.foreach(n => {
-              n.ref ! DissolvePartition()
+              n.ref ! DissolvePartition("timeout")
             })
           }
 
@@ -208,13 +216,13 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
       }
     }
 
-    case DissolvePartition() => {
+    case DissolvePartition(reason) => {
 
       currentPartition match {
-        case Some(p) => {
-          log.info(s"$applicationRef: I dissolve the partition $p")
-        }
-        case None => log.info(s"$applicationRef: I dissolve the partition None")
+        case Some(p) =>
+          log.info(s"$applicationRef: I dissolve the partition $p, because <$reason>")
+        case None =>
+          log.info(s"$applicationRef: I dissolve the partition None, because <$reason>")
       }
 
 
@@ -231,16 +239,23 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
       log.info(s"$applicationRef: ${partition.leader} is the new leader of $partition")
 
-      currentPartition = Some(partition)
-      lockedForFusion = false
+      val outdatedUpdate: Boolean = (currentPartition, partition.state) match {
+        case (None, Finishing()) => true
+        case _ => false
+      }
 
-      lastPartitionUpdateDate = Some(new Date())
+      if(!outdatedUpdate) {
+        currentPartition = Some(partition)
+        lastPartitionUpdateDate = Some(new Date())
 
-      firstOut match {
-        case None => firstOut = Some(firstOutOfTheLeader)
-        case Some(node) => {
-          if (firstOut.get.location isEqualTo partition.leader.location) {
-            firstOut = Some(firstOutOfTheLeader)
+        lockedForFusion = false
+
+        firstOut match {
+          case None => firstOut = Some(firstOutOfTheLeader)
+          case Some(node) => {
+            if (firstOut.get.location isEqualTo partition.leader.location) {
+              firstOut = Some(firstOutOfTheLeader)
+            }
           }
         }
       }
@@ -283,7 +298,7 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
               s" with a Blocked state: it dissolve it :(")
             // the currentPartition should be dissolved
             p.nodes.foreach(node => {
-              node.ref ! DissolvePartition()
+              node.ref ! DissolvePartition("back to initiator with a blocked state")
             })
 
           }
@@ -332,6 +347,12 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
                 }
 
               }
+
+              case Finishing() =>  {
+                log.info(s"$applicationRef: forwarding $msg to $firstOut")
+                firstOut.get.ref.forward(msg)
+              }
+
               case Growing() => {
                 log.info(s"$applicationRef: forwarding $msg to $firstOut")
                 firstOut.get.ref.forward(msg)
@@ -340,7 +361,8 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
           }
           // other case... (if so)
           case _ => {
-
+            log.info(s"$applicationRef forwarding $msg to $firstOut (forward-bis)")
+            firstOut.get.ref.forward(msg)
           }
         }
 
@@ -350,6 +372,9 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
           if (partition.state isEqualTo Blocked()) {
             try {
+
+              // TODO: there was a mistake reported here!
+
               partitionIsStillValid = Await.result(partition.initiator.ref ?
                 IsThisVersionOfThePartitionStillValid(partition), 1 second
               ).asInstanceOf[Boolean]
@@ -378,7 +403,7 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
             currentPartition = Some(newPartition)
             firstOut = Some(nextDvmsNode)
-
+            lastPartitionUpdateDate = Some(new Date())
 
             // Alert LogginActor that the current node is booked in a partition
             applicationRef.ref ! IsBooked(ExperimentConfiguration.getCurrentTime())
@@ -398,12 +423,35 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
               case solution: ReconfigurationSolution => {
                 log.info("(A) Partition was enough to reconfigure ")
 
+
+                val newPartition: DvmsPartition = new DvmsPartition(
+                  applicationRef,
+                  partition.initiator,
+                  applicationRef :: partition.nodes,
+                  Finishing(),
+                  UUID.randomUUID()
+                )
+
+                currentPartition = Some(newPartition)
+                firstOut = Some(nextDvmsNode)
+
+
+                // Alert LogginActor that the current node is booked in a partition
+                applicationRef.ref ! IsBooked(ExperimentConfiguration.getCurrentTime())
+
+                partition.nodes.foreach(node => {
+                  log.info(s"$applicationRef: sending the $newPartition to $node")
+                  node.ref ! IAmTheNewLeader(newPartition, firstOut.get)
+                })
+
+                lastPartitionUpdateDate = Some(new Date())
+
                 // Applying the reconfiguration plan
                 applySolution(solution)
 
                 // it was enough: the partition is no more useful
                 currentPartition.get.nodes.foreach(node => {
-                  node.ref ! DissolvePartition()
+                  node.ref ! DissolvePartition("violation resolved")
                 })
               }
               case ReconfigurationlNoSolution() => {
@@ -413,22 +461,6 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
                 firstOut.get.ref ! TransmissionOfAnISP(currentPartition.get)
               }
             }
-//            if (computeEntropy()) {
-//
-//              log.info("(A) Partition was enough to reconfigure ")
-//
-//              // Applying the reconfiguration paln
-//
-//              // it was enough: the partition is no more useful
-//              currentPartition.get.nodes.foreach(node => {
-//                node.ref ! DissolvePartition()
-//              })
-//            } else {
-//
-//              log.info(s"(A) Partition was not enough to reconfigure, forwarding to ${firstOut.get}")
-//              // it was not enough: the partition is forwarded to the firstOut
-//              firstOut.get.ref ! TransmissionOfAnISP(currentPartition.get)
-//            }
           } else {
             log.warning(s"$applicationRef: $partition is no more valid (source: ${partition.initiator})")
           }
@@ -465,6 +497,7 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
           nextDvmsNode.ref ! TransmissionOfAnISP(currentPartition.get)
         }
         case _ =>
+          println(s"violation detected: this is my Partition [$currentPartition]")
       }
     }
 
@@ -489,9 +522,11 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
     log.info("computeEntropy (1)")
 
-    val entropyComputeAsFuture: Future[ReconfigurationResult] = (applicationRef.ref ?
-      EntropyComputeReconfigurePlan(currentPartition.get.nodes)
-      ).mapTo[ReconfigurationResult]
+    val entropyComputeAsFuture: Future[ReconfigurationResult] = (
+      (applicationRef.ref ? EntropyComputeReconfigurePlan(currentPartition.get.nodes)) recover {
+         case _: Throwable => ReconfigurationlNoSolution()
+      }
+   ).mapTo[ReconfigurationResult]
 
 
     val computationResult = Await.result(entropyComputeAsFuture, 2 seconds)
@@ -507,6 +542,31 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
     currentPartition match {
       case Some(partition) =>
+
+        var continueToUpdatePartition: Boolean = true
+
+        Future {
+          while(continueToUpdatePartition) {
+
+            val newPartition: DvmsPartition = new DvmsPartition(
+              applicationRef,
+              partition.initiator,
+              partition.nodes,
+              partition.state,
+              UUID.randomUUID()
+            )
+
+            currentPartition = Some(newPartition)
+
+            partition.nodes.foreach(node => {
+              log.info(s"$applicationRef: updating the $newPartition to $node (to prevent timeout)")
+              node.ref ! IAmTheNewLeader(newPartition, firstOut.get)
+            })
+
+            Thread.sleep(500)
+          }
+        }
+
         solution.actions.keySet().foreach(key => {
           solution.actions.get(key).foreach(action => {
 
@@ -561,6 +621,15 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
           })
         })
+
+        continueToUpdatePartition = false
+
+        partition.nodes.foreach(node => {
+          log.info(s"$applicationRef: reconfiguration plan has been applied, dissolving partition $partition")
+          node.ref ! DissolvePartition("Reconfiguration plan has been applied")
+        })
+
+
       case None =>
         log.info("cannot apply reconfigurationSolution: current partition is undefined")
     }
@@ -568,11 +637,11 @@ class DvmsActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
 
   def printDetails() {
-    //      log.info(s"currentPartition: $currentPartition")
-    //      log.info(s"firstOut: $firstOut")
-    //      log.info(s"DvmsNextNode: $nextDvmsNode")
-    //      log.info(s"lastPartitionUpdate: $lastPartitionUpdateDate")
-    //      log.info(s"lockedForFusion: $lockedForFusion")
+//          log.info(s"currentPartition: $currentPartition")
+//          log.info(s"firstOut: $firstOut")
+//          log.info(s"DvmsNextNode: $nextDvmsNode")
+//          log.info(s"lastPartitionUpdate: $lastPartitionUpdateDate")
+//          log.info(s"lockedForFusion: $lockedForFusion")
   }
 
   // registering an event: when a CpuViolation is triggered, CpuViolationDetected() is sent to dvmsActor

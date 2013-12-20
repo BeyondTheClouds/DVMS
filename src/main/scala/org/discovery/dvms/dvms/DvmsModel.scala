@@ -55,9 +55,9 @@ object DvmsModel {
          }
       }
 
-      case class Finished() extends DvmsPartititionState {
+      case class Finishing() extends DvmsPartititionState {
          def isEqualTo(a: DvmsPartititionState): Boolean = a match {
-            case Finished() => true
+            case Finishing() => true
             case _ => false
          }
       }
