@@ -219,7 +219,7 @@ public class EntropyService {
         }
     }
 
-    private static boolean addReconfigurationActionsToPreviousActions(HashMap<String, List<ReconfigurationAction>> newActions, HashMap<String, List<ReconfigurationAction>> previousActions) {
+    private static boolean addReconfigurationActionsToPreviousActions(HashMap<String, List<ReconfigurationAction>> previousActions, HashMap<String, List<ReconfigurationAction>> newActions) {
 
         for(Map.Entry<String, List<ReconfigurationAction>> action : newActions.entrySet()) {
             if(!previousActions.containsKey(action.getKey())) {

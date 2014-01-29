@@ -26,12 +26,13 @@ import org.discovery.dvms.dvms.DvmsActor
 import org.discovery.dvms.log.LoggingActor
 import org.discovery.dvms.service.ServiceActor
 import org.discovery.AkkaArc.overlay.chord.ChordService
+import org.discovery.AkkaArc.overlay.OverlayService
 
 trait DvmsAbstractFactory {
 
    def createMonitorActor(nodeRef: NodeRef): Option[AbstractMonitorActor]
 
-   def createDvmsActor(nodeRef: NodeRef): Option[DvmsActor]
+   def createDvmsActor(nodeRef: NodeRef, overlayService: OverlayService): Option[DvmsActor]
 
    def createEntropyActor(nodeRef: NodeRef): Option[AbstractEntropyActor]
 

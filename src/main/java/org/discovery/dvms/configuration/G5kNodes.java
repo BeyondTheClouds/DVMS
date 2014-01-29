@@ -37,58 +37,55 @@ public class G5kNodes {
         {
 
             // Jonathan's computer
-            put("jonathan", new DPSimpleNode(null, 2, 200 , 4096,-1,-1));
+            put("jonathan", new DPSimpleNode(null, 2, 200 , 4096,1214967.788475, 7513266.608608));
 
             //Bordeaux
-            put("bordeplage", new DPSimpleNode(null, 2, 200 , 2048,-1,-1));
-            put("bordereau", new DPSimpleNode(null, 4, 400, 4096,-1,-1));
-            put("borderline", new DPSimpleNode(null, 8, 800, 32768,-1,-1));
+            put("bordeplage", new DPSimpleNode(null, 2, 200 , 2048,1214967.788475, 7513266.608608));
+            put("bordereau", new DPSimpleNode(null, 4, 400, 4096,1214967.788475, 7513266.608608));
+            put("borderline", new DPSimpleNode(null, 8, 800, 32768,1214967.788475, 7513266.608608));
 
             //Grenoble
-            put("adonis", new DPSimpleNode(null, 8, 800, 24576,-1,-1));
-            put("edel", new DPSimpleNode(null, 8, 800, 24576,-1,-1));
-            put("genepi", new DPSimpleNode(null, 8, 800, 8192,-1,-1));
+            put("adonis", new DPSimpleNode(null, 8, 800, 24576,232871.692585, 7679674.739783));
+            put("edel", new DPSimpleNode(null, 8, 800, 24576,232871.692585, 7679674.739783));
+            put("genepi", new DPSimpleNode(null, 8, 800, 8192,232871.692585, 7679674.739783));
 
             //Lille
-            put("chicon", new DPSimpleNode(null, 4, 400, 4096,-1,-1));
-            put("chimint", new DPSimpleNode(null, 8, 800, 16384,-1,-1));
-            put("chinqchint", new DPSimpleNode(null, 8, 800, 8192,-1,-1));
-            put("chirloute", new DPSimpleNode(null, 8, 800, 8192,-1,-1));
+            put("chicon", new DPSimpleNode(null, 4, 400, 4096,1214967.788475, 7513266.608608));
+            put("chimint", new DPSimpleNode(null, 8, 800, 16384,232871.692585, 7679674.739783));
+            put("chinqchint", new DPSimpleNode(null, 8, 800, 8192,1214967.788475, 7513266.608608));
+            put("chirloute", new DPSimpleNode(null, 8, 800, 8192,1214967.788475, 7513266.608608));
 
             // Luxembourg
-//            put("granduc", new DPSimpleNode(null, 8, 800, 16384, 232871.692585, 7679674.739783));
-            put("granduc", new DPSimpleNode(null, 6, 600, 16384, 232871.692585, 7679674.739783));
+            put("granduc", new DPSimpleNode(null, 8, 800, 16384, 232871.692585, 7679674.739783));
+            put("petitprince", new DPSimpleNode(null, 12, 1200, 32768, 232871.692585, 7679674.739783));
 
 
             //Lyon
-            put("capricorne", new DPSimpleNode(null, 2, 200, 2048,-1,-1));
-            put("sagittaire", new DPSimpleNode(null, 2, 200, 2048,-1,-1));
+            put("taurus", new DPSimpleNode(null, 12, 1200, 32768,232871.692585, 7679674.739783));
+            put("sagittaire", new DPSimpleNode(null, 2, 200, 2048,643147.295611,9291461.264815));
+            put("hercule", new DPSimpleNode(null, 12, 1200, 32768, 232871.692585, 7679674.739783));
 
             //Nancy
             put("griffon", new DPSimpleNode(null, 8, 800, 16384, 1214967.788475, 7513266.608608));
-            put("graphene", new DPSimpleNode(null, 4, 400, 16384,-1,-1));
+            put("graphene", new DPSimpleNode(null, 4, 400, 16384, 1214967.788475, 7513266.608608));
 
             //Reims
-            put("stremi", new DPSimpleNode(null, 24, 2400, 49152,-1,-1));
+            put("stremi", new DPSimpleNode(null, 24, 2400, 49152,1214967.788475, 7513266.608608));
 
             //Rennes
-//            put("paradent", new DPSimpleNode(null, 8, 800, 32768, 1214967.788475, 7473261.785402));
-            put("paradent", new DPSimpleNode(null, 6, 600, 32768, 1214967.788475, 7473261.785402));
-            put("paramount", new DPSimpleNode(null, 4, 400, 8192,-1,-1));
-            put("parapide", new DPSimpleNode(null, 8, 800, 24576,-1,-1));
+            put("paradent", new DPSimpleNode(null, 8, 800, 32768, 1214967.788475, 7473261.785402));
+            put("paramount", new DPSimpleNode(null, 4, 400, 8192,1214967.788475, 7513266.608608));
+            put("parapide", new DPSimpleNode(null, 8, 800, 24576,1214967.788475, 7513266.608608));
             put("parapluie", new DPSimpleNode(null, 24, 2400, 49152,559949.493139, 6699922.315851));
 
             //Sophia
-            put("helios", new DPSimpleNode(null, 4, 400, 4096,-1,-1));
+            put("helios", new DPSimpleNode(null, 4, 400, 4096,643147.295611,9291461.264815));
             put("sol", new DPSimpleNode(null, 4,400 , 4096,643147.295611,9291461.264815));
             put("suno", new DPSimpleNode(null, 8, 800, 32768,741925.004637,48114514.880358));
 
             //Toulouse
-            put("pastel", new DPSimpleNode(null, 4, 400, 8192,-1,-1));
-            put("violette", new DPSimpleNode(null, 2, 200, 2048,-1,-1));
-
-
-            put("default", new DPSimpleNode(null, 4, 400, 4096,-1,-1));
+            put("pastel", new DPSimpleNode(null, 4, 400, 8192, 232871.692585, 7679674.739783));
+            put("violette", new DPSimpleNode(null, 2, 200, 2048,1214967.788475, 7513266.608608));
         }};
 
     public static String getClusterName(String nodeName){

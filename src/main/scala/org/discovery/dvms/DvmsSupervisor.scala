@@ -17,6 +17,9 @@ import util.parsing.combinator.RegexParsers
 import java.util.concurrent.TimeoutException
 import configuration.{ExperimentConfiguration, DvmsConfiguration}
 import org.discovery.AkkaArc.PeerActorMessage
+import org.discovery.AkkaArc.overlay.OverlayServiceFactory
+import org.discovery.AkkaArc.notification.ChordServiceWithNotificationFactory
+import org.discovery.AkkaArc.overlay.vivaldi.VivaldiServiceFactory
 
 /* ============================================================
  * Discovery Project - DVMS
@@ -37,107 +40,48 @@ import org.discovery.AkkaArc.PeerActorMessage
  * limitations under the License.
  * ============================================================ */
 
-class DvmsSupervisor(location: INetworkLocation, factory: DvmsAbstractFactory) extends PeerActor(location) {
+class DvmsSupervisor(location: INetworkLocation, factory: DvmsAbstractFactory, overlayFactory: OverlayServiceFactory = VivaldiServiceFactory) extends PeerActor(location, overlayFactory) {
 
-   import org.discovery.AkkaArc.overlay.chord.ChordActor._
+  import org.discovery.AkkaArc.overlay.chord.ChordActor._
 
-   def this(location: INetworkLocation) = this(
-      location,
-      DvmsConfiguration.FACTORY_NAME match {
-         case "libvirt" => LibvirtDvmsFactory
-         case _ => FakeDvmsFactory
-      }
-   )
+  def this(location: INetworkLocation) = this(
+    location,
+    DvmsConfiguration.FACTORY_NAME match {
+      case "libvirt" => LibvirtDvmsFactory
+      case _ => FakeDvmsFactory
+    }
+  )
 
-   val nodeRef: NodeRef = NodeRef(location, self)
+  val nodeRef: NodeRef = NodeRef(location, self)
 
-   val monitorActor = context.actorOf(Props(factory.createMonitorActor(nodeRef).get), s"Monitor@${location.getId}")
-   val dvmsActor    = context.actorOf(Props(factory.createDvmsActor(nodeRef).get),    s"DVMS@${location.getId}")
-   val entropyActor = context.actorOf(Props(factory.createEntropyActor(nodeRef).get), s"Entropy@${location.getId}")
-   val loggingActor = context.actorOf(Props(factory.createLoggingActor(nodeRef).get), s"Logging@${location.getId}")
-//   val serviceActor = context.actorOf(Props(factory.createServiceActor(nodeRef, overlayService).get), s"Service@${location.getId}")
+  val monitorActor = context.actorOf(Props(factory.createMonitorActor(nodeRef).get), s"Monitor@${location.getId}")
+  val dvmsActor = context.actorOf(Props(factory.createDvmsActor(nodeRef, overlayService).get), s"DVMS@${location.getId}")
+  val entropyActor = context.actorOf(Props(factory.createEntropyActor(nodeRef).get), s"Entropy@${location.getId}")
+  val loggingActor = context.actorOf(Props(factory.createLoggingActor(nodeRef).get), s"Logging@${location.getId}")
 
-   EntropyService.setLoggingActorRef(loggingActor)
+  EntropyService.setLoggingActorRef(loggingActor)
 
-   // Register the start time of the experiment
-   ExperimentConfiguration.startExperiment()
+  // Register the start time of the experiment
+  ExperimentConfiguration.startExperiment()
 
-   override def receive = {
+  override def receive = {
+    case msg: MonitorMessage => monitorActor.forward(msg)
+    case msg: DvmsMessage => dvmsActor.forward(msg)
+    case msg: EntropyMessage => entropyActor.forward(msg)
+    case msg: LoggingMessage => loggingActor.forward(msg)
 
-      case msg: MonitorMessage   => monitorActor.forward(msg)
-      case msg: DvmsMessage      => dvmsActor.forward(msg)
-      case msg: EntropyMessage   => entropyActor.forward(msg)
-      case msg: LoggingMessage   => loggingActor.forward(msg)
-//      case msg: ServiceMessage   => serviceActor.forward(msg)
+    case msg =>
+      super.receive(msg)
+  }
 
-      case msg =>
+  override def onConnection() {}
 
-         msg match {
-            case m:PeerActorMessage =>
-            case _ =>
-               log.info(s"DvmsSupervisor has received an unknown message: $msg")
-         }
-         super.receive(msg)
-   }
+  override def onDisconnection() {}
 
-   override def onConnection() {
-      for {
-         neighbours <- overlayService.getNeighbourHood()
-      } yield {
-         log.info(s"$location: I am connected and here are my neighbors [${neighbours.mkString(",")}]")
-
-         if (neighbours.size > 1)
-            dvmsActor ! ThisIsYourNeighbor(neighbours(1))
-      }
-   }
-
-   override def onDisconnection() {
-      log.info(s"$location: I have been disconnected")
-   }
-
-   override def onNeighborChanged(oldNeighbor: Option[NodeRef], newNeighbor: NodeRef) {
-
-      for {
-         neighbours <- overlayService.getNeighbourHood()
-      } yield {
-         log.info(s"$location: one of my neighbors ($oldNeighbor) has changed, here is the new one ($newNeighbor) and here are my neighbors [${neighbours.mkString(",")}]")
-
-         if (neighbours.size > 1 && (newNeighbor.location isEqualTo neighbours(1).location)) {
-            dvmsActor ! YouMayNeedToUpdateYourFirstOut(oldNeighbor, newNeighbor)
-            dvmsActor ! ThisIsYourNeighbor(neighbours(1))
-         }
-      }
-   }
-
-   override def onNeighborCrashed(neighbor: NodeRef) {
-      for {
-         neighbours <- overlayService.getNeighbourHood()
-      } yield {
-         log.info(s"$location: one of my neighbors ($neighbor) has crashed and here are my neighbors [${neighbours.mkString(",")}]")
-
-         dvmsActor ! FailureDetected(neighbor)
-      }
-   }
-
-   override val supervisorStrategy =
-      OneForOneStrategy(maxNrOfRetries = 2, withinTimeRange = 1 second) {
-//         case e: AskTimeoutException => {
-//
-//
-//            dvmsActor ! AskTimeoutDetected(e)
-//
-//            Resume
-//         }
-//
-//         case e: TimeoutException => {
-//            Resume
-//         }
-//
-//         case _: NullPointerException => Restart
-//         case _: IllegalArgumentException => Stop
-//         case _: Exception => Escalate
-         case e: Exception =>
-            e.printStackTrace()
-            Restart
-      }
+  override val supervisorStrategy =
+    OneForOneStrategy(maxNrOfRetries = 2, withinTimeRange = 1 second) {
+      case e: Exception =>
+        e.printStackTrace()
+        Restart
+    }
 }

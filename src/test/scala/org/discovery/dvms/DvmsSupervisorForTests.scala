@@ -1,9 +1,5 @@
 package org.discovery.dvms
 
-import factory.{DvmsAbstractFactory, FakeDvmsFactory}
-import org.discovery.AkkaArc.util.INetworkLocation
-import akka.pattern.pipe
-
 /* ============================================================
  * Discovery Project - DVMS
  * http://beyondtheclouds.github.io/
@@ -23,6 +19,10 @@ import akka.pattern.pipe
  * limitations under the License.
  * ============================================================ */
 
+import factory.{DvmsAbstractFactory, FakeDvmsFactory}
+import org.discovery.AkkaArc.util.INetworkLocation
+import akka.pattern.pipe
+import org.discovery.AkkaArc.overlay.chord.ChordService
 
 object DvmsSupervisorForTestsProtocol {
 
@@ -38,7 +38,12 @@ class DvmsSupervisorForTests(location: INetworkLocation, factory: DvmsAbstractFa
 
    override def receive = {
       case DvmsSupervisorForTestsProtocol.GetRingSize() =>
-         overlayService.ringSize() pipeTo sender
+        overlayService match {
+          case chordService: ChordService =>
+            chordService.ringSize() pipeTo sender
+          case _ =>
+        }
+
 
       case msg =>
          super.receive(msg)

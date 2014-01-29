@@ -31,8 +31,7 @@ import scala.concurrent.ExecutionContext
 import akka.util.Timeout
 import collection.mutable
 import util.NetworkLocation
-import org.discovery.AkkaArc.PeerActorProtocol.ToNotificationActor
-import org.discovery.AkkaArc.notification.TriggerEvent
+import org.discovery.AkkaArc.notification.NotificationActorProtocol.TriggerEvent
 
 object FaultyMain extends App {
 
@@ -106,7 +105,7 @@ object FaultyMain extends App {
             Thread.sleep(5000)
             println("Simulating a false CPU overload")
 
-            peer ! ToNotificationActor(TriggerEvent(new CpuViolation()))
+            peer ! TriggerEvent(new CpuViolation())
          }
       }
    }

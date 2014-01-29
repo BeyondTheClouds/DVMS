@@ -112,12 +112,12 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
       node4 ! SetCurrentPartition(partition_1_2_3_4_10)
       node10 ! SetCurrentPartition(partition_1_2_3_4_10)
 
-      node1 ! SetFirstOut(node5Ref)
-      node2 ! SetFirstOut(node5Ref)
-      node3 ! SetFirstOut(node5Ref)
-      node4 ! SetFirstOut(node5Ref)
-
-      node10 ! SetFirstOut(node11Ref)
+//      node1 ! SetFirstOut(node5Ref)
+//      node2 ! SetFirstOut(node5Ref)
+//      node3 ! SetFirstOut(node5Ref)
+//      node4 ! SetFirstOut(node5Ref)
+//
+//      node10 ! SetFirstOut(node11Ref)
       //         node10 ! EverythingIsOkToken(partition_1_2_3_4_10.id))
 
 
@@ -243,12 +243,12 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
       node4 ! SetCurrentPartition(partition_1_2_3_4_10)
       node10 ! SetCurrentPartition(partition_1_2_3_4_10)
 
-      node1 ! SetFirstOut(node5Ref)
-      node2 ! SetFirstOut(node5Ref)
-      node3 ! SetFirstOut(node5Ref)
-      node4 ! SetFirstOut(node5Ref)
-
-      node10 ! SetFirstOut(node11Ref)
+//      node1 ! SetFirstOut(node5Ref)
+//      node2 ! SetFirstOut(node5Ref)
+//      node3 ! SetFirstOut(node5Ref)
+//      node4 ! SetFirstOut(node5Ref)
+//
+//      node10 ! SetFirstOut(node11Ref)
       TestDvmsActor.experimentHasStarted = true
 
 
@@ -266,7 +266,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
       node10 ! BeginTransmission()
 
 
-      Thread.sleep(5000)
+      Thread.sleep(8000)
 
       //         val node1IsOk = Await.result(node1 ? ReportIn()), 1 second).asInstanceOf[Boolean]
       val node2IsOk = Await.result(node2 ? ReportIn(), 1 second).asInstanceOf[Boolean]
@@ -375,12 +375,12 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
       node4 ! SetCurrentPartition(partition_1_2_3_4_10)
       node10 ! SetCurrentPartition(partition_1_2_3_4_10)
 
-      node1 ! SetFirstOut(node5Ref)
-      node2 ! SetFirstOut(node5Ref)
-      node3 ! SetFirstOut(node5Ref)
-      node4 ! SetFirstOut(node5Ref)
-
-      node10 ! SetFirstOut(node11Ref)
+//      node1 ! SetFirstOut(node5Ref)
+//      node2 ! SetFirstOut(node5Ref)
+//      node3 ! SetFirstOut(node5Ref)
+//      node4 ! SetFirstOut(node5Ref)
+//
+//      node10 ! SetFirstOut(node11Ref)
       TestDvmsActor.experimentHasStarted = true
       Thread.sleep(1000)
       //         node10 ! EverythingIsOkToken(partition_1_2_3_4_10.id))
@@ -436,7 +436,6 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
       node7 ! Kill
       node8 ! Kill
       node9 ! Kill
-      //         node10 ! Kill
       node11 ! Kill
       node12 ! Kill
 
@@ -508,12 +507,12 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
       node4 ! SetCurrentPartition(partition_1)
       node10 ! SetCurrentPartition(partition_1)
 
-      node1 ! SetFirstOut(node5Ref)
-      node2 ! SetFirstOut(node5Ref)
-      node3 ! SetFirstOut(node5Ref)
-      node4 ! SetFirstOut(node5Ref)
-
-      node10 ! SetFirstOut(node11Ref)
+//      node1 ! SetFirstOut(node5Ref)
+//      node2 ! SetFirstOut(node5Ref)
+//      node3 ! SetFirstOut(node5Ref)
+//      node4 ! SetFirstOut(node5Ref)
+//
+//      node10 ! SetFirstOut(node11Ref)
 
 
       // partition 2
@@ -521,9 +520,9 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
       node7 ! SetCurrentPartition(partition_2)
       node12 ! SetCurrentPartition(partition_2)
 
-      node5 ! SetFirstOut(node6Ref)
-      node7 ! SetFirstOut(node8Ref)
-      node12 ! SetFirstOut(node1Ref)
+//      node5 ! SetFirstOut(node6Ref)
+//      node7 ! SetFirstOut(node8Ref)
+//      node12 ! SetFirstOut(node1Ref)
 
       // partition 3
       node6 ! SetCurrentPartition(partition_3)
@@ -531,10 +530,10 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
       node9 ! SetCurrentPartition(partition_3)
       node11 ! SetCurrentPartition(partition_3)
 
-      node6 ! SetFirstOut(node7Ref)
-      node8 ! SetFirstOut(node9Ref)
-      node9 ! SetFirstOut(node10Ref)
-      node11 ! SetFirstOut(node12Ref)
+//      node6 ! SetFirstOut(node7Ref)
+//      node8 ! SetFirstOut(node9Ref)
+//      node9 ! SetFirstOut(node10Ref)
+//      node11 ! SetFirstOut(node12Ref)
 
 
       TestDvmsActor.experimentHasStarted = true
@@ -669,33 +668,17 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
       node4 ! SetCurrentPartition(partition_1)
       node10 ! SetCurrentPartition(partition_1)
 
-      node1 ! SetFirstOut(node5Ref)
-      node2 ! SetFirstOut(node5Ref)
-      node3 ! SetFirstOut(node5Ref)
-      node4 ! SetFirstOut(node5Ref)
-
-      node10 ! SetFirstOut(node11Ref)
-
 
       // partition 2
       node5 ! SetCurrentPartition(partition_2)
       node7 ! SetCurrentPartition(partition_2)
       node12 ! SetCurrentPartition(partition_2)
 
-      node5 ! SetFirstOut(node6Ref)
-      node7 ! SetFirstOut(node8Ref)
-      node12 ! SetFirstOut(node1Ref)
-
       // partition 3
       node6 ! SetCurrentPartition(partition_3)
       node8 ! SetCurrentPartition(partition_3)
       node9 ! SetCurrentPartition(partition_3)
       node11 ! SetCurrentPartition(partition_3)
-
-      node6 ! SetFirstOut(node7Ref)
-      node8 ! SetFirstOut(node9Ref)
-      node9 ! SetFirstOut(node10Ref)
-      node11 ! SetFirstOut(node12Ref)
 
 
       TestDvmsActor.experimentHasStarted = true
@@ -718,53 +701,32 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
 
       Thread.sleep(200)
 
-      // transmission of ISP to the respectives firstOuts
-      //         node10 ! BeginTransmission())
 
+      Thread.sleep(7000)
 
-      Thread.sleep(5000)
-
-      //         val node1IsOk = Await.result(node1 ? ReportIn()), 1 second).asInstanceOf[Boolean]
       val node2IsOk = Await.result(node2 ? ReportIn(), 1 second).asInstanceOf[Boolean]
       val node3IsOk = Await.result(node3 ? ReportIn(), 1 second).asInstanceOf[Boolean]
       val node4IsOk = Await.result(node4 ? ReportIn(), 1 second).asInstanceOf[Boolean]
-      //         val node5IsOk = Await.result(node5 ? ReportIn()), 1 second).asInstanceOf[Boolean]
-      //         val node6IsOk = Await.result(node6 ? ReportIn()), 1 second).asInstanceOf[Boolean]
       val node7IsOk = Await.result(node7 ? ReportIn(), 1 second).asInstanceOf[Boolean]
-      //         val node8IsOk = Await.result(node8 ? ReportIn()), 1 second).asInstanceOf[Boolean]
       val node9IsOk = Await.result(node9 ? ReportIn(), 1 second).asInstanceOf[Boolean]
-      //         val node10IsOk = Await.result(node10 ? ReportIn()), 1 second).asInstanceOf[Boolean]
       val node11IsOk = Await.result(node11 ? ReportIn(), 1 second).asInstanceOf[Boolean]
-      //         val node12IsOk = Await.result(node12 ? ReportIn()), 1 second).asInstanceOf[Boolean]
 
-      //         println(s"1: $node1IsOk")
       println(s"2: $node2IsOk")
       println(s"3: $node3IsOk")
       println(s"4: $node4IsOk")
-      //         println(s"5: $node5IsOk")
-      //         println(s"6: $node6IsOk")
       println(s"7: $node7IsOk")
-      //         println(s"8: $node8IsOk")
       println(s"9: $node9IsOk")
-      //         println(s"10: $node10IsOk")
       println(s"11: $node11IsOk")
-      //         println(s"12: $node12IsOk")
 
       (node2IsOk && node3IsOk &&
         node7IsOk && node9IsOk && node4IsOk && node11IsOk) must be(true)
 
-      //         node1 ! Kill
       node2 ! Kill
       node3 ! Kill
       node4 ! Kill
-      //         node5 ! Kill
-      //         node6 ! Kill
       node7 ! Kill
-      //         node8 ! Kill
       node9 ! Kill
-      //         node10 ! Kill
       node11 ! Kill
-      //         node12 ! Kill
 
       system.shutdown()
       TestDvmsActor.experimentHasStarted = false

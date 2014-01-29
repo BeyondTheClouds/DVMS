@@ -35,83 +35,94 @@ import collection.immutable.HashMap
 import org.discovery.dvms.monitor.MonitorProtocol.GetVmsWithConsumption
 import org.discovery.dvms.dvms.DvmsModel.PhysicalNode
 import org.discovery.dvms.entropy.EntropyProtocol.MigrateVirtualMachine
-import org.discovery.DiscoveryModel.model.ReconfigurationModel.ReconfigurationResult
+import org.discovery.DiscoveryModel.model.ReconfigurationModel.{ReconfigurationlNoSolution, ReconfigurationResult}
 
 class EntropyActor(applicationRef: NodeRef) extends AbstractEntropyActor(applicationRef) {
 
-   val planner: ChocoCustomRP = new ChocoCustomRP(new MockDurationEvaluator(2, 5, 1, 1, 7, 14, 7, 2, 4));
-   planner.setTimeLimit(2);
+  val planner: ChocoCustomRP = new ChocoCustomRP(new MockDurationEvaluator(2, 5, 1, 1, 7, 14, 7, 2, 4));
+  planner.setTimeLimit(3);
 
-//   def computeReconfigurationPlan(nodes: List[NodeRef]): Boolean = {
+  //   def computeReconfigurationPlan(nodes: List[NodeRef]): Boolean = {
 
-   def computeReconfigurationPlan(nodes: List[NodeRef]): ReconfigurationResult = {
+  def computeReconfigurationPlan(nodes: List[NodeRef]): ReconfigurationResult = {
 
-      val initialConfiguration: Configuration = new SimpleConfiguration();
+    val initialConfiguration: Configuration = new SimpleConfiguration();
 
-      // building the entropy configuration
+    // building the entropy configuration
+    var entropyResult: ReconfigurationResult = ReconfigurationlNoSolution()
+
+    try {
 
       val physicalNodesWithVmsConsumption = Await.result(Future.sequence(nodes.map({
-         n =>
-            n.ref ? GetVmsWithConsumption()
+        n =>
+          n.ref ? GetVmsWithConsumption()
       })).mapTo[List[PhysicalNode]], 1 second)
 
       physicalNodesWithVmsConsumption.foreach(physicalNodeWithVmsConsumption => {
 
-         val entropyNode = new SimpleNode(s"${physicalNodeWithVmsConsumption.ref.location.getId}",
-            physicalNodeWithVmsConsumption.specs.numberOfCPU,
-            physicalNodeWithVmsConsumption.specs.coreCapacity,
-            physicalNodeWithVmsConsumption.specs.ramCapacity);
-         initialConfiguration.addOnline(entropyNode);
+        val entropyNode = new SimpleNode(s"${physicalNodeWithVmsConsumption.ref.location.getId}",
+          physicalNodeWithVmsConsumption.specs.numberOfCPU,
+          physicalNodeWithVmsConsumption.specs.coreCapacity,
+          physicalNodeWithVmsConsumption.specs.ramCapacity);
+        initialConfiguration.addOnline(entropyNode);
 
-         physicalNodeWithVmsConsumption.machines.foreach(vm => {
-            val entropyVm = new SimpleVirtualMachine(vm.name,
-               vm.specs.numberOfCPU,
-               0,
-               vm.specs.ramCapacity,
-               vm.cpuConsumption.toInt,
-               vm.specs.ramCapacity);
-            initialConfiguration.setRunOn(entropyVm, entropyNode);
-         })
+        physicalNodeWithVmsConsumption.machines.foreach(vm => {
+          val entropyVm = new SimpleVirtualMachine(vm.name,
+            vm.specs.numberOfCPU,
+            0,
+            vm.specs.ramCapacity,
+            vm.cpuConsumption.toInt,
+            vm.specs.ramCapacity);
+          initialConfiguration.setRunOn(entropyVm, entropyNode);
+        })
       })
 
-      EntropyService.computeReconfigurationPlan(initialConfiguration, physicalNodesWithVmsConsumption)
-   }
+      entropyResult = EntropyService.computeReconfigurationPlan(initialConfiguration, physicalNodesWithVmsConsumption)
+
+    } catch {
+      case e: Throwable =>
+        log.info("at least one virtual machines failed to answer in times")
+        entropyResult = ReconfigurationlNoSolution()
+    }
+
+    entropyResult
+  }
 
 
-   override def receive = {
+  override def receive = {
 
-      case MigrateVirtualMachine(vmName, destination) => {
-         log.info(s"performing migration of $vmName to ${destination.getId}")
+    case MigrateVirtualMachine(vmName, destination) => {
+      log.info(s"performing migration of $vmName to ${destination.getId}")
 
-         destination match {
-            case destinationAsNetworkLocation: NetworkLocation =>
-               val vm: IVirtualMachine = LibvirtMonitorDriver.driver.findByName(vmName)
+      destination match {
+        case destinationAsNetworkLocation: NetworkLocation =>
+          val vm: IVirtualMachine = LibvirtMonitorDriver.driver.findByName(vmName)
 
-               // TODO: following parameters are hard coded! that is bad :(
-               val destinationNode: INode = new Node(destinationAsNetworkLocation.ip, "root", 22)
+          // TODO: following parameters are hard coded! that is bad :(
+          val destinationNode: INode = new Node(destinationAsNetworkLocation.ip, "root", 22)
 
-               var okToContinue: Boolean = true
+          var okToContinue: Boolean = true
 
-               if (vm == null) {
-                  log.info(s"cannot find vm ${vmName} on current host.")
-                  okToContinue = false
-               }
+          if (vm == null) {
+            log.info(s"cannot find vm ${vmName} on current host.")
+            okToContinue = false
+          }
 
-               if (okToContinue) {
-                  log.info(s"starting migration of $vmName on ${destination.getId}!")
-                  LibvirtMonitorDriver.driver.migrate(vm, destinationNode)
-                  sender ! true
-                  log.info(s"[Administration] Please check  if $vmName is now located on ${destination.getId}!")
-               } else {
-                  log.info(s"aborting migration of $vmName on ${destination.getId}!")
-                  sender ! false
-               }
+          if (okToContinue) {
+            log.info(s"starting migration of $vmName on ${destination.getId}!")
+            LibvirtMonitorDriver.driver.migrate(vm, destinationNode)
+            sender ! true
+            log.info(s"[Administration] Please check  if $vmName is now located on ${destination.getId}!")
+          } else {
+            log.info(s"aborting migration of $vmName on ${destination.getId}!")
+            sender ! false
+          }
 
-            case _ =>
+        case _ =>
 
-         }
       }
+    }
 
-      case msg => super.receive(msg)
-   }
+    case msg => super.receive(msg)
+  }
 }
