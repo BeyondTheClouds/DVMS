@@ -2,6 +2,7 @@ package org.discovery.akka
 
 import scala.concurrent._
 import ExecutionContext.Implicits.global
+import org.discovery.akka.example
 
 /**
  * Created by jonathan on 18/12/13.
@@ -11,14 +12,14 @@ trait Node {
   def getValue: Int
 }
 
-case class GoodNode(val i: Int) extends Node {
+case class GoodNode(val i: Int) extends example.Node {
 
   def getValue: Int = i
 
   override def toString: String = s"GoodNode($i)"
 }
 
-case class BadNode(val i: Int) extends Node {
+case class BadNode(val i: Int) extends example.Node {
 
   def getValue: Int = i
 
@@ -35,7 +36,7 @@ case class BadNode(val i: Int) extends Node {
 
 
 object MayFail {
-  def protect[T](t: => T): MayFail[T] = MayFailImpl(t)
+  def protect[T](t: => T): example.MayFail[T] = example.MayFailImpl(t)
 }
 
 trait MayFail[T] {
@@ -49,9 +50,9 @@ trait MayFail[T] {
 
 case class CallBack[T](f: (T => Unit), id: Int)
 
-case class MayFailImpl[T](var unsafeRessource: T) extends MayFail[T] {
+case class MayFailImpl[T](var unsafeRessource: T) extends example.MayFail[T] {
 
-  var callback: CallBack[T] = CallBack(_ => None, 0)
+  var callback: example.CallBack[T] = example.CallBack(_ => None, 0)
 
 //  def get: Future[T] = {
 //    val future = Future {
@@ -65,7 +66,7 @@ case class MayFailImpl[T](var unsafeRessource: T) extends MayFail[T] {
 //  }
 
   def watch(fcb: T => Unit) {
-    callback = CallBack(fcb, callback.id + 1)
+    callback = example.CallBack(fcb, callback.id + 1)
   }
 
   def executeInProtectedSpace[R](f: (T => R)): Future[R] = {
@@ -96,22 +97,22 @@ case class MayFailImpl[T](var unsafeRessource: T) extends MayFail[T] {
 
 object BadMayFailTest extends App {
 
-  def productNodes(i: Int): Node = {
+  def productNodes(i: Int): example.Node = {
     if (i == 3) {
-      new BadNode(i)
+      new example.UnstableNode(i)
     } else {
-      new GoodNode(i)
+      new example.StableNode(i)
     }
   }
 
-  def workOnNodes(nodes: List[Node]): Boolean = {
+  def workOnNodes(nodes: List[example.Node]): Boolean = {
     Thread.sleep(2000)
 
     nodes.size >= 5
   }
 
   var i: Int = 1
-  var nodes: List[Node] = Nil
+  var nodes: List[example.Node] = Nil
   while (!workOnNodes(nodes)) {
     nodes = productNodes(i) :: nodes
   }
@@ -126,7 +127,7 @@ object GoodMayFailTest extends App {
 
 
   // simulate node failure
-  def simulateFailure(nodes: List[MayFail[Node]]): List[MayFail[Node]] = {
+  def simulateFailure(nodes: List[example.MayFail[example.Node]]): List[example.MayFail[example.Node]] = {
 
     nodes.foreach( n =>
       n match {
@@ -141,18 +142,18 @@ object GoodMayFailTest extends App {
   }
 
   // same as Vivaldi.giveSomeCloseNodeOutside()
-  def productNodes(i: Int): MayFail[Node] = {
+  def productNodes(i: Int): example.MayFail[example.Node] = {
     if (i == 3) {
-      MayFail.protect(new BadNode(i))
+      example.MayFail.protect(new example.UnstableNode(i))
     } else {
-      MayFail.protect(new GoodNode(i))
+      example.MayFail.protect(new example.StableNode(i))
     }
   }
 
 
 
   // same as enoughRessources(p)
-  def workOnNodes(nodes: List[MayFail[Node]]): Boolean = {
+  def workOnNodes(nodes: List[example.MayFail[example.Node]]): Boolean = {
     Thread.sleep(1000)
 
 
@@ -170,7 +171,7 @@ object GoodMayFailTest extends App {
   }
 
   var i: Int = 1
-  var nodes: List[MayFail[Node]] = Nil
+  var nodes: List[example.MayFail[example.Node]] = Nil
 
   while (!workOnNodes(nodes)) {
 

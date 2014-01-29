@@ -29,6 +29,7 @@ import com.typesafe.config.ConfigFactory
 import org.discovery.AkkaArc.overlay.chord.ChordService
 import service.ServiceActor
 import org.discovery.DiscoveryModel.model.ReconfigurationModel._
+import org.discovery.AkkaArc.overlay.OverlayService
 
 
 object DvmsDeadlockTest {
@@ -85,7 +86,7 @@ case class ReportIn() extends TestDvmsMessage
 
 case class SetCurrentPartition(partition: DvmsPartition) extends TestDvmsMessage
 
-case class SetFirstOut(firstOut: NodeRef) extends TestDvmsMessage
+//case class SetFirstOut(firstOut: NodeRef) extends TestDvmsMessage
 
 case class BeginTransmission() extends TestDvmsMessage
 
@@ -93,7 +94,7 @@ object TestDvmsActor {
   var experimentHasStarted: Boolean = false
 }
 
-class TestDvmsActor(applicationRef: NodeRef) extends DvmsActor(applicationRef) {
+class TestDvmsActor(applicationRef: NodeRef, overlayService: OverlayService) extends DvmsActor(applicationRef, overlayService) {
 
 
 
@@ -111,20 +112,24 @@ class TestDvmsActor(applicationRef: NodeRef) extends DvmsActor(applicationRef) {
       }
     }
 
-    case msg@SetFirstOut(node) => {
-      firstOut = Some(node)
-    }
+//    case msg@SetFirstOut(node) => {
+//      firstOut = Some(node)
+//    }
 
     case BeginTransmission() => {
       currentPartition match {
         case Some(p) =>
-          firstOut.get.ref ! TransmissionOfAnISP(p)
-        case None =>
+          firstOut match {
+            case Some(actor) =>
+              actor.ref ! TransmissionOfAnISP(p)
+            case None =>
+          }
+          case None =>
       }
     }
 
     case ReportIn() =>
-      if(firstOut != None || currentPartition != None) {
+      if(currentPartition != None) {
         sender ! false
       } else {
         sender ! true
@@ -178,8 +183,8 @@ object TestDvmsFactory extends DvmsAbstractFactory {
     Some(new TestMonitorActor(nodeRef))
   }
 
-  def createDvmsActor(nodeRef: NodeRef): Option[DvmsActor] = {
-    Some(new TestDvmsActor(nodeRef))
+  def createDvmsActor(nodeRef: NodeRef, overlayService: OverlayService): Option[DvmsActor] = {
+    Some(new TestDvmsActor(nodeRef, overlayService))
   }
 
   def createEntropyActor(nodeRef: NodeRef): Option[AbstractEntropyActor] = {
@@ -281,17 +286,17 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
       node7 ! SetCurrentPartition(partition_7_8)
       node8 ! SetCurrentPartition(partition_7_8)
 
-      node1 ! SetFirstOut(node3Ref)
-      node2 ! SetFirstOut(node3Ref)
-
-      node3 ! SetFirstOut(node5Ref)
-      node4 ! SetFirstOut(node5Ref)
-
-      node5 ! SetFirstOut(node7Ref)
-      node6 ! SetFirstOut(node7Ref)
-
-      node7 ! SetFirstOut(node1Ref)
-      node8 ! SetFirstOut(node1Ref)
+//      node1 ! SetFirstOut(node3Ref)
+//      node2 ! SetFirstOut(node3Ref)
+//
+//      node3 ! SetFirstOut(node5Ref)
+//      node4 ! SetFirstOut(node5Ref)
+//
+//      node5 ! SetFirstOut(node7Ref)
+//      node6 ! SetFirstOut(node7Ref)
+//
+//      node7 ! SetFirstOut(node1Ref)
+//      node8 ! SetFirstOut(node1Ref)
 
       // transmission of ISP to the respectives firstOuts
       TestDvmsActor.experimentHasStarted = true
@@ -375,11 +380,11 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
       node2 ! SetCurrentPartition(partition_2_4)
       node4 ! SetCurrentPartition(partition_2_4)
 
-      node1 ! SetFirstOut(node2Ref)
-      node3 ! SetFirstOut(node4Ref)
-
-      node2 ! SetFirstOut(node3Ref)
-      node4 ! SetFirstOut(node1Ref)
+//      node1 ! SetFirstOut(node2Ref)
+//      node3 ! SetFirstOut(node4Ref)
+//
+//      node2 ! SetFirstOut(node3Ref)
+//      node4 ! SetFirstOut(node1Ref)
 
       // transmission of ISP to the respectives firstOuts
       TestDvmsActor.experimentHasStarted = true
@@ -456,13 +461,13 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
       node4 ! SetCurrentPartition(partition_2_4_6)
       node6 ! SetCurrentPartition(partition_2_4_6)
 
-      node1 ! SetFirstOut(node2Ref)
-      node3 ! SetFirstOut(node4Ref)
-      node5 ! SetFirstOut(node6Ref)
-
-      node2 ! SetFirstOut(node3Ref)
-      node4 ! SetFirstOut(node5Ref)
-      node6 ! SetFirstOut(node1Ref)
+//      node1 ! SetFirstOut(node2Ref)
+//      node3 ! SetFirstOut(node4Ref)
+//      node5 ! SetFirstOut(node6Ref)
+//
+//      node2 ! SetFirstOut(node3Ref)
+//      node4 ! SetFirstOut(node5Ref)
+//      node6 ! SetFirstOut(node1Ref)
 
       // transmission of ISP to the respectives firstOuts
       TestDvmsActor.experimentHasStarted = true
@@ -558,17 +563,17 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
       node7 ! SetCurrentPartition(partition_4_7_9)
       node9 ! SetCurrentPartition(partition_4_7_9)
 
-      node1 ! SetFirstOut(node2Ref)
-      node3 ! SetFirstOut(node4Ref)
-      node5 ! SetFirstOut(node6Ref)
-
-      node2 ! SetFirstOut(node3Ref)
-      node6 ! SetFirstOut(node7Ref)
-      node8 ! SetFirstOut(node9Ref)
-
-      node4 ! SetFirstOut(node5Ref)
-      node7 ! SetFirstOut(node8Ref)
-      node9 ! SetFirstOut(node1Ref)
+//      node1 ! SetFirstOut(node2Ref)
+//      node3 ! SetFirstOut(node4Ref)
+//      node5 ! SetFirstOut(node6Ref)
+//
+//      node2 ! SetFirstOut(node3Ref)
+//      node6 ! SetFirstOut(node7Ref)
+//      node8 ! SetFirstOut(node9Ref)
+//
+//      node4 ! SetFirstOut(node5Ref)
+//      node7 ! SetFirstOut(node8Ref)
+//      node9 ! SetFirstOut(node1Ref)
 
       // transmission of ISP to the respectives firstOuts
       TestDvmsActor.experimentHasStarted = true
@@ -689,21 +694,21 @@ with WordSpec with MustMatchers with BeforeAndAfterAll with BeforeAndAfterEach {
       node8 ! SetCurrentPartition(partition_4_8_12)
       node12 ! SetCurrentPartition(partition_4_8_12)
 
-      node1 ! SetFirstOut(node2Ref)
-      node5 ! SetFirstOut(node6Ref)
-      node9 ! SetFirstOut(node10Ref)
-
-      node2 ! SetFirstOut(node3Ref)
-      node6 ! SetFirstOut(node7Ref)
-      node10 ! SetFirstOut(node11Ref)
-
-      node3 ! SetFirstOut(node4Ref)
-      node7 ! SetFirstOut(node8Ref)
-      node11 ! SetFirstOut(node12Ref)
-
-      node4 ! SetFirstOut(node5Ref)
-      node8 ! SetFirstOut(node9Ref)
-      node12 ! SetFirstOut(node1Ref)
+//      node1 ! SetFirstOut(node2Ref)
+//      node5 ! SetFirstOut(node6Ref)
+//      node9 ! SetFirstOut(node10Ref)
+//
+//      node2 ! SetFirstOut(node3Ref)
+//      node6 ! SetFirstOut(node7Ref)
+//      node10 ! SetFirstOut(node11Ref)
+//
+//      node3 ! SetFirstOut(node4Ref)
+//      node7 ! SetFirstOut(node8Ref)
+//      node11 ! SetFirstOut(node12Ref)
+//
+//      node4 ! SetFirstOut(node5Ref)
+//      node8 ! SetFirstOut(node9Ref)
+//      node12 ! SetFirstOut(node1Ref)
 
       // transmission of ISP to the respectives firstOuts
       TestDvmsActor.experimentHasStarted = true

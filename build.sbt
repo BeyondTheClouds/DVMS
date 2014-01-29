@@ -43,3 +43,11 @@ mainClass in assembly := Some("org.discovery.dvms.Main")
 test in assembly := {}
 
 jarName in assembly := "dvms.jar"
+
+mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
+{
+  case "application.conf" => MergeStrategy.rename
+  case "META-INF/MANIFEST.MF" => old("META-INF/MANIFEST.MF")
+  case x => MergeStrategy.first
+}
+}

@@ -90,7 +90,7 @@ object Main extends App {
          val remotePortAsInt = Integer.parseInt(remotePort)
          val remoteLocation = NetworkLocation(remoteIp, remotePortAsInt)
 
-         val remotePeer = system.actorSelection(s"akka.tcp://DvmsSystem@$remoteIp:$remotePort/user/overlay${remoteLocation.getId}/ring_actor")
+         val remotePeer = system.actorSelection(s"akka.tcp://DvmsSystem@$remoteIp:$remotePort/user/overlay${remoteLocation.getId}/overlay_actor")
 
          for {
             ref <- remotePeer.resolveOne()

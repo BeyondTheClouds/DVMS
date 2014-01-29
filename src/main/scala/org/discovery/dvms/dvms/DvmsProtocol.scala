@@ -36,7 +36,7 @@ object DvmsProtocol {
    // Message used for the base of DVMS
    case class DissolvePartition(reason: String) extends DvmsMessage
    case class TransmissionOfAnISP(currentPartition: DvmsPartition) extends DvmsMessage
-   case class IAmTheNewLeader(partition: DvmsPartition, firstOut: NodeRef) extends DvmsMessage
+   case class IAmTheNewLeader(partition: DvmsPartition) extends DvmsMessage
 
    // Message used for the merge of partitions
    case class IsThisVersionOfThePartitionStillValid(partition: DvmsPartition) extends DvmsMessage

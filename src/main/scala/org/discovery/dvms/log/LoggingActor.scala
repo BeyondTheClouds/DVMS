@@ -44,6 +44,8 @@ object LoggingProtocol {
    case class ViolationDetected(time: Double) extends LoggingMessage
 
    case class UpdateMigrationCount(time: Double, count: Int) extends LoggingMessage
+
+   case class DoingMigration(time: Double, from: Long, to: Long) extends LoggingMessage
 }
 
 class LoggingActor(location: INetworkLocation) extends Actor {
@@ -70,6 +72,10 @@ class LoggingActor(location: INetworkLocation) extends Actor {
       case IsFree(time: Double) =>
          writer.write(s"id, ${location.getId}, SERVICE, $time, free\n")
          writer.flush()
+
+      case DoingMigration(time: Double, from: Long, to: Long) =>
+        writer.write(s"id, ${location.getId}, SERVICE, $time, $from, $to, migration\n")
+        writer.flush()
 
       case CurrentLoadIs(time: Double, load: Double) =>
          writer.write(s"id, ${location.getId}, LOAD, $time, $load\n")

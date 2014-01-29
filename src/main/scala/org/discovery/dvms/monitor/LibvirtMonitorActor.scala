@@ -20,19 +20,18 @@ package org.discovery.dvms.monitor
  * ============================================================ */
 
 import org.discovery.AkkaArc.util.NodeRef
-import org.discovery.driver.{VirtualMachineState, LibvirtDriver, LibvirtG5kDriver}
+import org.discovery.driver.{LibvirtDriver, LibvirtG5kDriver}
 import org.discovery.model.IDriver
 import scala.collection.JavaConversions._
 import org.discovery.dvms.configuration._
-import org.discovery.AkkaArc.notification.TriggerEvent
 import org.discovery.dvms.log.LoggingProtocol.CurrentLoadIs
 import org.discovery.dvms.dvms.DvmsModel.PhysicalNode
-import org.discovery.AkkaArc.PeerActorProtocol.ToNotificationActor
 import org.discovery.dvms.dvms.DvmsModel.ComputerSpecification
 import org.discovery.dvms.dvms.DvmsModel.VirtualMachine
 import org.discovery.model.network.CpuConsumptions
 import MonitorProtocol._
 import java.util.UUID
+import org.discovery.AkkaArc.notification.NotificationActorProtocol.TriggerEvent
 
 object LibvirtMonitorDriver {
    val driver: IDriver = DvmsConfiguration.IS_G5K_MODE match {
@@ -131,7 +130,7 @@ class LibvirtMonitorActor(applicationRef: NodeRef) extends AbstractMonitorActor(
                   log.info(s"the cpu consumption is under violation")
 
                   // triggering CpuViolation event
-                  applicationRef.ref ! ToNotificationActor(TriggerEvent(new MonitorEvent.CpuViolation()))
+                  applicationRef.ref ! TriggerEvent(new MonitorEvent.CpuViolation())
                case _ =>
             }
 

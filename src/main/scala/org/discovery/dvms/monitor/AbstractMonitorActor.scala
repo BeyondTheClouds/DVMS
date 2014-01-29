@@ -24,26 +24,15 @@ import akka.actor.{ActorLogging, Actor}
 import akka.util.Timeout
 import concurrent.ExecutionContext
 import java.util.concurrent.Executors
-import org.discovery.AkkaArc.notification.{TriggerEvent}
+import org.discovery.AkkaArc.notification.NotificationActorProtocol._
 import scala.concurrent.duration._
 import org.discovery.dvms.dvms.DvmsModel._
-import org.discovery.AkkaArc.PeerActorProtocol.ToNotificationActor
 import org.discovery.AkkaArc.notification._
 import org.discovery.dvms.monitor.MonitorProtocol._
-import org.discovery.dvms.entropy.EntropyProtocol.MigrateVirtualMachine
-
-
-object MonitorEventsTypes {
-   case class OnCpuViolation() extends EventType
-}
 
 object MonitorEvent {
-   class CpuViolation() extends Event {
-      def getType: EventType = MonitorEventsTypes.OnCpuViolation()
-   }
+   case class CpuViolation() extends Event
 }
-
-
 
 abstract class AbstractMonitorActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
@@ -68,7 +57,7 @@ abstract class AbstractMonitorActor(applicationRef: NodeRef) extends Actor with 
             log.info(s"the cpu consumption is under violation")
 
             // triggering CpuViolation event
-            applicationRef.ref ! ToNotificationActor(TriggerEvent(new MonitorEvent.CpuViolation()))
+            applicationRef.ref ! TriggerEvent(new MonitorEvent.CpuViolation())
          }
       }
 
