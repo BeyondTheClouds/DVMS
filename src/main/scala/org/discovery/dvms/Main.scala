@@ -20,7 +20,7 @@ package org.discovery.dvms
  * ============================================================ */
 
 import akka.actor.{ActorSystem, Props}
-import configuration.{HardwareConfiguration, DPSimpleNode, G5kNodes}
+import org.discovery.dvms.configuration.{DvmsConfiguration, HardwareConfiguration, DPSimpleNode, G5kNodes}
 import org.discovery.AkkaArc.util
 import org.discovery.AkkaArc.PeerActorProtocol._
 import util._
@@ -30,6 +30,9 @@ import scala.concurrent.ExecutionContext
 import akka.util.Timeout
 import collection.mutable
 import util.NetworkLocation
+import org.discovery.AkkaArc.overlay.OverlayServiceFactory
+import org.discovery.AkkaArc.overlay.vivaldi.VivaldiServiceFactory
+import org.discovery.AkkaArc.notification.ChordServiceWithNotificationFactory
 
 object Main extends App {
 
@@ -81,7 +84,16 @@ object Main extends App {
       val location: NetworkLocation = NetworkLocation(ip, port)
       val system = ActorSystem(s"DvmsSystem", Configuration.generateNetworkActorConfiguration(location))
 
-      val peer = system.actorOf(Props(new DvmsSupervisor(location)), name = s"node")
+      val overlayFactory: OverlayServiceFactory = DvmsConfiguration.OVERLAY match {
+        case "vivaldi" =>
+          VivaldiServiceFactory
+        case _ =>
+          ChordServiceWithNotificationFactory
+      }
+
+     println(s"overlayFactory: ${DvmsConfiguration.OVERLAY}")
+
+      val peer = system.actorOf(Props(new DvmsSupervisor(location, overlayFactory)), name = s"node")
 
       if (argumentHashMap.contains("remote_ip") && argumentHashMap.contains("remote_port")) {
 

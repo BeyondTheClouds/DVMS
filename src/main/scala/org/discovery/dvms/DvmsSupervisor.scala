@@ -40,11 +40,11 @@ import org.discovery.AkkaArc.overlay.vivaldi.VivaldiServiceFactory
  * limitations under the License.
  * ============================================================ */
 
-class DvmsSupervisor(location: INetworkLocation, factory: DvmsAbstractFactory, overlayFactory: OverlayServiceFactory = VivaldiServiceFactory) extends PeerActor(location, overlayFactory) {
+class DvmsSupervisor(location: INetworkLocation, factory: DvmsAbstractFactory, overlayFactory: OverlayServiceFactory = ChordServiceWithNotificationFactory) extends PeerActor(location, overlayFactory) {
 
   import org.discovery.AkkaArc.overlay.chord.ChordActor._
 
-  def this(location: INetworkLocation) = this(
+  def this(location: INetworkLocation, overlayFactory: OverlayServiceFactory = ChordServiceWithNotificationFactory) = this(
     location,
     DvmsConfiguration.FACTORY_NAME match {
       case "libvirt" => LibvirtDvmsFactory

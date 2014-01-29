@@ -37,6 +37,7 @@ object DvmsConfiguration {
    }
 
    val FACTORY_NAME: String = getPropertyOrDefault("dvms.factory", "fake");
+   val OVERLAY: String      = getPropertyOrDefault("overlay", "chord");
    var IS_G5K_MODE: Boolean = getBooleanPropertyOrDefault("g5k.mode.enabled", false);
 
 
