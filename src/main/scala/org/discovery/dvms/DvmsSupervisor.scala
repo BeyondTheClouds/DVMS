@@ -49,7 +49,8 @@ class DvmsSupervisor(location: INetworkLocation, factory: DvmsAbstractFactory, o
     DvmsConfiguration.FACTORY_NAME match {
       case "libvirt" => LibvirtDvmsFactory
       case _ => FakeDvmsFactory
-    }
+    },
+    overlayFactory
   )
 
   val nodeRef: NodeRef = NodeRef(location, self)
