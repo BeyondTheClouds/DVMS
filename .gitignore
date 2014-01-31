@@ -72,6 +72,10 @@ local.properties
 *.iws
 .idea/
 
+## ENSIME
+
+.ensime
+
 ## MAC OS
 
 .DS_Store
