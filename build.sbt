@@ -28,6 +28,8 @@ libraryDependencies += "com.typesafe.akka" %% "akka-multi-node-testkit" % "2.2.1
 
 libraryDependencies += "junit" % "junit" % "4.5" % "test"
 
+libraryDependencies += "net.databinder.dispatch" %% "dispatch-core" % "0.11.0"
+
 //libraryDependencies += "choco" % "choco" % "2.1.4" % "test"
 
 //libraryDependencies += "entropy" % "entropy-api" % "2.1.14" % "test"

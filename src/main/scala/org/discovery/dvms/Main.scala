@@ -36,79 +36,84 @@ import org.discovery.AkkaArc.notification.ChordServiceWithNotificationFactory
 
 object Main extends App {
 
-   override def main(args: Array[String]) {
+  override def main(args: Array[String]) {
 
-      println("DVMS - version 0.1 (alpha)")
+    println("DVMS - version 0.1 (alpha)")
 
-      G5kNodes.getCurrentNodeInstance() match {
-         case null =>
-            println(s"no node configuration matched!")
-         case nodeInstance: DPSimpleNode =>
-            println(s"node configuration: { cpu: ${G5kNodes.getCurrentNodeInstance.getCPUCapacity},  mem: ${G5kNodes.getCurrentNodeInstance.getMemoryCapacity} }")
-            println(s"node configuration: { cpu: ${HardwareConfiguration.getCpuCapacity},  mem: ${HardwareConfiguration.getRamCapacity} }")
+    G5kNodes.getCurrentNodeInstance() match {
+      case null =>
+        println(s"no node configuration matched!")
+      case nodeInstance: DPSimpleNode =>
+        println(s"node configuration: { cpu: ${G5kNodes.getCurrentNodeInstance.getCPUCapacity},  mem: ${G5kNodes.getCurrentNodeInstance.getMemoryCapacity} }")
+        println(s"node configuration: { cpu: ${HardwareConfiguration.getCpuCapacity},  mem: ${HardwareConfiguration.getRamCapacity} }")
+    }
+
+
+    implicit val timeout = Timeout(1 seconds)
+    implicit val ec = ExecutionContext.fromExecutorService(Executors.newCachedThreadPool())
+
+    var argumentHashMap = new mutable.HashMap[String, String]()
+
+    args.foreach(arg => {
+      val argArray = arg.split("=")
+      argArray.size match {
+        case 1 => argumentHashMap += (argArray(0) -> "")
+        case 2 => argumentHashMap += (argArray(0) -> argArray(1))
+        case 3 => throw new Exception(s"Invalid argument: $arg")
       }
 
+    })
 
-      implicit val timeout = Timeout(1 seconds)
-      implicit val ec = ExecutionContext.fromExecutorService(Executors.newCachedThreadPool())
+    val ip = argumentHashMap.contains("ip") match {
+      case true => argumentHashMap("ip")
+      case false => throw new Exception("please specify <ip> argument")
+    }
+    val portAsString = argumentHashMap.contains("port") match {
+      case true => argumentHashMap("port")
+      case false => throw new Exception("please specify <port> argument")
+    }
+    val debug = argumentHashMap.contains("debug") match {
+      case true => argumentHashMap("debug")
+      case false => "false"
+    }
 
-      var argumentHashMap = new mutable.HashMap[String, String]()
 
-      args.foreach(arg => {
-         val argArray = arg.split("=")
-         argArray.size match {
-            case 1 => argumentHashMap += (argArray(0) -> "")
-            case 2 => argumentHashMap += (argArray(0) -> argArray(1))
-            case 3 => throw new Exception(s"Invalid argument: $arg")
-         }
+    val port: Int = Integer.parseInt(portAsString)
 
-      })
 
-      val ip = argumentHashMap.contains("ip") match {
-         case true => argumentHashMap("ip")
-         case false => throw new Exception("please specify <ip> argument")
+    val location: NetworkLocation = NetworkLocation(ip, port, Some(NetworkLocation.getHostname))
+
+    val system = ActorSystem(s"DvmsSystem", Configuration.generateNetworkActorConfiguration(
+      location,
+      DvmsConfiguration.IS_MONITORING_ACTIVATED,
+      DvmsConfiguration.MONITORING_URL
+    ))
+
+    val overlayFactory: OverlayServiceFactory = DvmsConfiguration.OVERLAY match {
+      case "vivaldi" =>
+        VivaldiServiceFactory
+      case _ =>
+        ChordServiceWithNotificationFactory
+    }
+
+    println(s"overlayFactory: ${DvmsConfiguration.OVERLAY}")
+
+    val peer = system.actorOf(Props(new DvmsSupervisor(location, overlayFactory)), name = s"node")
+
+    if (argumentHashMap.contains("remote_ip") && argumentHashMap.contains("remote_port")) {
+
+      val remoteIp = argumentHashMap("remote_ip")
+      val remotePort = argumentHashMap("remote_port")
+      val remotePortAsInt = Integer.parseInt(remotePort)
+      val remoteLocation = NetworkLocation(remoteIp, remotePortAsInt)
+
+      val remotePeer = system.actorSelection(s"akka.tcp://DvmsSystem@$remoteIp:$remotePort/user/overlay${remoteLocation.getId}/overlay_actor")
+
+      for {
+        ref <- remotePeer.resolveOne()
+      } yield {
+        peer ! ConnectTo(ref, remoteLocation)
       }
-      val portAsString = argumentHashMap.contains("port") match {
-         case true => argumentHashMap("port")
-         case false => throw new Exception("please specify <port> argument")
-      }
-      val debug = argumentHashMap.contains("debug") match {
-         case true => argumentHashMap("debug")
-         case false => "false"
-      }
-
-
-      val port: Int = Integer.parseInt(portAsString)
-
-
-      val location: NetworkLocation = NetworkLocation(ip, port)
-      val system = ActorSystem(s"DvmsSystem", Configuration.generateNetworkActorConfiguration(location))
-
-      val overlayFactory: OverlayServiceFactory = DvmsConfiguration.OVERLAY match {
-        case "vivaldi" =>
-          VivaldiServiceFactory
-        case _ =>
-          ChordServiceWithNotificationFactory
-      }
-
-     println(s"overlayFactory: ${DvmsConfiguration.OVERLAY}")
-
-      val peer = system.actorOf(Props(new DvmsSupervisor(location, overlayFactory)), name = s"node")
-
-      if (argumentHashMap.contains("remote_ip") && argumentHashMap.contains("remote_port")) {
-
-         val remoteIp = argumentHashMap("remote_ip")
-         val remotePort = argumentHashMap("remote_port")
-         val remotePortAsInt = Integer.parseInt(remotePort)
-         val remoteLocation = NetworkLocation(remoteIp, remotePortAsInt)
-
-         val remotePeer = system.actorSelection(s"akka.tcp://DvmsSystem@$remoteIp:$remotePort/user/overlay${remoteLocation.getId}/overlay_actor")
-
-         for {
-            ref <- remotePeer.resolveOne()
-         } yield {
-            peer ! ConnectTo(ref, remoteLocation)
-         }
-      }
-   }
+    }
+  }
 }

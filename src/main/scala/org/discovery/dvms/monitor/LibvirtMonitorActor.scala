@@ -34,165 +34,158 @@ import java.util.UUID
 import org.discovery.AkkaArc.notification.NotificationActorProtocol.TriggerEvent
 
 object LibvirtMonitorDriver {
-   val driver: IDriver = DvmsConfiguration.IS_G5K_MODE match {
+  val driver: IDriver = DvmsConfiguration.IS_G5K_MODE match {
 
-      case true =>
-         new LibvirtG5kDriver("configuration/driver.cfg")
-         new LibvirtDriver("configuration/driver.cfg")
-      case false =>
-         new LibvirtDriver("configuration/driver.cfg")
-   }
+    case true =>
+      new LibvirtG5kDriver("configuration/driver.cfg")
+      new LibvirtDriver("configuration/driver.cfg")
+    case false =>
+      new LibvirtDriver("configuration/driver.cfg")
+  }
 
-   driver.connect()
+  driver.connect()
 
 }
 
 class LibvirtMonitorActor(applicationRef: NodeRef) extends AbstractMonitorActor(applicationRef) {
 
-   var lastCpuConsumptions = LibvirtMonitorDriver.driver.getCpuConsumptions()
-   var listOfVms = LibvirtMonitorDriver.driver.getRunningVms
+  var lastCpuConsumptions = LibvirtMonitorDriver.driver.getCpuConsumptions()
+  var listOfVms = LibvirtMonitorDriver.driver.getRunningVms
 
-   updateVmsData()
+  updateVmsData()
 
-   var lastCheckingUUID: Option[UUID] = None
-   var lastViolationReportedUUID: Option[UUID] = None
+  var lastCheckingUUID: Option[UUID] = None
+  var lastViolationReportedUUID: Option[UUID] = None
 
-   def getVmsWithConsumption(): PhysicalNode = {
+  def getVmsWithConsumption(): PhysicalNode = {
 
-      val result = PhysicalNode(applicationRef, listOfVms.par.map(vm => {
+    val result = PhysicalNode(applicationRef, listOfVms.par.map(vm => {
 
-         val vmName = vm.getName
-         val listOfConsumptions = lastCpuConsumptions.get(vmName)
-         val userCpuConsumption = listOfConsumptions.get(CpuConsumptions.US)
-         val stealCpuConsumption = listOfConsumptions.get(CpuConsumptions.ST)
+      val vmName = vm.getName
+      val listOfConsumptions = lastCpuConsumptions.get(vmName)
+      val userCpuConsumption = listOfConsumptions.get(CpuConsumptions.US)
+      val stealCpuConsumption = listOfConsumptions.get(CpuConsumptions.ST)
 
 
-         VirtualMachine(
-            vmName,
-            userCpuConsumption + stealCpuConsumption,
-            ComputerSpecification(
-               VirtualMachineConfiguration.getNumberOfCpus,
-               VirtualMachineConfiguration.getRamCapacity,
-               VirtualMachineConfiguration.getCpuCoreCapacity
-            )
-         )
-      }).toList,
-         LibvirtMonitorDriver.driver.getMigrationUrl()
-         ,
-         ComputerSpecification(
-            HardwareConfiguration.getNumberOfCpus,
-            HardwareConfiguration.getRamCapacity,
-            HardwareConfiguration.getCpuCapacity
-         )
+      VirtualMachine(
+        vmName,
+        userCpuConsumption + stealCpuConsumption,
+        ComputerSpecification(
+          VirtualMachineConfiguration.getNumberOfCpus,
+          VirtualMachineConfiguration.getRamCapacity,
+          VirtualMachineConfiguration.getCpuCoreCapacity
+        )
       )
+    }).toList,
+      LibvirtMonitorDriver.driver.getMigrationUrl()
+      ,
+      ComputerSpecification(
+        HardwareConfiguration.getNumberOfCpus,
+        HardwareConfiguration.getRamCapacity,
+        HardwareConfiguration.getCpuCapacity
+      )
+    )
 
-      result
-   }
+    result
+  }
 
-   def uploadCpuConsumption(): Double = {
+  def uploadCpuConsumption(): Double = {
+    /* Send the CPU consumption to loggingActor */
+    applicationRef.ref ! CurrentLoadIs(ExperimentConfiguration.getCurrentTime(), cpuConsumption)
+    cpuConsumptionValue
+  }
+
+  def uploadCpuConsumption(tickNumber: Int): Double = uploadCpuConsumption()
+
+  var tickCount: Int = 0;
+  var cpuConsumptionValue: Double = 0.0
+
+  override def receive = {
+
+    case UpdateCpuConsumptions(consumptions) =>
+      lastCpuConsumptions = consumptions
+
+    case Tick() => {
+
+      tickCount += 1
+
+      val tickNumber = tickCount
+
+      cpuConsumption = uploadCpuConsumption(tickNumber)
+
+      log.info(s"the new consumption is : $cpuConsumption")
+
+      if (cpuConsumption > G5kNodes.getCurrentNodeInstance().getCPUCapacity) {
+
+        (lastCheckingUUID, lastViolationReportedUUID) match {
+          case (Some(checkingUUID), Some(violationReportedUUID))
+            if (checkingUUID != violationReportedUUID) =>
+            log.info(s"the cpu consumption is under violation")
+
+            // triggering CpuViolation event
+            applicationRef.ref ! TriggerEvent(new MonitorEvent.CpuViolation())
+          case _ =>
+        }
+
+        lastViolationReportedUUID = lastCheckingUUID
+      }
+    }
+
+    case msg => super.receive(msg)
+  }
+
+  def updateVmsData(): Unit = {
+    try {
+
+      val driver: IDriver = DvmsConfiguration.IS_G5K_MODE match {
+
+        case true =>
+          new LibvirtG5kDriver("configuration/driver.cfg")
+          new LibvirtDriver("configuration/driver.cfg")
+        case false =>
+          new LibvirtDriver("configuration/driver.cfg")
+      }
+
+      driver.connect()
+
+      val newConsumptions = driver.getCpuConsumptions
+      val newListOfVms = driver.getRunningVms
+
+      log.info(s"consumptions: $newConsumptions")
+      log.info(s"vms: {${
+
+        newListOfVms.foldLeft("")((a, b) => b.getName + "," + a)
+
+      }}")
+
+      lastCpuConsumptions = newConsumptions.filter(consumption => consumption._2.size() >= 8)
+      listOfVms = newListOfVms.filter(vm => lastCpuConsumptions.contains(vm.getName))
+      lastCheckingUUID = Some(UUID.randomUUID())
 
       val listOfConsumptions: List[Double] = lastCpuConsumptions.keySet.map(key =>
-         lastCpuConsumptions.get(key).get(CpuConsumptions.US) + lastCpuConsumptions.get(key).get(CpuConsumptions.ST)
+        lastCpuConsumptions.get(key).get(CpuConsumptions.US) + lastCpuConsumptions.get(key).get(CpuConsumptions.ST)
       ).toList
 
-      val cpuConsumption: Double = listOfConsumptions.foldLeft(0.0)((a, b) => a + b)
+      cpuConsumptionValue = listOfConsumptions.foldLeft(0.0)((a, b) => a + b)
+      log.info(s"consumptions_value: $cpuConsumptionValue")
 
-      // Send the CPU consumption to logginActor
-      applicationRef.ref ! CurrentLoadIs(ExperimentConfiguration.getCurrentTime(), cpuConsumption)
+    } catch {
+      case e: Throwable =>
+        e.printStackTrace()
+    }
 
-      cpuConsumption
-   }
+    Thread.sleep(500)
+  }
 
-   def uploadCpuConsumption(tickNumber: Int): Double = uploadCpuConsumption()
-
-   var tickCount: Int = 0;
-
-   override def receive = {
-
-      case UpdateCpuConsumptions(consumptions) =>
-         lastCpuConsumptions = consumptions
-
-      case Tick() => {
-
-         tickCount += 1
-
-         val tickNumber = tickCount
-
-         cpuConsumption = uploadCpuConsumption(tickNumber)
-
-         log.info(s"the new consumption is : $cpuConsumption")
-
-         if (cpuConsumption > G5kNodes.getCurrentNodeInstance().getCPUCapacity) {
-
-            (lastCheckingUUID, lastViolationReportedUUID) match {
-               case (Some(checkingUUID), Some(violationReportedUUID))
-                  if (checkingUUID != violationReportedUUID) =>
-                  log.info(s"the cpu consumption is under violation")
-
-                  // triggering CpuViolation event
-                  applicationRef.ref ! TriggerEvent(new MonitorEvent.CpuViolation())
-               case _ =>
-            }
-
-            lastViolationReportedUUID = lastCheckingUUID
-         }
+  // Yes, there a thread :(
+  // (following the KISS principle: "Keep It Simple Stupid!")
+  val updatingThread = new Thread(new Runnable {
+    def run() {
+      while (true) {
+        updateVmsData()
       }
-
-      case msg => super.receive(msg)
-   }
-
-   def updateVmsData(): Unit = {
-      try {
-
-         val driver: IDriver = DvmsConfiguration.IS_G5K_MODE match {
-
-            case true =>
-               new LibvirtG5kDriver("configuration/driver.cfg")
-               new LibvirtDriver("configuration/driver.cfg")
-            case false =>
-               new LibvirtDriver("configuration/driver.cfg")
-         }
-
-         driver.connect()
-
-         val newConsumptions = driver.getCpuConsumptions
-         val newListOfVms = driver.getRunningVms
-
-         log.info(s"consumptions: $newConsumptions")
-         log.info(s"vms: {${
-
-            newListOfVms.foldLeft("")((a,b) => b.getName + "," + a)
-
-         }}")
-
-         if (newListOfVms.forall(vm => {
-            (newConsumptions.contains(vm.getName)
-              && (newConsumptions(vm.getName).get(CpuConsumptions.US) != null
-              && newConsumptions(vm.getName).get(CpuConsumptions.ST) != null)
-            )
-         })) {
-            lastCpuConsumptions = driver.getCpuConsumptions
-            listOfVms = newListOfVms
-            lastCheckingUUID = Some(UUID.randomUUID())
-         }
-
-      } catch {
-         case e: Throwable =>
-            e.printStackTrace()
-      }
-
-      Thread.sleep(500)
-   }
-
-   // Yes, there a thread :(
-   // (following the KISS principle: "Keep It Simple Stupid!")
-   val updatingThread = new Thread(new Runnable {
-      def run() {
-         while (true) {
-            updateVmsData()
-         }
-      }
-   })
-   updatingThread.start()
+    }
+  })
+  updatingThread.start()
 
 }

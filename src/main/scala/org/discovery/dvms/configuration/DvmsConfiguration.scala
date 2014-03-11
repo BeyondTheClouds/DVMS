@@ -40,6 +40,9 @@ object DvmsConfiguration {
    val OVERLAY: String      = getPropertyOrDefault("overlay", "chord");
    var IS_G5K_MODE: Boolean = getBooleanPropertyOrDefault("g5k.mode.enabled", false);
 
+  val IS_MONITORING_ACTIVATED: Boolean = getBooleanPropertyOrDefault("vivaldi.monitoring.activated", true);
+  val MONITORING_URL: String = getPropertyOrDefault("vivaldi.monitoring.url", "http://localhost:8000/");
+
 
    implicit def stringToBoolean(value: String): Boolean = value.toBoolean
 

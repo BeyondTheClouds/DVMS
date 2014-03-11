@@ -64,10 +64,12 @@ public class G5kNodes {
             put("taurus", new DPSimpleNode(null, 12, 1200, 32768,232871.692585, 7679674.739783));
             put("sagittaire", new DPSimpleNode(null, 2, 200, 2048,643147.295611,9291461.264815));
             put("hercule", new DPSimpleNode(null, 12, 1200, 32768, 232871.692585, 7679674.739783));
+            put("orion", new DPSimpleNode(null, 12, 1200, 32768, 232871.692585, 7679674.739783));
 
             //Nancy
             put("griffon", new DPSimpleNode(null, 8, 800, 16384, 1214967.788475, 7513266.608608));
             put("graphene", new DPSimpleNode(null, 4, 400, 16384, 1214967.788475, 7513266.608608));
+            put("graphite", new DPSimpleNode(null, 16, 1600, 258048, 1214967.788475, 7513266.608608));
 
             //Reims
             put("stremi", new DPSimpleNode(null, 24, 2400, 49152,1214967.788475, 7513266.608608));

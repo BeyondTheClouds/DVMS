@@ -590,8 +590,10 @@ class DvmsActor(applicationRef: NodeRef, overlayService: OverlayService) extends
 
             currentPartition = Some(newPartition)
 
+
+            log.info(s"$applicationRef: updating the $newPartition to nodes (to prevent timeout)")
+
             partition.nodes.foreach(node => {
-              log.info(s"$applicationRef: updating the $newPartition to $node (to prevent timeout)")
               node.ref ! IAmTheNewLeader(newPartition)
             })
 
