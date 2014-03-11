@@ -22,11 +22,12 @@ package org.discovery.dvms.factory
 import org.discovery.dvms.monitor.{FakeMonitorActor, AbstractMonitorActor}
 import org.discovery.dvms.entropy.{FakeEntropyActor, AbstractEntropyActor}
 import org.discovery.AkkaArc.util.NodeRef
-import org.discovery.dvms.dvms.DvmsActor
+import org.discovery.dvms.dvms.{SchedulerActor, DvmsActor, SmartScheduler}
 import org.discovery.dvms.log.LoggingActor
 import org.discovery.dvms.service.ServiceActor
 import org.discovery.AkkaArc.overlay.chord.ChordService
 import org.discovery.AkkaArc.overlay.OverlayService
+import org.discovery.dvms.utility.FakePlanApplicator
 
 
 object FakeDvmsFactory extends DvmsAbstractFactory {
@@ -35,8 +36,8 @@ object FakeDvmsFactory extends DvmsAbstractFactory {
       Some(new FakeMonitorActor(nodeRef))
    }
 
-   def createDvmsActor(nodeRef: NodeRef, overlayService: OverlayService): Option[DvmsActor] = {
-      Some(new DvmsActor(nodeRef, overlayService))
+   def createDvmsActor(nodeRef: NodeRef, overlayService: OverlayService): Option[SchedulerActor] = {
+      Some(new DvmsActor(nodeRef, overlayService, new FakePlanApplicator()))
    }
 
    def createEntropyActor(nodeRef: NodeRef): Option[AbstractEntropyActor] = {

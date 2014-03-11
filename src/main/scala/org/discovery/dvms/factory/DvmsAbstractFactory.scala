@@ -22,7 +22,7 @@ package org.discovery.dvms.factory
 import org.discovery.dvms.monitor.AbstractMonitorActor
 import org.discovery.AkkaArc.util.NodeRef
 import org.discovery.dvms.entropy.AbstractEntropyActor
-import org.discovery.dvms.dvms.DvmsActor
+import org.discovery.dvms.dvms.{SchedulerActor, DvmsActor, SmartScheduler}
 import org.discovery.dvms.log.LoggingActor
 import org.discovery.dvms.service.ServiceActor
 import org.discovery.AkkaArc.overlay.chord.ChordService
@@ -32,7 +32,7 @@ trait DvmsAbstractFactory {
 
    def createMonitorActor(nodeRef: NodeRef): Option[AbstractMonitorActor]
 
-   def createDvmsActor(nodeRef: NodeRef, overlayService: OverlayService): Option[DvmsActor]
+   def createDvmsActor(nodeRef: NodeRef, overlayService: OverlayService): Option[SchedulerActor]
 
    def createEntropyActor(nodeRef: NodeRef): Option[AbstractEntropyActor]
 

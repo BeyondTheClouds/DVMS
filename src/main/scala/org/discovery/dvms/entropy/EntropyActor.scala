@@ -35,7 +35,10 @@ import collection.immutable.HashMap
 import org.discovery.dvms.monitor.MonitorProtocol.GetVmsWithConsumption
 import org.discovery.dvms.dvms.DvmsModel.PhysicalNode
 import org.discovery.dvms.entropy.EntropyProtocol.MigrateVirtualMachine
-import org.discovery.DiscoveryModel.model.ReconfigurationModel.{ReconfigurationlNoSolution, ReconfigurationResult}
+import org.discovery.DiscoveryModel.model.ReconfigurationModel.{MakeMigration, ReconfigurationSolution, ReconfigurationlNoSolution, ReconfigurationResult}
+import org.discovery.dvms.log.LoggingProtocol.DoingMigration
+import org.discovery.dvms.configuration.ExperimentConfiguration
+import akka.util.Timeout
 
 class EntropyActor(applicationRef: NodeRef) extends AbstractEntropyActor(applicationRef) {
 
@@ -87,7 +90,6 @@ class EntropyActor(applicationRef: NodeRef) extends AbstractEntropyActor(applica
 
     entropyResult
   }
-
 
   override def receive = {
 

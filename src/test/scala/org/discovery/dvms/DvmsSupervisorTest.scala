@@ -141,10 +141,10 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
 
     "compute a reconfiguration plan with success" in {
 
-      val node1 = system.actorOf(Props(new DvmsSupervisorForTests(FakeNetworkLocation(11), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
-      val node2 = system.actorOf(Props(new DvmsSupervisorForTests(FakeNetworkLocation(12), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
-      val node3 = system.actorOf(Props(new DvmsSupervisorForTests(FakeNetworkLocation(13), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
-      val node4 = system.actorOf(Props(new DvmsSupervisorForTests(FakeNetworkLocation(14), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
+      val node1 = system.actorOf(Props(new DvmsSupervisorForTests(FakeNetworkLocation(5), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
+      val node2 = system.actorOf(Props(new DvmsSupervisorForTests(FakeNetworkLocation(6), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
+      val node3 = system.actorOf(Props(new DvmsSupervisorForTests(FakeNetworkLocation(7), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
+      val node4 = system.actorOf(Props(new DvmsSupervisorForTests(FakeNetworkLocation(8), TestDvmsFactory)).withDispatcher("prio-dispatcher"))
 
       // create the links
       node2 ! ConnectToThisPeerActor(node1)

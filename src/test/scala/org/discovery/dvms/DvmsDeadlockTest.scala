@@ -30,6 +30,7 @@ import org.discovery.AkkaArc.overlay.chord.ChordService
 import service.ServiceActor
 import org.discovery.DiscoveryModel.model.ReconfigurationModel._
 import org.discovery.AkkaArc.overlay.OverlayService
+import org.discovery.dvms.utility.FakePlanApplicator
 
 
 object DvmsDeadlockTest {
@@ -94,39 +95,39 @@ object TestDvmsActor {
   var experimentHasStarted: Boolean = false
 }
 
-class TestDvmsActor(applicationRef: NodeRef, overlayService: OverlayService) extends DvmsActor(applicationRef, overlayService) {
+class TestDvmsActor(applicationRef: NodeRef, overlayService: OverlayService) extends SmartScheduler(applicationRef, overlayService, new FakePlanApplicator()) {
 
 
 
   override def receive = {
 
-    case msg@SetCurrentPartition(partition) => {
-      currentPartition = Some(partition)
-      lastPartitionUpdateDate = Some(new Date())
-    }
-
-
-    case msg@CpuViolationDetected() => {
-      if(TestDvmsActor.experimentHasStarted) {
-        super.receive(msg)
-      }
-    }
-
-//    case msg@SetFirstOut(node) => {
-//      firstOut = Some(node)
+//    case msg@SetCurrentPartition(partition) => {
+//      currentPartition = Some(partition)
+//      lastPartitionUpdateDate = Some(new Date())
 //    }
-
-    case BeginTransmission() => {
-      currentPartition match {
-        case Some(p) =>
-          firstOut match {
-            case Some(actor) =>
-              actor.ref ! TransmissionOfAnISP(p)
-            case None =>
-          }
-          case None =>
-      }
-    }
+//
+//
+//    case msg@CpuViolationDetected() => {
+//      if(TestDvmsActor.experimentHasStarted) {
+//        super.receive(msg)
+//      }
+//    }
+//
+////    case msg@SetFirstOut(node) => {
+////      firstOut = Some(node)
+////    }
+//
+//    case BeginTransmission() => {
+//      currentPartition match {
+//        case Some(p) =>
+//          firstOut match {
+//            case Some(actor) =>
+//              actor.ref ! TransmissionOfAnISP(p)
+//            case None =>
+//          }
+//          case None =>
+//      }
+//    }
 
     case ReportIn() =>
       if(currentPartition != None) {
@@ -183,7 +184,7 @@ object TestDvmsFactory extends DvmsAbstractFactory {
     Some(new TestMonitorActor(nodeRef))
   }
 
-  def createDvmsActor(nodeRef: NodeRef, overlayService: OverlayService): Option[DvmsActor] = {
+  def createDvmsActor(nodeRef: NodeRef, overlayService: OverlayService): Option[SchedulerActor] = {
     Some(new TestDvmsActor(nodeRef, overlayService))
   }
 

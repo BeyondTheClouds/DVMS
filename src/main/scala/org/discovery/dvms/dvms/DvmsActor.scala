@@ -25,7 +25,7 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 import concurrent.{Future, Await, ExecutionContext}
 import java.util.concurrent.Executors
-import org.discovery.AkkaArc.util.NodeRef
+import org.discovery.AkkaArc.util.{MayFail, NodeRef}
 import java.util.{Date, UUID}
 
 import org.discovery.dvms.dvms.DvmsProtocol._
@@ -38,12 +38,13 @@ import org.discovery.DiscoveryModel.model.ReconfigurationModel._
 import org.discovery.dvms.monitor.MonitorEvent
 import org.discovery.AkkaArc.notification.NotificationActorProtocol.Register
 import org.discovery.AkkaArc.overlay.OverlayService
+import org.discovery.dvms.utility.PlanApplicator
 
 object DvmsActor {
   val partitionUpdateTimeout: FiniteDuration = 3500 milliseconds
 }
 
-class DvmsActor(applicationRef: NodeRef, overlayService: OverlayService) extends Actor with ActorLogging {
+class DvmsActor(applicationRef: NodeRef, overlayService: OverlayService, planApplicator: PlanApplicator) extends Actor with ActorLogging with SchedulerActor {
 
   implicit val timeout = Timeout(2 seconds)
   implicit val ec = ExecutionContext.fromExecutorService(Executors.newCachedThreadPool())
@@ -57,12 +58,20 @@ class DvmsActor(applicationRef: NodeRef, overlayService: OverlayService) extends
 
     val future = currentPartition match {
       case Some(partition) =>
-        overlayService.giveSomeNeighbourOutside(partition.nodes)
+        overlayService.giveSomeNeighbourOutside(partition.nodes.map(n => MayFail.protect(n)))
       case None =>
         overlayService.giveSomeNeighbour()
     }
 
-    Await.result(future, 2 seconds)
+    Await.result(future, 2 seconds) match {
+      case Some(mayFailedNode: MayFail[NodeRef]) => {
+
+        val futureResult = mayFailedNode.executeInProtectedSpace((n:NodeRef) => n)
+        val result = Await.result(futureResult, 2 seconds)
+        Some(result)
+      }
+      case _ => None
+    }
 
   }
 
@@ -601,68 +610,7 @@ class DvmsActor(applicationRef: NodeRef, overlayService: OverlayService) extends
           }
         }
 
-        solution.actions.keySet().foreach(key => {
-          solution.actions.get(key).foreach(action => {
-
-
-            action match {
-              case MakeMigration(from, to, vmName) =>
-                log.info(s"preparing migration of $vmName")
-
-
-                var fromNodeRef: Option[NodeRef] = None
-                var toNodeRef: Option[NodeRef] = None
-
-                partition.nodes.foreach(nodeRef => {
-                  log.info(s"check ${nodeRef.location.getId} == ( $from | $to ) ?")
-
-                  if (s"${nodeRef.location.getId}" == from) {
-                    fromNodeRef = Some(nodeRef)
-                  }
-
-                  if (s"${nodeRef.location.getId}" == to) {
-                    toNodeRef = Some(nodeRef)
-                  }
-                })
-
-                (fromNodeRef, toNodeRef) match {
-                  case (Some(from), Some(to)) =>
-                    log.info(s"send migrate message {from:$fromNodeRef, to: $toNodeRef, vmName: $vmName}")
-
-                    (fromNodeRef, toNodeRef) match {
-                      case (Some(from), Some(to)) =>
-                        applicationRef.ref ! DoingMigration(ExperimentConfiguration.getCurrentTime(), from.location.getId, to.location.getId)
-                      case _ =>
-                    }
-
-
-
-                    var migrationSucceed = false
-
-                    implicit val timeout = Timeout(300 seconds)
-                    val future = (from.ref ? MigrateVirtualMachine(vmName, to.location)).mapTo[Boolean]
-
-                    try {
-                      migrationSucceed  = Await.result(future, timeout.duration)
-                    } catch {
-                      case e: Throwable =>
-                        e.printStackTrace()
-                        migrationSucceed = false
-                    }
-
-                    log.info(s"migrate {from:$fromNodeRef, to: $toNodeRef, vmName: $vmName} : result => $migrationSucceed")
-                  case _ =>
-                    log.info(s"migrate {from:$fromNodeRef, to: $toNodeRef, vmName: $vmName} : failed")
-                }
-              case otherAction =>
-                log.info(s"unknownAction $otherAction")
-            }
-
-
-
-
-          })
-        })
+        planApplicator.applySolution(applicationRef, solution, partition.nodes)
 
         continueToUpdatePartition = false
 

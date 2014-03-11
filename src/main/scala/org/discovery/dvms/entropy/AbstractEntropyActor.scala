@@ -26,7 +26,7 @@ import concurrent.ExecutionContext
 import java.util.concurrent.Executors
 import scala.concurrent.duration._
 import org.discovery.dvms.entropy.EntropyProtocol._
-import org.discovery.DiscoveryModel.model.ReconfigurationModel.ReconfigurationResult
+import org.discovery.DiscoveryModel.model.ReconfigurationModel.{ReconfigurationSolution, ReconfigurationResult}
 
 abstract class AbstractEntropyActor(applicationRef: NodeRef) extends Actor with ActorLogging {
 
@@ -48,4 +48,5 @@ abstract class AbstractEntropyActor(applicationRef: NodeRef) extends Actor with 
          applicationRef.ref ! msg
       }
    }
+
 }
