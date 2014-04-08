@@ -22,7 +22,7 @@ package org.discovery.dvms.factory
 import org.discovery.dvms.monitor.AbstractMonitorActor
 import org.discovery.AkkaArc.util.NodeRef
 import org.discovery.dvms.entropy.AbstractEntropyActor
-import org.discovery.dvms.dvms.{SchedulerActor, DvmsActor, SmartScheduler}
+import org.discovery.dvms.dvms.{SchedulerActor, DvmsActor, LocalityBasedScheduler}
 import org.discovery.dvms.log.LoggingActor
 import org.discovery.dvms.service.ServiceActor
 import org.discovery.AkkaArc.overlay.chord.ChordService

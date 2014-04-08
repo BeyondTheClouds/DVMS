@@ -2,7 +2,7 @@ package org.discovery.dvms
 
 import akka.actor.ActorSystem
 import akka.testkit.{ImplicitSender, TestKit}
-import dvms.SmartScheduler
+import dvms.LocalityBasedScheduler
 import entropy.AbstractEntropyActor
 import factory.DvmsAbstractFactory
 import log.LoggingActor

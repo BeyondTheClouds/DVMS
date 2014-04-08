@@ -37,11 +37,11 @@ import org.discovery.DiscoveryModel.model.ReconfigurationModel.ReconfigurationSo
 import org.discovery.AkkaArc.notification.NotificationActorProtocol.Register
 import scala.Some
 import org.discovery.dvms.dvms.DvmsProtocol.CheckTimeout
-import org.discovery.dvms.dvms.SmartSchedulerProtocol._
+import org.discovery.dvms.dvms.LocalityBasedSchedulerProtocol._
 import org.discovery.DiscoveryModel.model.ReconfigurationModel.ReconfigurationlNoSolution
 
 
-object SmartSchedulerProtocol {
+object LocalityBasedSchedulerProtocol {
   case class YouBelongToThisPartition(partition: Partition) extends DvmsMessage
   case class MergeWithThisPartition(partition: Partition) extends DvmsMessage
   case class Downgrade() extends DvmsMessage
@@ -51,11 +51,11 @@ object SmartSchedulerProtocol {
 
 case class Partition(leader: MayFail[NodeRef], nodes: List[MayFail[NodeRef]])
 
-object SmartScheduler {
+object LocalityBasedScheduler {
   val partitionTimeout: FiniteDuration = 3500 milliseconds
 }
 
-class SmartScheduler(currentNode: NodeRef, overlayService: OverlayService, planApplicator: PlanApplicator) extends Actor with ActorLogging with SchedulerActor {
+class LocalityBasedScheduler(currentNode: NodeRef, overlayService: OverlayService, planApplicator: PlanApplicator) extends Actor with ActorLogging with SchedulerActor {
 
   implicit val timeout = Timeout(2 seconds)
   var isLeading = false

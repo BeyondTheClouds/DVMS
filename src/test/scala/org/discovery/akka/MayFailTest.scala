@@ -153,7 +153,7 @@ object GoodMayFailTest extends App {
 
 
   // same as enoughRessources(p)
-  def workOnNodes(nodes: List[example.MayFail[example.Node]]): Boolean = {
+  def enoughRessources(nodes: List[example.MayFail[example.Node]]): Boolean = {
     Thread.sleep(1000)
 
 
@@ -173,7 +173,7 @@ object GoodMayFailTest extends App {
   var i: Int = 1
   var nodes: List[example.MayFail[example.Node]] = Nil
 
-  while (!workOnNodes(nodes)) {
+  while (!enoughRessources(nodes)) {
 
     val node = productNodes(i)
     nodes = simulateFailure(nodes)

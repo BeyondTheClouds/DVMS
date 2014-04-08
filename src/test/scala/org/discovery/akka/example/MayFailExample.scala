@@ -98,17 +98,21 @@ object GoodMayFailTest extends App {
   }
 
   // same as Vivaldi.giveSomeCloseNodeOutside()
-  var nextId: Int = 0
-  def VivaldiGiveSomeCloseNodeOutside(nodes: List[MayFail[Node]]): MayFail[Node] = {
-    nextId += 1
-    if (nextId == 3) {
-      MayFail.protect(new UnstableNode(nextId))
-    } else {
-      MayFail.protect(new StableNode(nextId))
+  object Overlay {
+    var nextId: Int = 0
+    def giveOneNeighbour(nodes: List[MayFail[Node]]): MayFail[Node] = {
+      nextId += 1
+      if (nextId == 3) {
+        MayFail.protect(new UnstableNode(nextId))
+      } else {
+        MayFail.protect(new StableNode(nextId))
+      }
     }
   }
 
+  def applyReconfigurationPlan(nodes: List[MayFail[Node]) {
 
+  }
 
   // same as enoughResources(p)
   def enoughResources(nodes: List[MayFail[Node]]): Boolean = {
@@ -138,7 +142,7 @@ object GoodMayFailTest extends App {
 
   while (!enoughResources(nodes)) {
 
-    val node = VivaldiGiveSomeCloseNodeOutside(nodes)
+    val node = Overlay.giveOneNeighbour(nodes)
     nodes = simulateFailure(nodes)
 
     node.watch(failedNode => {
@@ -150,6 +154,7 @@ object GoodMayFailTest extends App {
     println(s"nodes: $nodes")
   }
 
+  applyReconfigurationPlan(nodes)
   // wait for asynchronous code
   Thread.sleep(20000)
 }

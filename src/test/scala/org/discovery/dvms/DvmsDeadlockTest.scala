@@ -95,7 +95,7 @@ object TestDvmsActor {
   var experimentHasStarted: Boolean = false
 }
 
-class TestDvmsActor(applicationRef: NodeRef, overlayService: OverlayService) extends SmartScheduler(applicationRef, overlayService, new FakePlanApplicator()) {
+class TestDvmsActor(applicationRef: NodeRef, overlayService: OverlayService) extends LocalityBasedScheduler(applicationRef, overlayService, new FakePlanApplicator()) {
 
 
 
