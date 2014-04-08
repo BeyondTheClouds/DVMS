@@ -110,7 +110,7 @@ object GoodMayFailTest extends App {
     }
   }
 
-  def applyReconfigurationPlan(nodes: List[MayFail[Node]) {
+  def applyReconfigurationPlan(nodes: List[MayFail[Node]]) {
 
   }
 
