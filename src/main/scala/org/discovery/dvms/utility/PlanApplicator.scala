@@ -20,8 +20,8 @@ package org.discovery.dvms.utility
  * ============================================================ */
 
 import org.discovery.DiscoveryModel.model.ReconfigurationModel.{MakeMigration, ReconfigurationSolution}
-import org.discovery.AkkaArc.util.NodeRef
-import org.discovery.dvms.log.LoggingProtocol.DoingMigration
+import org.discovery.peeractor.util.NodeRef
+import org.discovery.dvms.log.LoggingProtocol.AskingMigration
 import org.discovery.dvms.configuration.ExperimentConfiguration
 import akka.util.Timeout
 import scala.concurrent.duration._
@@ -80,7 +80,7 @@ class LibvirtPlanApplicator extends PlanApplicator {
 
                 (fromNodeRef, toNodeRef) match {
                   case (Some(from), Some(to)) =>
-                    app.ref ! DoingMigration(ExperimentConfiguration.getCurrentTime(), from.location.getId, to.location.getId)
+                    app.ref ! AskingMigration(ExperimentConfiguration.getCurrentTime(), from.location.getId, to.location.getId)
                   case _ =>
                 }
 

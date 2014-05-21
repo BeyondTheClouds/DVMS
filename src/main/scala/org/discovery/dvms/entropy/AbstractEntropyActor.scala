@@ -19,7 +19,7 @@ package org.discovery.dvms.entropy
  * limitations under the License.
  * ============================================================ */
 
-import org.discovery.AkkaArc.util.NodeRef
+import org.discovery.peeractor.util.NodeRef
 import akka.actor.{ActorLogging, Actor}
 import akka.util.Timeout
 import concurrent.ExecutionContext

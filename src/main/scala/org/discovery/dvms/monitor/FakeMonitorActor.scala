@@ -19,7 +19,7 @@ package org.discovery.dvms.monitor
  * limitations under the License.
  * ============================================================ */
 
-import org.discovery.AkkaArc.util.NodeRef
+import org.discovery.peeractor.util.NodeRef
 import org.discovery.dvms.dvms.DvmsModel._
 import util.Random
 import org.discovery.dvms.log.LoggingProtocol.CurrentLoadIs

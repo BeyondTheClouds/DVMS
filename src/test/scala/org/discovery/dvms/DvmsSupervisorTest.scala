@@ -7,7 +7,7 @@ import org.discovery.dvms.entropy.FakeEntropyActor
 import org.scalatest.WordSpec
 import org.scalatest.matchers.MustMatchers
 import org.scalatest.BeforeAndAfterAll
-import org.discovery.AkkaArc.util.{NodeRef, Configuration, INetworkLocation}
+import org.discovery.peeractor.util.{NodeRef, Configuration, INetworkLocation}
 import scala.concurrent.duration._
 import concurrent.{Await, ExecutionContext}
 import java.util.concurrent.Executors
@@ -16,8 +16,8 @@ import akka.pattern.ask
 import org.discovery.dvms.monitor.FakeMonitorActor
 import collection.immutable.HashMap
 import com.typesafe.config.ConfigFactory
-import org.discovery.AkkaArc.PeerActorProtocol.ConnectToThisPeerActor
-import org.discovery.AkkaArc.util.FakeNetworkLocation
+import org.discovery.peeractor.PeerActorProtocol.ConnectToThisPeerActor
+import org.discovery.peeractor.util.FakeNetworkLocation
 import org.discovery.dvms.ReportIn
 import org.discovery.DiscoveryModel.model.ReconfigurationModel.{ReconfigurationlNoSolution, ReconfigurationSolution, ReconfigurationResult}
 

@@ -22,8 +22,8 @@ package org.discovery.dvms
 import akka.actor.{ActorSystem, Props}
 import configuration.{DPSimpleNode, G5kNodes}
 import monitor.MonitorEvent.CpuViolation
-import org.discovery.AkkaArc.util
-import org.discovery.AkkaArc.PeerActorProtocol._
+import org.discovery.peeractor.util
+import org.discovery.peeractor.PeerActorProtocol._
 import util._
 import scala.concurrent.duration._
 import java.util.concurrent.Executors
@@ -31,7 +31,7 @@ import scala.concurrent.ExecutionContext
 import akka.util.Timeout
 import collection.mutable
 import util.NetworkLocation
-import org.discovery.AkkaArc.notification.NotificationActorProtocol.TriggerEvent
+import org.discovery.peeractor.notification.NotificationActorProtocol.TriggerEvent
 
 object FaultyMain extends App {
 

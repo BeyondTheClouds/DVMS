@@ -1,26 +1,5 @@
 package org.discovery.dvms
 
-import dvms.DvmsMessage
-import dvms.DvmsProtocol._
-import entropy.{EntropyService, EntropyMessage}
-import factory.{LibvirtDvmsFactory, DvmsAbstractFactory, FakeDvmsFactory}
-import log.LoggingMessage
-import monitor.MonitorMessage
-import org.discovery.AkkaArc.util.{NodeRef, INetworkLocation}
-import org.discovery.AkkaArc.PeerActor
-import akka.actor.{OneForOneStrategy, Props}
-import akka.actor.SupervisorStrategy.{Escalate, Stop, Restart, Resume}
-import akka.pattern.AskTimeoutException
-import scala.concurrent.duration._
-import service.ServiceMessage
-import util.parsing.combinator.RegexParsers
-import java.util.concurrent.TimeoutException
-import configuration.{ExperimentConfiguration, DvmsConfiguration}
-import org.discovery.AkkaArc.PeerActorMessage
-import org.discovery.AkkaArc.overlay.OverlayServiceFactory
-import org.discovery.AkkaArc.notification.ChordServiceWithNotificationFactory
-import org.discovery.AkkaArc.overlay.vivaldi.VivaldiServiceFactory
-
 /* ============================================================
  * Discovery Project - DVMS
  * http://beyondtheclouds.github.io/
@@ -40,9 +19,22 @@ import org.discovery.AkkaArc.overlay.vivaldi.VivaldiServiceFactory
  * limitations under the License.
  * ============================================================ */
 
+import dvms.DvmsMessage
+import entropy.{EntropyService, EntropyMessage}
+import factory.{LibvirtDvmsFactory, DvmsAbstractFactory, FakeDvmsFactory}
+import log.LoggingMessage
+import monitor.MonitorMessage
+import org.discovery.peeractor.util.{NodeRef, INetworkLocation}
+import org.discovery.peeractor.PeerActor
+import akka.actor.{OneForOneStrategy, Props}
+import akka.actor.SupervisorStrategy.Restart
+import scala.concurrent.duration._
+import configuration.{ExperimentConfiguration, DvmsConfiguration}
+import org.discovery.peeractor.overlay.OverlayServiceFactory
+import org.discovery.peeractor.notification.ChordServiceWithNotificationFactory
+
 class DvmsSupervisor(location: INetworkLocation, factory: DvmsAbstractFactory, overlayFactory: OverlayServiceFactory = ChordServiceWithNotificationFactory) extends PeerActor(location, overlayFactory) {
 
-  import org.discovery.AkkaArc.overlay.chord.ChordActor._
 
   def this(location: INetworkLocation, overlayFactory: OverlayServiceFactory = ChordServiceWithNotificationFactory) = this(
     location,

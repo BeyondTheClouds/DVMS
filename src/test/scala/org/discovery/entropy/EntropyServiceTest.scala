@@ -8,7 +8,7 @@ import org.scalatest.matchers.MustMatchers
 import scala.concurrent.duration._
 import concurrent.ExecutionContext
 import java.util.concurrent.Executors
-import org.discovery.AkkaArc.util.{NodeRef, INetworkLocation, FakeNetworkLocation}
+import org.discovery.peeractor.util.{NodeRef, INetworkLocation, FakeNetworkLocation}
 import com.typesafe.config.ConfigFactory
 import org.discovery.dvms.entropy.EntropyService
 import entropy.configuration.{SimpleVirtualMachine, SimpleNode, SimpleConfiguration, Configuration}

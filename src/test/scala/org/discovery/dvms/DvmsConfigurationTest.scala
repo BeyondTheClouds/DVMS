@@ -9,9 +9,9 @@ import org.scalatest.matchers.MustMatchers
 import scala.concurrent.duration._
 import concurrent.ExecutionContext
 import java.util.concurrent.Executors
-import org.discovery.AkkaArc.util.INetworkLocation
-import org.discovery.AkkaArc.util.Configuration
-import org.discovery.AkkaArc.util.FakeNetworkLocation
+import org.discovery.peeractor.util.INetworkLocation
+import org.discovery.peeractor.util.Configuration
+import org.discovery.peeractor.util.FakeNetworkLocation
 import com.typesafe.config.ConfigFactory
 
 

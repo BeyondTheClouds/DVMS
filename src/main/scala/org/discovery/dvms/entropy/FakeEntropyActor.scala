@@ -19,7 +19,7 @@ package org.discovery.dvms.entropy
  * limitations under the License.
  * ============================================================ */
 
-import org.discovery.AkkaArc.util.NodeRef
+import org.discovery.peeractor.util.NodeRef
 import concurrent.{Future, Await}
 import scala.concurrent.duration._
 import akka.pattern.{AskTimeoutException, ask}

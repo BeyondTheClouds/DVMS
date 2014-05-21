@@ -19,7 +19,7 @@ package org.discovery.dvms.monitor
  * limitations under the License.
  * ============================================================ */
 
-import org.discovery.AkkaArc.util.NodeRef
+import org.discovery.peeractor.util.NodeRef
 import org.discovery.driver.{LibvirtDriver, LibvirtG5kDriver}
 import org.discovery.model.IDriver
 import scala.collection.JavaConversions._
@@ -31,7 +31,7 @@ import org.discovery.dvms.dvms.DvmsModel.VirtualMachine
 import org.discovery.model.network.CpuConsumptions
 import MonitorProtocol._
 import java.util.UUID
-import org.discovery.AkkaArc.notification.NotificationActorProtocol.TriggerEvent
+import org.discovery.peeractor.notification.NotificationActorProtocol.TriggerEvent
 
 object LibvirtMonitorDriver {
   val driver: IDriver = DvmsConfiguration.IS_G5K_MODE match {

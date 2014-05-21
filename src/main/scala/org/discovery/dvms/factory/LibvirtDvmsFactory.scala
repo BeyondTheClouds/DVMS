@@ -21,12 +21,12 @@ package org.discovery.dvms.factory
 
 import org.discovery.dvms.monitor.{LibvirtMonitorActor, AbstractMonitorActor}
 import org.discovery.dvms.entropy.{EntropyActor, AbstractEntropyActor}
-import org.discovery.AkkaArc.util.NodeRef
-import org.discovery.dvms.dvms.{SchedulerActor, DvmsActor, LocalityBasedScheduler}
+import org.discovery.peeractor.util.NodeRef
+import org.discovery.dvms.dvms.{SchedulerActor, DvmsActor}
 import org.discovery.dvms.log.LoggingActor
 import org.discovery.dvms.service.ServiceActor
-import org.discovery.AkkaArc.overlay.chord.ChordService
-import org.discovery.AkkaArc.overlay.OverlayService
+import org.discovery.peeractor.overlay.chord.ChordService
+import org.discovery.peeractor.overlay.OverlayService
 import org.discovery.dvms.utility.LibvirtPlanApplicator
 
 

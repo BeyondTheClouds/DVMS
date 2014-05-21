@@ -1,12 +1,12 @@
 package org.discovery.dvms.service
 
-import org.discovery.AkkaArc.util.Configuration
-import org.discovery.AkkaArc.util.FakeNetworkLocation
-import org.discovery.AkkaArc.PeerActorProtocol.ConnectToThisPeerActor
+import org.discovery.peeractor.util.Configuration
+import org.discovery.peeractor.util.FakeNetworkLocation
+import org.discovery.peeractor.PeerActorProtocol.ConnectToThisPeerActor
 import akka.actor.{Props, ActorSystem}
 import org.discovery.dvms.DvmsSupervisor
 import org.discovery.dvms.factory.FakeDvmsFactory
-import org.discovery.AkkaArc.overlay.vivaldi.VivaldiServiceFactory
+import org.discovery.peeractor.overlay.vivaldi.VivaldiServiceFactory
 
 object Main extends App {
 

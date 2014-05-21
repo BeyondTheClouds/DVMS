@@ -21,8 +21,8 @@ package org.discovery.dvms
 
 import akka.actor.{ActorSystem, Props}
 import org.discovery.dvms.configuration.{DvmsConfiguration, HardwareConfiguration, DPSimpleNode, G5kNodes}
-import org.discovery.AkkaArc.util
-import org.discovery.AkkaArc.PeerActorProtocol._
+import org.discovery.peeractor.util
+import org.discovery.peeractor.PeerActorProtocol._
 import util._
 import scala.concurrent.duration._
 import java.util.concurrent.Executors
@@ -30,9 +30,9 @@ import scala.concurrent.ExecutionContext
 import akka.util.Timeout
 import collection.mutable
 import util.NetworkLocation
-import org.discovery.AkkaArc.overlay.OverlayServiceFactory
-import org.discovery.AkkaArc.overlay.vivaldi.VivaldiServiceFactory
-import org.discovery.AkkaArc.notification.ChordServiceWithNotificationFactory
+import org.discovery.peeractor.overlay.OverlayServiceFactory
+import org.discovery.peeractor.overlay.vivaldi.VivaldiServiceFactory
+import org.discovery.peeractor.notification.ChordServiceWithNotificationFactory
 
 object Main extends App {
 

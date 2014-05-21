@@ -25,7 +25,7 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 import concurrent.{Future, Await, ExecutionContext}
 import java.util.concurrent.Executors
-import org.discovery.AkkaArc.util.{MayFail, NodeRef}
+import org.discovery.peeractor.util.{MayFail, NodeRef}
 import java.util.{Date, UUID}
 
 import org.discovery.dvms.dvms.DvmsProtocol._
@@ -33,11 +33,11 @@ import org.discovery.dvms.dvms.DvmsModel._
 import org.discovery.dvms.dvms.DvmsModel.DvmsPartititionState._
 import org.discovery.dvms.log.LoggingProtocol._
 import org.discovery.dvms.configuration.ExperimentConfiguration
-import org.discovery.dvms.entropy.EntropyProtocol.{MigrateVirtualMachine, EntropyComputeReconfigurePlan}
+import org.discovery.dvms.entropy.EntropyProtocol.EntropyComputeReconfigurePlan
 import org.discovery.DiscoveryModel.model.ReconfigurationModel._
 import org.discovery.dvms.monitor.MonitorEvent
-import org.discovery.AkkaArc.notification.NotificationActorProtocol.Register
-import org.discovery.AkkaArc.overlay.OverlayService
+import org.discovery.peeractor.notification.NotificationActorProtocol.Register
+import org.discovery.peeractor.overlay.OverlayService
 import org.discovery.dvms.utility.PlanApplicator
 
 object DvmsActor {
@@ -579,7 +579,6 @@ class DvmsActor(applicationRef: NodeRef, overlayService: OverlayService, planApp
 
   def applySolution(solution: ReconfigurationSolution) {
 
-    import scala.collection.JavaConversions._
 
     currentPartition match {
       case Some(partition) =>

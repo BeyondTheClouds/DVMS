@@ -9,13 +9,13 @@ import log.LoggingActor
 import monitor.{LibvirtMonitorActor, AbstractMonitorActor}
 import org.scalatest.{BeforeAndAfterAll, WordSpec}
 import org.scalatest.matchers.MustMatchers
-import org.discovery.AkkaArc.util.{NodeRef, Configuration, FakeNetworkLocation, INetworkLocation}
+import org.discovery.peeractor.util.{NodeRef, Configuration, FakeNetworkLocation, INetworkLocation}
 import concurrent.ExecutionContext
 import java.util.concurrent.Executors
 import com.typesafe.config.ConfigFactory
 import scala.concurrent.duration._
 import org.discovery.driver.LibvirtDriver
-import org.discovery.AkkaArc.overlay.chord.ChordService
+import org.discovery.peeractor.overlay.chord.ChordService
 import service.ServiceActor
 
 /* ============================================================

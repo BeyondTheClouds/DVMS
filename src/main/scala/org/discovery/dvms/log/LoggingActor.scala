@@ -23,7 +23,7 @@ package org.discovery.dvms.log
 import akka.actor.Actor
 import org.discovery.dvms.log.LoggingProtocol._
 import java.io.{File, PrintWriter}
-import org.discovery.AkkaArc.util.INetworkLocation
+import org.discovery.peeractor.util.INetworkLocation
 
 trait LoggingMessage
 
@@ -45,7 +45,13 @@ object LoggingProtocol {
 
    case class UpdateMigrationCount(time: Double, count: Int) extends LoggingMessage
 
-   case class DoingMigration(time: Double, from: Long, to: Long) extends LoggingMessage
+   case class AskingMigration(time: Double, from: Long, to: Long) extends LoggingMessage
+
+  case class StartingMigration(time: Double, from: Long, to: Long) extends LoggingMessage
+
+  case class FinishingMigration(time: Double, from: Long, to: Long) extends LoggingMessage
+
+  case class AbortingMigration(time: Double, from: Long, to: Long) extends LoggingMessage
 }
 
 class LoggingActor(location: INetworkLocation) extends Actor {
@@ -53,41 +59,56 @@ class LoggingActor(location: INetworkLocation) extends Actor {
    val file = new File("dvms.log")
    val writer = new PrintWriter(file)
 
+   val origin: Long = location.getId
+
    override def receive = {
 
       case ComputingSomeReconfigurationPlan(time: Double) =>
-         writer.write(s"id, ${location.getId}, SERVICE, $time, compute\n")
+         writer.write(s"""{"event": "computing_reconfiguration_plan", "origin": "$origin", "time": "$time"}\n""")
          writer.flush()
 
       case ApplyingSomeReconfigurationPlan(time: Double) =>
-         writer.write(s"id, ${location.getId}, SERVICE, $time, reconfigure\n")
+         writer.write(s"""{"event": "applying_reconfiguration_plan", "origin": "$origin", "time": "$time"}\n""")
          writer.flush()
 
       case ApplicationSomeReconfigurationPlanIsDone(time: Double) =>
+        writer.write(s"""{"event": "applying_reconfiguration_plan_is_done", "origin": "$origin", "time": "$time"}\n""")
 
       case IsBooked(time: Double) =>
-         writer.write(s"id, ${location.getId}, SERVICE, $time, booked\n")
+        writer.write(s"""{"event": "is_booked", "origin": "$origin", "time": "$time"}\n""")
          writer.flush()
 
       case IsFree(time: Double) =>
-         writer.write(s"id, ${location.getId}, SERVICE, $time, free\n")
+        writer.write(s"""{"event": "is_free", "origin": "$origin", "time": "$time"}\n""")
          writer.flush()
 
-      case DoingMigration(time: Double, from: Long, to: Long) =>
-        writer.write(s"id, ${location.getId}, SERVICE, $time, $from, $to, migration\n")
+      case AskingMigration(time: Double, from: Long, to: Long) =>
+        writer.write(s"""{"event": "ask_migration", "origin": "$origin", "time": "$time",  "from": "$from",  "to": "$to"}\n""")
+        writer.flush()
+
+      case StartingMigration(time: Double, from: Long, to: Long) =>
+        writer.write(s"""{"event": "start_migration", "origin": "$origin", "time": "$time",  "from": "$from",  "to": "$to"}\n""")
+        writer.flush()
+
+      case FinishingMigration(time: Double, from: Long, to: Long) =>
+        writer.write(s"""{"event": "finish_migration", "origin": "$origin", "time": "$time",  "from": "$from",  "to": "$to"}\n""")
+        writer.flush()
+
+      case AbortingMigration(time: Double, from: Long, to: Long) =>
+        writer.write(s"""{"event": "abort_migration", "origin": "$origin", "time": "$time",  "from": "$from",  "to": "$to"}\n""")
         writer.flush()
 
       case CurrentLoadIs(time: Double, load: Double) =>
-         writer.write(s"id, ${location.getId}, LOAD, $time, $load\n")
+        writer.write(s"""{"event": "cpu_load", "origin": "$origin", "time": "$time",  "value": "$load"}\n""")
          writer.flush()
 
 
       case ViolationDetected(time: Double) =>
-         writer.write(s"id, ${location.getId}, PM, ${time}, violation-det\n")
+        writer.write(s"""{"event": "overload", "origin": "$origin", "time": "$time"}\n""")
          writer.flush()
 
       case UpdateMigrationCount(time: Double, count: Int) =>
-         writer.write(s"id, ${location.getId}, NB_MIG, $time, $count\n")
+        writer.write(s"""{"event": "migration_count", "origin": "$origin", "time": "$time", "value": "$count"}\n""")
          writer.flush()
 
       case _ =>

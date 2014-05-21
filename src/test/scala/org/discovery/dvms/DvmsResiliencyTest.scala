@@ -12,11 +12,11 @@ import scala.concurrent.duration._
 import concurrent.{Await, ExecutionContext}
 import java.util.concurrent.Executors
 import akka.pattern.ask
-import org.discovery.AkkaArc.util.{NodeRef, INetworkLocation}
-import org.discovery.AkkaArc.util.Configuration
-import org.discovery.AkkaArc.util.FakeNetworkLocation
+import org.discovery.peeractor.util.{NodeRef, INetworkLocation}
+import org.discovery.peeractor.util.Configuration
+import org.discovery.peeractor.util.FakeNetworkLocation
 import com.typesafe.config.ConfigFactory
-import org.discovery.AkkaArc.PeerActorProtocol.ConnectToThisPeerActor
+import org.discovery.peeractor.PeerActorProtocol.ConnectToThisPeerActor
 import scala.Console
 
 

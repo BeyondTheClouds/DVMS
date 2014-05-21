@@ -19,7 +19,7 @@ package org.discovery.dvms.entropy
  * limitations under the License.
  * ============================================================ */
 
-import org.discovery.AkkaArc.util.{NetworkLocation, NodeRef}
+import org.discovery.peeractor.util.{NetworkLocation, NodeRef}
 import entropy.plan.choco.ChocoCustomRP
 import entropy.configuration.{SimpleConfiguration, SimpleVirtualMachine, SimpleNode, Configuration}
 import entropy.plan.durationEvaluator.MockDurationEvaluator
@@ -31,16 +31,14 @@ import org.discovery.driver.Node
 import scala.concurrent.Await
 import akka.pattern.ask
 import scala.concurrent.duration._
-import collection.immutable.HashMap
 import org.discovery.dvms.monitor.MonitorProtocol.GetVmsWithConsumption
 import org.discovery.dvms.dvms.DvmsModel.PhysicalNode
 import org.discovery.dvms.entropy.EntropyProtocol.MigrateVirtualMachine
-import org.discovery.DiscoveryModel.model.ReconfigurationModel.{MakeMigration, ReconfigurationSolution, ReconfigurationlNoSolution, ReconfigurationResult}
-import org.discovery.dvms.log.LoggingProtocol.DoingMigration
+import org.discovery.DiscoveryModel.model.ReconfigurationModel.{ReconfigurationlNoSolution, ReconfigurationResult}
+import org.discovery.dvms.log.LoggingProtocol._
 import org.discovery.dvms.configuration.ExperimentConfiguration
-import akka.util.Timeout
 
-class EntropyActor(applicationRef: NodeRef) extends AbstractEntropyActor(applicationRef) {
+class EntropyActor(app: NodeRef) extends AbstractEntropyActor(app) {
 
   val planner: ChocoCustomRP = new ChocoCustomRP(new MockDurationEvaluator(2, 5, 1, 1, 7, 14, 7, 2, 4));
   planner.setTimeLimit(3);
@@ -112,11 +110,18 @@ class EntropyActor(applicationRef: NodeRef) extends AbstractEntropyActor(applica
 
           if (okToContinue) {
             log.info(s"starting migration of $vmName on ${destination.getId}!")
+
+
+            app.ref ! StartingMigration(ExperimentConfiguration.getCurrentTime(), app.location.getId, destination.getId)
             LibvirtMonitorDriver.driver.migrate(vm, destinationNode)
+            app.ref ! FinishingMigration(ExperimentConfiguration.getCurrentTime(), app.location.getId, destination.getId)
             sender ! true
+
+
             log.info(s"[Administration] Please check  if $vmName is now located on ${destination.getId}!")
           } else {
             log.info(s"aborting migration of $vmName on ${destination.getId}!")
+            app.ref ! AbortingMigration(ExperimentConfiguration.getCurrentTime(), app.location.getId, destination.getId)
             sender ! false
           }
 

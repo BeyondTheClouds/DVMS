@@ -20,14 +20,14 @@ package org.discovery.dvms.service
  * ============================================================ */
 
 
-import org.discovery.AkkaArc.util.NodeRef
+import org.discovery.peeractor.util.NodeRef
 import akka.actor.{ActorLogging, Actor}
 import akka.util.Timeout
 import concurrent.ExecutionContext
 import java.util.concurrent.Executors
 import scala.concurrent.duration._
 import org.discovery.dvms.service.ServiceProtocol._
-import org.discovery.AkkaArc.overlay.chord.ChordService
+import org.discovery.peeractor.overlay.chord.ChordService
 
 class ServiceActor(applicationRef: NodeRef, overlayService: ChordService) extends Actor with ActorLogging {
 

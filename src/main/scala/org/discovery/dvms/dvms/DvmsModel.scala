@@ -1,8 +1,5 @@
 package org.discovery.dvms.dvms
 
-import org.discovery.AkkaArc.util.NodeRef
-import java.util.UUID
-
 /* ============================================================
  * Discovery Project - DVMS
  * http://beyondtheclouds.github.io/
@@ -21,6 +18,9 @@ import java.util.UUID
  * See the License for the specific language governing permissions and
  * limitations under the License.
  * ============================================================ */
+
+import org.discovery.peeractor.util.NodeRef
+import java.util.UUID
 
 object DvmsModel {
 

@@ -19,15 +19,15 @@ package org.discovery.dvms.monitor
  * limitations under the License.
  * ============================================================ */
 
-import org.discovery.AkkaArc.util.NodeRef
+import org.discovery.peeractor.util.NodeRef
 import akka.actor.{ActorLogging, Actor}
 import akka.util.Timeout
 import concurrent.ExecutionContext
 import java.util.concurrent.Executors
-import org.discovery.AkkaArc.notification.NotificationActorProtocol._
+import org.discovery.peeractor.notification.NotificationActorProtocol._
 import scala.concurrent.duration._
 import org.discovery.dvms.dvms.DvmsModel._
-import org.discovery.AkkaArc.notification._
+import org.discovery.peeractor.notification._
 import org.discovery.dvms.monitor.MonitorProtocol._
 
 object MonitorEvent {

@@ -20,9 +20,9 @@ package org.discovery.dvms
  * ============================================================ */
 
 import factory.{DvmsAbstractFactory, FakeDvmsFactory}
-import org.discovery.AkkaArc.util.INetworkLocation
+import org.discovery.peeractor.util.INetworkLocation
 import akka.pattern.pipe
-import org.discovery.AkkaArc.overlay.chord.ChordService
+import org.discovery.peeractor.overlay.chord.ChordService
 
 object DvmsSupervisorForTestsProtocol {
 
@@ -34,7 +34,7 @@ class DvmsSupervisorForTests(location: INetworkLocation, factory: DvmsAbstractFa
 
 
    def this(location: INetworkLocation) = this(location, FakeDvmsFactory)
-   import org.discovery.AkkaArc.overlay.chord.ChordActor._
+   import org.discovery.peeractor.overlay.chord.ChordActor._
 
    override def receive = {
       case DvmsSupervisorForTestsProtocol.GetRingSize() =>

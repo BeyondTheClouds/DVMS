@@ -1,10 +1,5 @@
 package org.discovery.dvms.dvms
 
-import org.discovery.AkkaArc.util.NodeRef
-import org.discovery.dvms.dvms.DvmsModel._
-import java.util.UUID
-import akka.pattern.AskTimeoutException
-
 /* ============================================================
  * Discovery Project - DVMS
  * http://beyondtheclouds.github.io/
@@ -24,6 +19,10 @@ import akka.pattern.AskTimeoutException
  * limitations under the License.
  * ============================================================ */
 
+import org.discovery.peeractor.util.NodeRef
+import org.discovery.dvms.dvms.DvmsModel._
+import java.util.UUID
+import akka.pattern.AskTimeoutException
 
 trait DvmsMessage
 

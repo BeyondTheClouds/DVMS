@@ -24,17 +24,17 @@ import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future, Await}
-import org.discovery.AkkaArc.util.{MayFail, NodeRef}
+import org.discovery.peeractor.util.{MayFail, NodeRef}
 
 import org.discovery.DiscoveryModel.model.ReconfigurationModel._
 import org.discovery.dvms.monitor.MonitorEvent
-import org.discovery.AkkaArc.overlay.OverlayService
+import org.discovery.peeractor.overlay.OverlayService
 import ExecutionContext.Implicits.global
 import org.discovery.dvms.utility.PlanApplicator
 import java.util.Date
 import org.discovery.dvms.entropy.EntropyProtocol.EntropyComputeReconfigurePlan
 import org.discovery.DiscoveryModel.model.ReconfigurationModel.ReconfigurationSolution
-import org.discovery.AkkaArc.notification.NotificationActorProtocol.Register
+import org.discovery.peeractor.notification.NotificationActorProtocol.Register
 import scala.Some
 import org.discovery.dvms.dvms.DvmsProtocol.CheckTimeout
 import org.discovery.dvms.dvms.LocalityBasedSchedulerProtocol._

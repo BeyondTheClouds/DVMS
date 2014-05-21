@@ -19,7 +19,7 @@ package org.discovery.dvms.entropy
  * limitations under the License.
  * ============================================================ */
 
-import org.discovery.AkkaArc.util.{INetworkLocation, NodeRef}
+import org.discovery.peeractor.util.{INetworkLocation, NodeRef}
 import org.discovery.model._
 
 trait EntropyMessage
