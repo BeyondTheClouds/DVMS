@@ -18,13 +18,13 @@ resolvers += "Typesafe Releases" at "http://repo.typesafe.com/typesafe/snapshots
 
 libraryDependencies += "org.scalatest"     %% "scalatest" % "1.9.1" % "test"
 
-libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.2.1"
+libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.2.3"
 
-libraryDependencies += "com.typesafe.akka" %% "akka-remote" % "2.2.1"
+libraryDependencies += "com.typesafe.akka" %% "akka-remote" % "2.2.3"
 
-libraryDependencies += "com.typesafe.akka" %% "akka-testkit" % "2.2.1" % "test"
+libraryDependencies += "com.typesafe.akka" %% "akka-testkit" % "2.2.3" % "test"
 
-libraryDependencies += "com.typesafe.akka" %% "akka-multi-node-testkit" % "2.2.1" % "test"
+libraryDependencies += "com.typesafe.akka" %% "akka-multi-node-testkit" % "2.2.3" % "test"
 
 libraryDependencies += "junit" % "junit" % "4.5" % "test"
 

@@ -80,7 +80,7 @@ class LibvirtPlanApplicator extends PlanApplicator {
 
                 (fromNodeRef, toNodeRef) match {
                   case (Some(from), Some(to)) =>
-                    app.ref ! AskingMigration(ExperimentConfiguration.getCurrentTime(), from.location.getId, to.location.getId)
+                    app.ref ! AskingMigration(ExperimentConfiguration.getCurrentTime(), vmName, from.location.getId, to.location.getId)
                   case _ =>
                 }
 

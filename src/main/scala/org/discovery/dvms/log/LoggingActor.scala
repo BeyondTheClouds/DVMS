@@ -45,13 +45,13 @@ object LoggingProtocol {
 
    case class UpdateMigrationCount(time: Double, count: Int) extends LoggingMessage
 
-   case class AskingMigration(time: Double, from: Long, to: Long) extends LoggingMessage
+   case class AskingMigration(time: Double, name: String, from: Long, to: Long) extends LoggingMessage
 
-  case class StartingMigration(time: Double, from: Long, to: Long) extends LoggingMessage
+  case class StartingMigration(time: Double, name: String, from: Long, to: Long) extends LoggingMessage
 
-  case class FinishingMigration(time: Double, from: Long, to: Long) extends LoggingMessage
+  case class FinishingMigration(time: Double, name: String, from: Long, to: Long) extends LoggingMessage
 
-  case class AbortingMigration(time: Double, from: Long, to: Long) extends LoggingMessage
+  case class AbortingMigration(time: Double, name: String, from: Long, to: Long) extends LoggingMessage
 }
 
 class LoggingActor(location: INetworkLocation) extends Actor {
@@ -82,20 +82,20 @@ class LoggingActor(location: INetworkLocation) extends Actor {
         writer.write(s"""{"event": "is_free", "origin": "$origin", "time": "$time"}\n""")
          writer.flush()
 
-      case AskingMigration(time: Double, from: Long, to: Long) =>
-        writer.write(s"""{"event": "ask_migration", "origin": "$origin", "time": "$time",  "from": "$from",  "to": "$to"}\n""")
+      case AskingMigration(time: Double, vm: String, from: Long, to: Long) =>
+        writer.write(s"""{"event": "ask_migration", "origin": "$origin", "time": "$time",  "vm": "$vm", "from": "$from",  "to": "$to"}\n""")
         writer.flush()
 
-      case StartingMigration(time: Double, from: Long, to: Long) =>
-        writer.write(s"""{"event": "start_migration", "origin": "$origin", "time": "$time",  "from": "$from",  "to": "$to"}\n""")
+      case StartingMigration(time: Double, vm: String, from: Long, to: Long) =>
+        writer.write(s"""{"event": "start_migration", "origin": "$origin", "time": "$time",  "vm": "$vm", "from": "$from",  "to": "$to"}\n""")
         writer.flush()
 
-      case FinishingMigration(time: Double, from: Long, to: Long) =>
-        writer.write(s"""{"event": "finish_migration", "origin": "$origin", "time": "$time",  "from": "$from",  "to": "$to"}\n""")
+      case FinishingMigration(time: Double, vm: String, from: Long, to: Long) =>
+        writer.write(s"""{"event": "finish_migration", "origin": "$origin", "time": "$time",  "vm": "$vm", "from": "$from",  "to": "$to"}\n""")
         writer.flush()
 
-      case AbortingMigration(time: Double, from: Long, to: Long) =>
-        writer.write(s"""{"event": "abort_migration", "origin": "$origin", "time": "$time",  "from": "$from",  "to": "$to"}\n""")
+      case AbortingMigration(time: Double, vm: String, from: Long, to: Long) =>
+        writer.write(s"""{"event": "abort_migration", "origin": "$origin", "time": "$time",  "vm": "$vm", "from": "$from",  "to": "$to"}\n""")
         writer.flush()
 
       case CurrentLoadIs(time: Double, load: Double) =>

@@ -24,7 +24,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.duration._
 import concurrent.{Future, Await, ExecutionContext}
-import java.util.concurrent.Executors
+import java.util.concurrent.{TimeoutException, Executors}
 import org.discovery.peeractor.util.{MayFail, NodeRef}
 import java.util.{Date, UUID}
 
@@ -61,6 +61,12 @@ class DvmsActor(applicationRef: NodeRef, overlayService: OverlayService, planApp
         overlayService.giveSomeNeighbourOutside(partition.nodes.map(n => MayFail.protect(n)))
       case None =>
         overlayService.giveSomeNeighbour()
+    }
+
+    future onFailure {
+      case t: TimeoutException =>
+        log.info("overlay was unable to give a firstOut")
+        case e: Exception =>
     }
 
     Await.result(future, 2 seconds) match {

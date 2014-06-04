@@ -31,10 +31,10 @@ object LoggingTest extends App {
   loggingActor ! CurrentLoadIs(6, 56.29)
   loggingActor ! ViolationDetected(7)
   loggingActor ! UpdateMigrationCount(8, 22)
-  loggingActor ! AskingMigration(9, 29, 44)
-  loggingActor ! StartingMigration(10, 44, 35)
-  loggingActor ! FinishingMigration(11, 35, 22)
-  loggingActor ! AbortingMigration(12, 22, 29)
+  loggingActor ! AskingMigration(9, "vm44", 29, 44)
+  loggingActor ! StartingMigration(10, "vm56", 44, 35)
+  loggingActor ! FinishingMigration(11, "vm29", 35, 22)
+  loggingActor ! AbortingMigration(12, "vm22", 22, 29)
 
   system.awaitTermination(8 seconds)
 

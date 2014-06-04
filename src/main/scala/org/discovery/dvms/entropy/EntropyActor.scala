@@ -112,16 +112,16 @@ class EntropyActor(app: NodeRef) extends AbstractEntropyActor(app) {
             log.info(s"starting migration of $vmName on ${destination.getId}!")
 
 
-            app.ref ! StartingMigration(ExperimentConfiguration.getCurrentTime(), app.location.getId, destination.getId)
+            app.ref ! StartingMigration(ExperimentConfiguration.getCurrentTime(), vmName, app.location.getId, destination.getId)
             LibvirtMonitorDriver.driver.migrate(vm, destinationNode)
-            app.ref ! FinishingMigration(ExperimentConfiguration.getCurrentTime(), app.location.getId, destination.getId)
+            app.ref ! FinishingMigration(ExperimentConfiguration.getCurrentTime(), vmName, app.location.getId, destination.getId)
             sender ! true
 
 
             log.info(s"[Administration] Please check  if $vmName is now located on ${destination.getId}!")
           } else {
             log.info(s"aborting migration of $vmName on ${destination.getId}!")
-            app.ref ! AbortingMigration(ExperimentConfiguration.getCurrentTime(), app.location.getId, destination.getId)
+            app.ref ! AbortingMigration(ExperimentConfiguration.getCurrentTime(), vmName, app.location.getId, destination.getId)
             sender ! false
           }
 

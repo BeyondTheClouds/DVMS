@@ -34,6 +34,9 @@ import java.util.UUID
 import org.discovery.peeractor.notification.NotificationActorProtocol.TriggerEvent
 
 object LibvirtMonitorDriver {
+
+  var skipNextOverload: Boolean = false
+
   val driver: IDriver = DvmsConfiguration.IS_G5K_MODE match {
 
     case true =>
@@ -115,7 +118,13 @@ class LibvirtMonitorActor(applicationRef: NodeRef) extends AbstractMonitorActor(
 
       log.info(s"the new consumption is : $cpuConsumption")
 
-      if (cpuConsumption > G5kNodes.getCurrentNodeInstance().getCPUCapacity) {
+      if(LibvirtMonitorDriver.skipNextOverload) {
+        Thread.sleep(1000)
+      }
+
+      if (cpuConsumption > G5kNodes.getCurrentNodeInstance().getCPUCapacity && !LibvirtMonitorDriver.skipNextOverload) {
+
+        LibvirtMonitorDriver.skipNextOverload = false
 
         (lastCheckingUUID, lastViolationReportedUUID) match {
           case (Some(checkingUUID), Some(violationReportedUUID))
